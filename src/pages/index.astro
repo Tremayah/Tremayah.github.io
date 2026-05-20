@@ -1,0 +1,78 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allProjects = await getCollection('projects');
+
+// Featured projects, sorted by order field, then year descending
+const featured = allProjects
+  .filter(p => p.data.featured)
+  .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
+
+// Fall back: if no featured projects set, show the 3 most recent
+const displayProjects = featured.length > 0
+  ? featured
+  : allProjects
+      .sort((a, b) => b.data.year - a.data.year)
+      .slice(0, 3);
+---
+
+<BaseLayout
+  title="Raphael Murray-Browne"
+  description="Portfolio of Raphael Murray-Browne."
+>
+  <!-- ── Hero ─────────────────────────────────── -->
+  <section class="hero">
+    <div class="container">
+      <h1 class="hero__title">
+        <!--
+          EDIT: Replace the tagline below with your own.
+          The <em> tag makes text appear in accent purple.
+          You can remove it or move it to a different word.
+        -->
+        Raphael<br />Murray-Browne
+      </h1>
+      <p class="hero__sub">
+        <!-- EDIT: Replace this with your one-liner description -->
+        Designer &amp; maker based in [City].
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Selected Work ─────────────────────────── -->
+  <section class="mt-section mb-section">
+    <div class="container">
+
+      <div class="section-header">
+        <span class="section-header__title">Selected Work</span>
+        <span class="section-header__line" aria-hidden="true"></span>
+        <a
+          href="/projects"
+          class="label label--accent"
+          style="white-space:nowrap; transition: opacity 0.15s;"
+        >
+          All projects →
+        </a>
+      </div>
+
+      <ul class="project-list">
+        {displayProjects.map((project, i) => (
+          <li>
+            <a
+              class="project-row"
+              href={`/projects/${project.id}`}
+            >
+              <span class="project-row__index">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span class="project-row__title">{project.data.title}</span>
+              <span class="project-row__category">{project.data.category}</span>
+              <span class="project-row__arrow">→</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+
+    </div>
+  </section>
+</BaseLayout>

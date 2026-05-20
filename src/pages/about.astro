@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="About"
+  description="About Raphael Murray-Browne — designer and maker."
+>
+  <section class="about-page">
+    <div class="container">
+
+      <h1 class="about-page__name">Raphael<br />Murray-Browne</h1>
+
+      <!--
+        EDIT: Replace this bio with your own text.
+        Keep it to 2–4 short paragraphs.
+      -->
+      <p class="about-page__bio">
+        [YOUR BIO HERE. Write 2–3 sentences about who you are,
+        what you do, and what drives your work.
+        This is the first thing visitors will read about you —
+        keep it honest and direct.]
+      </p>
+
+      <!-- Contact / links section -->
+      <div>
+        <div class="section-header" style="margin-bottom: 0;">
+          <span class="section-header__title">Contact</span>
+          <span class="section-header__line" aria-hidden="true"></span>
+        </div>
+
+        <!--
+          EDIT: Replace the links below with your actual details.
+          Add or remove <li> items as needed.
+        -->
+        <ul class="contact-list" style="margin-top: 1.5rem;">
+          <li>
+            <a href="mailto:your@email.com">
+              your@email.com
+            </a>
+          </li>
+          <li>
+            <a href="#" target="_blank" rel="noopener">
+              ↗ LinkedIn
+            </a>
+          </li>
+          <li>
+            <a href="#" target="_blank" rel="noopener">
+              ↗ Instagram
+            </a>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+</BaseLayout>

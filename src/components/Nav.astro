@@ -1,0 +1,30 @@
+---
+const pathname = Astro.url.pathname;
+
+const links = [
+  { href: '/about',    label: 'About'    },
+  { href: '/projects', label: 'Projects' },
+];
+---
+
+<header class="nav">
+  <div class="container">
+    <div class="nav__inner">
+      <a href="/" class="nav__name">Raphael Murray-Browne</a>
+      <nav aria-label="Primary navigation">
+        <ul class="nav__links">
+          {links.map(link => (
+            <li>
+              <a
+                href={link.href}
+                aria-current={pathname.startsWith(link.href) ? 'page' : undefined}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
+  </div>
+</header>

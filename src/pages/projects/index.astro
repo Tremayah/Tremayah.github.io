@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allProjects = await getCollection('projects');
+
+// Sort by year descending, then by order within a year
+const sorted = allProjects.sort((a, b) => {
+  if (b.data.year !== a.data.year) return b.data.year - a.data.year;
+  return (a.data.order ?? 99) - (b.data.order ?? 99);
+});
+---
+
+<BaseLayout
+  title="Projects"
+  description="All work by Raphael Murray-Browne."
+>
+  <section class="container">
+    <div class="page-header">
+      <p class="page-header__title">Work</p>
+      <h1 class="page-header__desc">All Projects</h1>
+    </div>
+
+    <ul class="project-table">
+      {sorted.map(project => (
+        <li>
+          <a
+            class="project-table-row"
+            href={`/projects/${project.id}`}
+          >
+            <span class="project-table-row__year">{project.data.year}</span>
+            <span class="project-table-row__title">{project.data.title}</span>
+            <span class="project-table-row__category">{project.data.category}</span>
+            <span class="project-table-row__arrow">→</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+</BaseLayout>
