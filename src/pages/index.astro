@@ -1,78 +1,403 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 
 const allProjects = await getCollection('projects');
+const sorted = allProjects.sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
 
-// Featured projects, sorted by order field, then year descending
-const featured = allProjects
-  .filter(p => p.data.featured)
-  .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
+const projects = await Promise.all(
+  sorted.map(async (entry) => {
+    const { Content } = await render(entry);
+    return { entry, Content };
+  })
+);
 
-// Fall back: if no featured projects set, show the 3 most recent
-const displayProjects = featured.length > 0
-  ? featured
-  : allProjects
-      .sort((a, b) => b.data.year - a.data.year)
-      .slice(0, 3);
+// 14 copies = 7 visible at a time + 7 looping behind (seamless)
+const MARQUEE_COPIES = 14;
 ---
 
-<BaseLayout
-  title="Raphael Murray-Browne"
-  description="Portfolio of Raphael Murray-Browne."
->
-  <!-- ── Hero ─────────────────────────────────── -->
-  <section class="hero">
-    <div class="container">
-      <h1 class="hero__title">
-        <!--
-          EDIT: Replace the tagline below with your own.
-          The <em> tag makes text appear in accent purple.
-          You can remove it or move it to a different word.
-        -->
-        Raphael<br />Murray-Browne
-      </h1>
-      <p class="hero__sub">
-        <!-- EDIT: Replace this with your one-liner description -->
-        Designer &amp; maker based in [City].
-      </p>
-    </div>
-  </section>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Portfolio of Raphael Murray-Browne." />
+  <title>Raphael Murray-Browne</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+</head>
+<body>
 
-  <!-- ── Selected Work ─────────────────────────── -->
-  <section class="mt-section mb-section">
-    <div class="container">
+  <!-- ── Accordion list ─────────────────────── -->
+  <main class="list">
 
-      <div class="section-header">
-        <span class="section-header__title">Selected Work</span>
-        <span class="section-header__line" aria-hidden="true"></span>
-        <a
-          href="/projects"
-          class="label label--accent"
-          style="white-space:nowrap; transition: opacity 0.15s;"
-        >
-          All projects →
-        </a>
+    <!-- About -->
+    <div class="item">
+      <button class="item-trigger" type="button" aria-expanded="false">
+        <span class="item-name">About</span>
+        <span class="item-toggle" aria-hidden="true">[+]</span>
+      </button>
+      <div class="item-body-wrap">
+        <div class="item-body-inner">
+          <div class="prose-area">
+            <!-- EDIT: Replace with your real bio -->
+            <p>[Your bio here. 2–3 sentences about who you are and what you make.]</p>
+          </div>
+        </div>
       </div>
-
-      <ul class="project-list">
-        {displayProjects.map((project, i) => (
-          <li>
-            <a
-              class="project-row"
-              href={`/projects/${project.id}`}
-            >
-              <span class="project-row__index">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <span class="project-row__title">{project.data.title}</span>
-              <span class="project-row__category">{project.data.category}</span>
-              <span class="project-row__arrow">→</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-
     </div>
-  </section>
-</BaseLayout>
+
+    <!-- Contact -->
+    <div class="item">
+      <button class="item-trigger" type="button" aria-expanded="false">
+        <span class="item-name">Contact</span>
+        <span class="item-toggle" aria-hidden="true">[+]</span>
+      </button>
+      <div class="item-body-wrap">
+        <div class="item-body-inner">
+          <div class="prose-area">
+            <!-- EDIT: Replace with your real links -->
+            <a class="contact-link" href="mailto:your@email.com">your@email.com</a>
+            <a class="contact-link" href="#" target="_blank" rel="noopener">↗ LinkedIn</a>
+            <a class="contact-link" href="#" target="_blank" rel="noopener">↗ Instagram</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Projects -->
+    {projects.map(({ entry, Content }) => (
+      <div class="item">
+        <button class="item-trigger" type="button" aria-expanded="false">
+          <span class="item-name">{entry.data.title}</span>
+          <span class="item-year">{entry.data.year}</span>
+          <span class="item-toggle" aria-hidden="true">[+]</span>
+        </button>
+        <div class="item-body-wrap">
+          <div class="item-body-inner">
+            <div class="h-scroll">
+              {entry.data.image && (
+                <div class="h-block h-block--img">
+                  <img src={entry.data.image} alt={entry.data.title} loading="lazy" />
+                </div>
+              )}
+              <div class="h-block h-block--text">
+                <p class="project-desc">{entry.data.description}</p>
+                <div class="project-body">
+                  <Content />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    ))}
+
+  </main>
+
+  <!-- ── Right-side vertical marquee ─────────── -->
+  <aside class="marquee-vert" aria-hidden="true">
+    <div class="marquee-track">
+      {Array.from({ length: MARQUEE_COPIES }).map(() => (
+        <span class="marquee-item">RAPHAEL MURRAY BROWNE</span>
+      ))}
+    </div>
+  </aside>
+
+</body>
+</html>
+
+<style is:global>
+  /* ── Design tokens ───────────────────────── */
+  :root {
+    --fg:     #1c1c1c;
+    --muted:  #aaaaaa;
+    --accent: #5200ff;
+    --border: #e2e2e2;
+    --bg:     #ffffff;
+    --mono:   'Space Mono', 'Courier New', monospace;
+    --col-w:  2.75rem;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--mono);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Outer list ──────────────────────────── */
+  .list {
+    padding-right: calc(var(--col-w) + 1px);
+  }
+
+  /* ── Accordion item ──────────────────────── */
+  .item {
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Trigger row ─────────────────────────── */
+  .item-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1rem clamp(1rem, 4vw, 2.5rem);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--mono);
+    color: var(--fg);
+  }
+
+  /* ── Item name — large bold mono ─────────── */
+  .item-name {
+    font-weight: 700;
+    font-size: clamp(1rem, 2.2vw, 1.5rem);
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+
+  /* Letter spans (injected by JS for the wave) */
+  .item-name .letter {
+    display: inline-block;
+    transition: color 0.1s ease-out;
+    color: var(--fg);
+  }
+  .item-name .letter.lit { color: var(--accent); }
+
+  /* Year badge */
+  .item-year {
+    font-weight: 400;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  /* +/– toggle pushed to far right */
+  .item-toggle {
+    margin-left: auto;
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: color 0.2s;
+  }
+  .item[data-open] .item-toggle { color: var(--accent); }
+
+  /* ── Accordion body ──────────────────────── */
+  .item-body-wrap {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .item[data-open] .item-body-wrap { grid-template-rows: 1fr; }
+  .item-body-inner { overflow: hidden; }
+
+  /* ── About / Contact prose ───────────────── */
+  .prose-area {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1.25rem clamp(1rem, 4vw, 2.5rem) 2rem;
+    max-width: 58ch;
+  }
+  .prose-area p {
+    font-size: 0.82rem;
+    font-weight: 400;
+    line-height: 1.75;
+  }
+  .contact-link {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--fg);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    width: fit-content;
+    padding-bottom: 0.1em;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .contact-link:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── Horizontal scroll (project content) ─── */
+  .h-scroll {
+    display: flex;
+    gap: 2.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 1.75rem clamp(1rem, 4vw, 2.5rem) 2rem;
+    align-items: flex-start;
+    cursor: grab;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .h-scroll:active { cursor: grabbing; }
+
+  .h-block { flex-shrink: 0; }
+
+  .h-block--img img {
+    display: block;
+    height: min(52vh, 460px);
+    width: auto;
+    max-width: 72vw;
+    object-fit: contain;
+  }
+
+  .h-block--text { width: min(460px, 78vw); }
+
+  .project-desc {
+    font-weight: 700;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    margin-bottom: 1.2rem;
+  }
+
+  .project-body {
+    font-size: 0.76rem;
+    font-weight: 400;
+    line-height: 1.9;
+    color: #555;
+  }
+  .project-body p { margin-bottom: 0.85rem; }
+  .project-body p:last-child { margin-bottom: 0; }
+  .project-body h2, .project-body h3 {
+    font-weight: 700;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 1.4rem;
+    margin-bottom: 0.4rem;
+  }
+  .project-body ul, .project-body ol {
+    padding-left: 1.1rem;
+    margin-bottom: 0.85rem;
+  }
+  .project-body li { margin-bottom: 0.2rem; }
+  .project-body a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .project-body strong { color: var(--fg); }
+  .project-body em { font-style: italic; }
+
+  /* ── Vertical marquee ────────────────────── */
+  .marquee-vert {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: var(--col-w);
+    height: 100dvh;
+    overflow: hidden;
+    border-left: 1px solid var(--border);
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .marquee-track {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: march-up 22s linear infinite;
+    will-change: transform;
+  }
+
+  .marquee-item {
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 0.5rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--border);
+    padding-block: 3rem;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  @keyframes march-up {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-50%); }
+  }
+</style>
+
+<script>
+  // Split text into individual letter <span>s
+  function wrapLetters(el) {
+    const raw = el.textContent ?? '';
+    el.innerHTML = [...raw].map(ch =>
+      ch === ' '
+        ? ' '
+        : `<span class="letter">${ch}</span>`
+    ).join('');
+  }
+
+  // Left-to-right colour wave on hover
+  function wave(nameEl) {
+    if (nameEl._waving) return;
+    nameEl._waving = true;
+    const letters = nameEl.querySelectorAll('.letter');
+    const GAP  = 38;   // ms between letters
+    const HOLD = 260;  // ms each letter stays lit
+    letters.forEach((l, i) => {
+      setTimeout(() => l.classList.add('lit'),    i * GAP);
+      setTimeout(() => l.classList.remove('lit'), i * GAP + HOLD);
+    });
+    setTimeout(() => { nameEl._waving = false; }, letters.length * GAP + HOLD);
+  }
+
+  // Accordion open/close
+  function toggle(item) {
+    const isOpen = item.hasAttribute('data-open');
+    const btn    = item.querySelector('.item-trigger');
+    const tog    = item.querySelector('.item-toggle');
+    if (isOpen) {
+      item.removeAttribute('data-open');
+      btn?.setAttribute('aria-expanded', 'false');
+      if (tog) tog.textContent = '[+]';
+    } else {
+      item.setAttribute('data-open', '');
+      btn?.setAttribute('aria-expanded', 'true');
+      if (tog) tog.textContent = '[–]';
+    }
+  }
+
+  // Drag-to-scroll on horizontal project areas
+  function addDragScroll(el) {
+    let down = false, startX = 0, scrollL = 0;
+    el.addEventListener('mousedown', e => {
+      down = true;
+      startX = e.pageX - el.offsetLeft;
+      scrollL = el.scrollLeft;
+    });
+    el.addEventListener('mouseleave', () => { down = false; });
+    el.addEventListener('mouseup',    () => { down = false; });
+    el.addEventListener('mousemove',  e => {
+      if (!down) return;
+      e.preventDefault();
+      el.scrollLeft = scrollL - (e.pageX - el.offsetLeft - startX) * 1.4;
+    });
+  }
+
+  // Init everything
+  document.querySelectorAll('.item').forEach(item => {
+    const btn    = item.querySelector('.item-trigger');
+    const nameEl = item.querySelector('.item-name');
+    if (!btn || !nameEl) return;
+    wrapLetters(nameEl);
+    btn.addEventListener('mouseenter', () => wave(nameEl));
+    btn.addEventListener('click',      () => toggle(item));
+  });
+
+  document.querySelectorAll('.h-scroll').forEach(addDragScroll);
+</script>
