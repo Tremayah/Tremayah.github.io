@@ -11,7 +11,7 @@ const projects = await Promise.all(
   })
 );
 
-// 4 copies = 2 visible + 2 looping behind → seamless
+// 4 copies = 2 showing + 2 identical looping behind = seamless scroll
 const MARQUEE_COPIES = 4;
 ---
 
@@ -20,7 +20,7 @@ const MARQUEE_COPIES = 4;
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Portfolio of Raphael Murray-Browne." />
+  <meta name="description" content="Portfolio of Raphael Murray-Browne — product designer." />
   <title>Raphael Murray-Browne</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -39,7 +39,8 @@ const MARQUEE_COPIES = 4;
       <div class="item-body-wrap">
         <div class="item-body-inner">
           <div class="prose-area">
-            <p>[Your bio here. 2–3 sentences about who you are and what you make.]</p>
+            <p>Aspiring product designer; do you think I'm there yet?</p>
+            <p>First-year work exploring electronics, materials, manufacturing, and the relationship between objects and the people who use them.</p>
           </div>
         </div>
       </div>
@@ -53,9 +54,8 @@ const MARQUEE_COPIES = 4;
       <div class="item-body-wrap">
         <div class="item-body-inner">
           <div class="prose-area">
-            <a class="contact-link" href="mailto:your@email.com">your@email.com</a>
-            <a class="contact-link" href="#" target="_blank" rel="noopener">↗ LinkedIn</a>
-            <a class="contact-link" href="#" target="_blank" rel="noopener">↗ Instagram</a>
+            <a class="contact-link" href="mailto:raphael.murraybrowne@gmail.com">raphael.murraybrowne@gmail.com</a>
+            <a class="contact-link" href="https://www.instagram.com/rmb_is_designing/" target="_blank" rel="noopener">↗ Instagram — RMB_IS_DESIGNING</a>
           </div>
         </div>
       </div>
@@ -89,7 +89,7 @@ const MARQUEE_COPIES = 4;
 
   </main>
 
-  <!-- Fixed vertical marquee — right side -->
+  <!-- Fixed vertical marquee — right edge -->
   <aside class="marquee-vert" aria-hidden="true">
     <div class="marquee-track">
       {Array.from({ length: MARQUEE_COPIES }).map(() => (
@@ -108,7 +108,6 @@ const MARQUEE_COPIES = 4;
     --bg:     #ffffff;
     --mono:   'Space Mono', monospace;
     --sans:   'Noto Sans', system-ui, sans-serif;
-    /* marquee column width — matches font-size so the text fills the column */
     --col-w:  14rem;
   }
 
@@ -127,16 +126,11 @@ const MARQUEE_COPIES = 4;
     padding-bottom: 6rem;
   }
 
-  /* ── Accordion item ──────────────────────── */
-  /* No border, no dividers — pure whitespace separation */
-  .item { }
-
-  /* ── Trigger row ─────────────────────────── */
+  /* ── Trigger — width is text only ───────── */
   .item-trigger {
-    width: 100%;
-    display: flex;
+    display: inline-flex;   /* shrinks to text width */
     align-items: center;
-    padding: 0.6rem clamp(1rem, 4vw, 2.5rem);
+    padding: 0.55rem clamp(1rem, 4vw, 2.5rem);
     background: none;
     border: none;
     cursor: pointer;
@@ -150,22 +144,52 @@ const MARQUEE_COPIES = 4;
     font-family: var(--mono);
     font-weight: 700;
     font-size: clamp(1.1rem, 2.2vw, 1.6rem);
-    letter-spacing: -0.01em;
-    line-height: 1;
+    line-height: 1.1;
+    color: inherit;
+    text-transform: lowercase;
+    transition: color 0.18s ease;
   }
 
-  /* Individual letter spans — NO transition, instant colour pop */
-  .item-name .letter {
+  /* Hover: whole name snaps to accent */
+  .item-trigger:hover .item-name { color: var(--accent); }
+
+  /* Open: name stays accent */
+  .item[data-open] > .item-trigger .item-name { color: var(--accent); }
+
+  /* ── Word-split structure (built by JS) ─── */
+  .word-wrap {
     display: inline-block;
-    color: var(--fg);
+    position: relative;
+    vertical-align: top;
   }
-  .item-name .letter.lit { color: var(--accent); }
 
-  /* ── Accordion body ──────────────────────── */
+  .word-half {
+    display: block;
+    transition: transform 0.22s cubic-bezier(0.77, 0, 0.175, 1);
+    will-change: transform;
+  }
+
+  /* top half: clips to show only the upper 50% of each character */
+  .word-top {
+    clip-path: inset(0 0 50% 0);
+  }
+
+  /* bottom half: overlays exactly on top, clips lower 50% */
+  .word-bot {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    clip-path: inset(50% 0 0 0);
+  }
+
+  /* When project opens: top half flies up; .word-bot translateY is set by JS */
+  .item[data-open] .word-top { transform: translateY(-55%); }
+
+  /* ── Accordion body — 1.5× faster ───────── */
   .item-body-wrap {
     display: grid;
     grid-template-rows: 0fr;
-    transition: grid-template-rows 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: grid-template-rows 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .item[data-open] .item-body-wrap { grid-template-rows: 1fr; }
   .item-body-inner { overflow: hidden; }
@@ -175,7 +199,7 @@ const MARQUEE_COPIES = 4;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    padding: 1rem clamp(1rem, 4vw, 2.5rem) 1.75rem;
+    padding: 0.75rem clamp(1rem, 4vw, 2.5rem) 1.5rem;
     max-width: 56ch;
   }
   .prose-area p {
@@ -183,7 +207,6 @@ const MARQUEE_COPIES = 4;
     font-size: 0.9rem;
     font-weight: 400;
     line-height: 1.75;
-    color: var(--fg);
   }
   .contact-link {
     display: block;
@@ -200,16 +223,15 @@ const MARQUEE_COPIES = 4;
     border-bottom-color: var(--accent);
   }
 
-  /* ── Horizontal scroll area (projects) ───── */
+  /* ── Horizontal scroll area ──────────────── */
   .h-scroll {
     display: flex;
     gap: 0;
     overflow-x: auto;
-    overflow-y: hidden;
     padding: 1.25rem 0 1.75rem;
     align-items: flex-start;
     cursor: grab;
-    scrollbar-width: none; /* hide scrollbar — drag to scroll */
+    scrollbar-width: none;
   }
   .h-scroll::-webkit-scrollbar { display: none; }
   .h-scroll:active { cursor: grabbing; }
@@ -225,7 +247,6 @@ const MARQUEE_COPIES = 4;
     padding: 0 clamp(1rem, 4vw, 2.5rem);
   }
 
-  /* Each text card is a fixed-width column */
   .h-block--text {
     width: clamp(280px, 35vw, 440px);
     padding: 0 clamp(1rem, 4vw, 2.5rem);
@@ -251,24 +272,25 @@ const MARQUEE_COPIES = 4;
   }
   .project-body p { margin-bottom: 0.8rem; }
   .project-body p:last-child { margin-bottom: 0; }
+
+  /* Card titles — accent, Space Mono bold */
   .project-body h2 {
-    font-family: var(--sans);
+    font-family: var(--mono);
     font-weight: 700;
-    font-size: 0.62rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #aaa;
-    margin-top: 1.25rem;
-    margin-bottom: 0.4rem;
-  }
-  .project-body h3 {
-    font-family: var(--sans);
-    font-weight: 700;
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #aaa;
-    margin-top: 1rem;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+  .project-body h3 {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-top: 0.75rem;
     margin-bottom: 0.3rem;
   }
   .project-body ul, .project-body ol {
@@ -288,68 +310,122 @@ const MARQUEE_COPIES = 4;
     width: var(--col-w);
     height: 100dvh;
     overflow: hidden;
-    pointer-events: none;
+    /* pointer-events: auto so hover fires */
     z-index: 10;
-    /* No border */
   }
 
   .marquee-track {
     display: flex;
     flex-direction: column;
     align-items: center;
-    animation: march-up 200s linear infinite;
+    /* INVERTED: from -50% → 0 = scrolls downward */
+    animation: march-down 140s linear infinite;
     will-change: transform;
   }
 
   .marquee-item {
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
+    writing-mode: vertical-rl;
     font-family: var(--sans);
     font-weight: 700;
     font-size: 14rem;
     line-height: 1;
     text-transform: uppercase;
-    color: var(--fg);         /* off-black, same as body text */
-    padding-block: 4rem;
+    color: var(--fg);
+    /* Generous, consistent spacing between each repetition */
+    padding-block: 6rem;
     white-space: nowrap;
     user-select: none;
   }
 
-  @keyframes march-up {
-    from { transform: translateY(0); }
-    to   { transform: translateY(-50%); }
+  @keyframes march-down {
+    from { transform: translateY(-50%); }
+    to   { transform: translateY(0); }
+  }
+
+  /* ── Project body images ─────────────────── */
+  .project-body img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0.75rem 0;
+  }
+
+  /* ── Card extended report ────────────────── */
+  /* Revealed when user scrolls to end of cards, or clicks a card */
+  .card-extended {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-extended.expanded {
+    max-height: 1200px;
+  }
+  .card-extended-inner {
+    padding-top: 1.25rem;
+    border-top: 1px solid #e8e8e8;
+    margin-top: 1.25rem;
+  }
+  .card-ext-label {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+  .card-ext-para {
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.85;
+    color: #666;
+    margin-bottom: 0.75rem;
+  }
+  .card-ext-img {
+    width: 100%;
+    height: 130px;
+    background: #f4f4f4;
+    margin-top: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-ext-img::after {
+    content: '[ image ]';
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: #ccc;
+    letter-spacing: 0.1em;
   }
 </style>
 
 <script>
-  // ── Split letter spans into the item name ────────────────────────────
-  function wrapLetters(el) {
-    const raw = el.textContent ?? '';
-    el.innerHTML = [...raw].map(ch =>
-      ch === ' ' ? ' ' : `<span class="letter">${ch}</span>`
-    ).join('');
-  }
+  // ── Build split-word structure in each item name ──────────────────────
+  function buildSplitWords(nameEl) {
+    const text = nameEl.textContent?.trim() ?? '';
+    nameEl.textContent = '';
+    text.split(' ').forEach((word, i, arr) => {
+      const wrap = document.createElement('span');
+      wrap.className = 'word-wrap';
 
-  // ── Continuous wave while hovering (one lit letter chases left→right) ─
-  function startWave(nameEl) {
-    stopWave(nameEl); // clear any existing
-    const letters = nameEl.querySelectorAll('.letter');
-    if (!letters.length) return;
-    const GAP = 110; // ms per letter — slower than before
-    let i = 0, prev = null;
-    function tick() {
-      if (prev) prev.classList.remove('lit');
-      letters[i].classList.add('lit');
-      prev = letters[i];
-      i = (i + 1) % letters.length;
-      nameEl._waveTimer = setTimeout(tick, GAP);
-    }
-    tick();
-  }
+      const top = document.createElement('span');
+      top.className = 'word-half word-top';
+      top.textContent = word;
 
-  function stopWave(nameEl) {
-    clearTimeout(nameEl._waveTimer);
-    nameEl.querySelectorAll('.letter.lit').forEach(l => l.classList.remove('lit'));
+      const bot = document.createElement('span');
+      bot.className = 'word-half word-bot';
+      bot.textContent = word;
+      bot.setAttribute('aria-hidden', 'true');
+
+      wrap.appendChild(top);
+      wrap.appendChild(bot);
+      nameEl.appendChild(wrap);
+
+      if (i < arr.length - 1) {
+        nameEl.appendChild(document.createTextNode(' '));
+      }
+    });
   }
 
   // ── One accordion open at a time ─────────────────────────────────────
@@ -358,17 +434,43 @@ const MARQUEE_COPIES = 4;
   function toggle(item) {
     const wasOpen = item.hasAttribute('data-open');
 
-    // Close everything
+    // Close all — reset word-bot inline transforms too
     allItems.forEach(other => {
       other.removeAttribute('data-open');
       other.querySelector('.item-trigger')?.setAttribute('aria-expanded', 'false');
+      other.querySelectorAll('.word-bot').forEach(bot => {
+        bot.style.transform = '';
+      });
     });
 
-    // Open this one only if it was previously closed
     if (!wasOpen) {
       item.setAttribute('data-open', '');
       item.querySelector('.item-trigger')?.setAttribute('aria-expanded', 'true');
+
+      // Word-bot: travel to the bottom of the revealed content area
+      const inner = item.querySelector('.item-body-inner');
+      if (inner) {
+        const contentH = inner.scrollHeight;
+        item.querySelectorAll('.word-bot').forEach(bot => {
+          bot.style.transform = `translateY(${contentH}px)`;
+        });
+      }
     }
+  }
+
+  // ── Append an extended-report section to a card ───────────────────────
+  function addExtendedSection(block) {
+    const ext = document.createElement('div');
+    ext.className = 'card-extended';
+    const inner = document.createElement('div');
+    inner.className = 'card-extended-inner';
+    inner.innerHTML =
+      '<p class="card-ext-label">Extended notes</p>' +
+      '<p class="card-ext-para">Further detail on process decisions, material behaviour, and iterations made throughout the development of this project.</p>' +
+      '<p class="card-ext-para">Documentation of key turning points and discoveries is ongoing — this section will be updated as the project develops.</p>' +
+      '<div class="card-ext-img"></div>';
+    ext.appendChild(inner);
+    block.appendChild(ext);
   }
 
   // ── Split project body into horizontal cards by h2 heading ───────────
@@ -391,13 +493,17 @@ const MARQUEE_COPIES = 4;
       }
     });
     if (current.length) sections.push(current);
-    if (sections.length <= 1) return; // Nothing to split
 
-    // Replace body contents with first section
+    // Always add extended section to the first (existing) card
+    addExtendedSection(textBlock);
+
+    if (sections.length <= 1) return;
+
+    // Rebuild first section in place
     while (body.firstChild) body.removeChild(body.firstChild);
     sections[0].forEach(el => body.appendChild(el));
 
-    // Append remaining sections as new sibling h-blocks
+    // Create new cards for remaining sections
     for (let i = 1; i < sections.length; i++) {
       const block = document.createElement('div');
       block.className = 'h-block h-block--text';
@@ -405,40 +511,90 @@ const MARQUEE_COPIES = 4;
       newBody.className = 'project-body';
       sections[i].forEach(el => newBody.appendChild(el));
       block.appendChild(newBody);
+      addExtendedSection(block);
       hscroll.appendChild(block);
     }
   }
 
-  // ── Drag-to-scroll on horizontal areas ───────────────────────────────
+  // ── Drag-to-scroll (tracks drag distance to avoid spurious clicks) ────
   function addDragScroll(el) {
-    let down = false, startX = 0, scrollL = 0;
+    let down = false, startX = 0, scrollL = 0, dragged = false;
     el.addEventListener('mousedown', e => {
-      down = true; startX = e.pageX - el.offsetLeft; scrollL = el.scrollLeft;
+      down = true;
+      startX = e.pageX - el.offsetLeft;
+      scrollL = el.scrollLeft;
+      dragged = false;
     });
     el.addEventListener('mouseleave', () => { down = false; });
     el.addEventListener('mouseup',    () => { down = false; });
     el.addEventListener('mousemove',  e => {
       if (!down) return;
       e.preventDefault();
+      if (Math.abs(e.pageX - el.offsetLeft - startX) > 5) dragged = true;
       el.scrollLeft = scrollL - (e.pageX - el.offsetLeft - startX) * 1.4;
+    });
+    // Expose drag state for click handlers
+    el._wasDragged = () => dragged;
+  }
+
+  // ── Marquee hover: fast-track back to start ───────────────────────────
+  const marqueeVert  = document.querySelector('.marquee-vert');
+  const marqueeTrack = document.querySelector('.marquee-track');
+
+  if (marqueeVert && marqueeTrack) {
+    marqueeVert.addEventListener('mouseenter', () => {
+      const style    = window.getComputedStyle(marqueeTrack);
+      const matrix   = new DOMMatrix(style.transform);
+      const currentY = matrix.m42;
+
+      marqueeTrack.style.animation  = 'none';
+      marqueeTrack.style.transform  = `translateY(${currentY}px)`;
+      void marqueeTrack.offsetHeight;
+
+      const startY = -(marqueeTrack.scrollHeight / 2);
+      marqueeTrack.style.transition = 'transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      marqueeTrack.style.transform  = `translateY(${startY}px)`;
+    });
+
+    marqueeVert.addEventListener('mouseleave', () => {
+      marqueeTrack.style.transition = 'none';
+      marqueeTrack.style.transform  = '';
+      void marqueeTrack.offsetHeight;
+      marqueeTrack.style.animation  = 'march-down 140s linear infinite';
     });
   }
 
-  // ── Init ─────────────────────────────────────────────────────────────
+  // ── Init ──────────────────────────────────────────────────────────────
   allItems.forEach(item => {
     const btn    = item.querySelector('.item-trigger');
     const nameEl = item.querySelector('.item-name');
     if (!btn || !nameEl) return;
 
-    wrapLetters(nameEl);
-
-    btn.addEventListener('mouseenter', () => startWave(nameEl));
-    btn.addEventListener('mouseleave', () => stopWave(nameEl));
-    btn.addEventListener('click',      () => toggle(item));
+    buildSplitWords(nameEl);
+    btn.addEventListener('click', () => toggle(item));
   });
 
   document.querySelectorAll('.h-scroll').forEach(el => {
     splitIntoCards(el);
     addDragScroll(el);
+
+    // Scroll to end → expand all card-extended sections in this hscroll
+    el.addEventListener('scroll', () => {
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 20;
+      if (atEnd) {
+        el.querySelectorAll('.card-extended').forEach(ext => {
+          ext.classList.add('expanded');
+        });
+      }
+    });
+
+    // Click on a card → expand that card's extended section
+    el.querySelectorAll('.h-block--text').forEach(card => {
+      card.addEventListener('click', () => {
+        if (el._wasDragged && el._wasDragged()) return; // skip drag-releases
+        const ext = card.querySelector('.card-extended');
+        if (ext) ext.classList.add('expanded');
+      });
+    });
   });
 </script>
