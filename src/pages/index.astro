@@ -31,7 +31,7 @@ const MARQUEE_COPIES = 4;
 
 <div class="layout">
 
-  <!-- Left column: title list — stays fixed while content changes -->
+  <!-- Left column: title list — scrolls independently -->
   <nav class="title-col">
 
     <div class="item" data-item="about">
@@ -56,7 +56,7 @@ const MARQUEE_COPIES = 4;
 
   </nav>
 
-  <!-- Middle column: content panels — instant show/hide, no animation -->
+  <!-- Middle column: content panels — scrolls independently -->
   <div class="content-col">
 
     <div class="item-panel" data-panel="about">
@@ -75,17 +75,10 @@ const MARQUEE_COPIES = 4;
 
     {projects.map(({ entry, Content }) => (
       <div class="item-panel" data-panel={entry.id}>
-        <div class="h-scroll">
-          {entry.data.image && (
-            <div class="h-block h-block--img">
-              <img src={entry.data.image} alt={entry.data.title} loading="lazy" />
-            </div>
-          )}
-          <div class="h-block h-block--text">
-            <p class="project-desc">{entry.data.description}</p>
-            <div class="project-body">
-              <Content />
-            </div>
+        <div class="project-report">
+          <p class="project-desc">{entry.data.description}</p>
+          <div class="project-body">
+            <Content />
           </div>
         </div>
       </div>
@@ -119,7 +112,8 @@ const MARQUEE_COPIES = 4;
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  html {
+  html, body {
+    height: 100%;
     background: var(--bg);
     color: var(--fg);
     -webkit-font-smoothing: antialiased;
@@ -128,25 +122,34 @@ const MARQUEE_COPIES = 4;
   /* ── Three-column page layout ────────────── */
   .layout {
     display: flex;
-    min-height: 100dvh;
+    height: 100dvh;
+    overflow: hidden;
     padding-right: var(--col-w); /* leave room for fixed marquee */
   }
 
-  /* Left: title list — doesn't move when content opens */
+  /* Left: title list — independent scroll */
   .title-col {
     flex-shrink: 0;
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-width: none;
     padding-top: 1rem;
     padding-bottom: 6rem;
     background: var(--accent);
   }
+  .title-col::-webkit-scrollbar { display: none; }
 
-  /* Middle: content fills remaining space */
+  /* Middle: content fills remaining space — independent scroll */
   .content-col {
     flex: 1;
     min-width: 0; /* prevent flex overflow */
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-width: none;
     padding-top: 1rem;
     padding-bottom: 6rem;
   }
+  .content-col::-webkit-scrollbar { display: none; }
 
   /* Panels — instant show/hide, zero delay */
   .item-panel { display: none; }
@@ -234,54 +237,29 @@ const MARQUEE_COPIES = 4;
     border-bottom-color: var(--accent);
   }
 
-  /* ── Horizontal scroll area ──────────────── */
-  .h-scroll {
-    display: flex;
-    gap: 0;
-    overflow-x: auto;
-    padding: 1.25rem 0 1.75rem;
-    align-items: flex-start;
-    cursor: grab;
-    scrollbar-width: none;
+  /* ── Project vertical report ─────────────── */
+  .project-report {
+    padding: 0.75rem clamp(1rem, 4vw, 2.5rem) 2rem;
+    max-width: 680px;
   }
-  .h-scroll::-webkit-scrollbar { display: none; }
-  .h-scroll:active { cursor: grabbing; }
-
-  .h-block { flex-shrink: 0; }
-
-  .h-block--img img {
-    display: block;
-    height: min(52vh, 460px);
-    width: auto;
-    max-width: 70vw;
-    object-fit: contain;
-    padding: 0 clamp(1rem, 4vw, 2.5rem);
-  }
-
-  .h-block--text {
-    width: clamp(280px, 35vw, 440px);
-    padding: 0 clamp(1rem, 4vw, 2.5rem);
-    border-right: 1px solid #e8e8e8;
-  }
-  .h-block--text:last-child { border-right: none; }
 
   .project-desc {
     font-family: var(--sans);
     font-weight: 700;
-    font-size: 0.82rem;
-    line-height: 1.6;
-    margin-bottom: 1.1rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin-bottom: 1.75rem;
     color: var(--fg);
   }
 
   .project-body {
     font-family: var(--sans);
-    font-size: 0.78rem;
+    font-size: 0.85rem;
     font-weight: 400;
     line-height: 1.9;
     color: #555;
   }
-  .project-body p { margin-bottom: 0.8rem; }
+  .project-body p { margin-bottom: 1rem; }
   .project-body p:last-child { margin-bottom: 0; }
 
   .project-body h2 {
@@ -291,8 +269,11 @@ const MARQUEE_COPIES = 4;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #c2fe0c;
-    margin-bottom: 0.5rem;
+    margin-top: 2rem;
+    margin-bottom: 0.6rem;
   }
+  .project-body h2:first-child { margin-top: 0; }
+
   .project-body h3 {
     font-family: var(--mono);
     font-weight: 700;
@@ -300,14 +281,14 @@ const MARQUEE_COPIES = 4;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #c2fe0c;
-    margin-top: 0.75rem;
-    margin-bottom: 0.3rem;
+    margin-top: 1.25rem;
+    margin-bottom: 0.35rem;
   }
   .project-body ul, .project-body ol {
     padding-left: 1.1rem;
-    margin-bottom: 0.8rem;
+    margin-bottom: 1rem;
   }
-  .project-body li { margin-bottom: 0.15rem; }
+  .project-body li { margin-bottom: 0.2rem; }
   .project-body a { color: var(--accent); text-decoration: underline; }
   .project-body strong { color: var(--fg); }
   .project-body em { font-style: italic; }
@@ -316,7 +297,7 @@ const MARQUEE_COPIES = 4;
     max-width: 100%;
     height: auto;
     display: block;
-    margin: 0.75rem 0;
+    margin: 1.25rem 0;
   }
 
   /* ── Vertical marquee ────────────────────── */
@@ -357,52 +338,6 @@ const MARQUEE_COPIES = 4;
     from { transform: translateY(-50%); }
     to   { transform: translateY(0); }
   }
-
-  /* ── Card extended report ────────────────── */
-  .card-extended {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .card-extended.expanded { max-height: 1200px; }
-  .card-extended-inner {
-    padding-top: 1.25rem;
-    border-top: 1px solid #e8e8e8;
-    margin-top: 1.25rem;
-  }
-  .card-ext-label {
-    font-family: var(--mono);
-    font-size: 0.58rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #c2fe0c;
-    margin-bottom: 0.75rem;
-  }
-  .card-ext-para {
-    font-family: var(--sans);
-    font-size: 0.75rem;
-    font-weight: 400;
-    line-height: 1.85;
-    color: #666;
-    margin-bottom: 0.75rem;
-  }
-  .card-ext-img {
-    width: 100%;
-    height: 130px;
-    background: #f4f4f4;
-    margin-top: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .card-ext-img::after {
-    content: '[ image ]';
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: #ccc;
-    letter-spacing: 0.1em;
-  }
 </style>
 
 <script>
@@ -436,6 +371,7 @@ const MARQUEE_COPIES = 4;
   // ── Instant panel swap — no animation ────────────────────────────────
   const allItems  = Array.from(document.querySelectorAll('.item'));
   const allPanels = Array.from(document.querySelectorAll('.item-panel'));
+  const contentCol = document.querySelector('.content-col');
 
   function toggle(item) {
     const id      = item.dataset.item;
@@ -452,82 +388,12 @@ const MARQUEE_COPIES = 4;
       item.setAttribute('data-open', '');
       item.querySelector('.item-trigger')?.setAttribute('aria-expanded', 'true');
       const panel = document.querySelector(`[data-panel="${id}"]`);
-      if (panel) panel.setAttribute('data-open', '');
-    }
-  }
-
-  // ── Append an extended-report section to a card ───────────────────────
-  function addExtendedSection(block) {
-    const ext = document.createElement('div');
-    ext.className = 'card-extended';
-    const inner = document.createElement('div');
-    inner.className = 'card-extended-inner';
-    inner.innerHTML =
-      '<p class="card-ext-label">Extended notes</p>' +
-      '<p class="card-ext-para">Further detail on process decisions, material behaviour, and iterations made throughout the development of this project.</p>' +
-      '<p class="card-ext-para">Documentation of key turning points and discoveries is ongoing — this section will be updated as the project develops.</p>' +
-      '<div class="card-ext-img"></div>';
-    ext.appendChild(inner);
-    block.appendChild(ext);
-  }
-
-  // ── Split project body into horizontal cards by h2 heading ───────────
-  function splitIntoCards(hscroll) {
-    const textBlock = hscroll.querySelector('.h-block--text');
-    if (!textBlock) return;
-    const body = textBlock.querySelector('.project-body');
-    if (!body) return;
-
-    const children = Array.from(body.children);
-    const sections = [];
-    let current = [];
-
-    children.forEach(el => {
-      if (el.tagName === 'H2' && current.length > 0) {
-        sections.push([...current]);
-        current = [el];
-      } else {
-        current.push(el);
+      if (panel) {
+        panel.setAttribute('data-open', '');
+        // Scroll content column back to top when switching panels
+        contentCol?.scrollTo({ top: 0 });
       }
-    });
-    if (current.length) sections.push(current);
-
-    addExtendedSection(textBlock);
-    if (sections.length <= 1) return;
-
-    while (body.firstChild) body.removeChild(body.firstChild);
-    sections[0].forEach(el => body.appendChild(el));
-
-    for (let i = 1; i < sections.length; i++) {
-      const block = document.createElement('div');
-      block.className = 'h-block h-block--text';
-      const newBody = document.createElement('div');
-      newBody.className = 'project-body';
-      sections[i].forEach(el => newBody.appendChild(el));
-      block.appendChild(newBody);
-      addExtendedSection(block);
-      hscroll.appendChild(block);
     }
-  }
-
-  // ── Drag-to-scroll ────────────────────────────────────────────────────
-  function addDragScroll(el) {
-    let down = false, startX = 0, scrollL = 0, dragged = false;
-    el.addEventListener('mousedown', e => {
-      down = true;
-      startX = e.pageX - el.offsetLeft;
-      scrollL = el.scrollLeft;
-      dragged = false;
-    });
-    el.addEventListener('mouseleave', () => { down = false; });
-    el.addEventListener('mouseup',    () => { down = false; });
-    el.addEventListener('mousemove',  e => {
-      if (!down) return;
-      e.preventDefault();
-      if (Math.abs(e.pageX - el.offsetLeft - startX) > 5) dragged = true;
-      el.scrollLeft = scrollL - (e.pageX - el.offsetLeft - startX) * 1.4;
-    });
-    el._wasDragged = () => dragged;
   }
 
   // ── Marquee hover: snap to start, seamless resume on mouseleave ───────
@@ -581,27 +447,5 @@ const MARQUEE_COPIES = 4;
 
     buildSplitWords(nameEl);
     btn.addEventListener('click', () => toggle(item));
-  });
-
-  document.querySelectorAll('.h-scroll').forEach(el => {
-    splitIntoCards(el);
-    addDragScroll(el);
-
-    // Scroll to end → expand all card-extended sections
-    el.addEventListener('scroll', () => {
-      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 20;
-      if (atEnd) {
-        el.querySelectorAll('.card-extended').forEach(ext => ext.classList.add('expanded'));
-      }
-    });
-
-    // Click on a card → expand its extended section
-    el.querySelectorAll('.h-block--text').forEach(card => {
-      card.addEventListener('click', () => {
-        if (el._wasDragged && el._wasDragged()) return;
-        const ext = card.querySelector('.card-extended');
-        if (ext) ext.classList.add('expanded');
-      });
-    });
   });
 </script>
