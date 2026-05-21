@@ -11,7 +11,6 @@ const projects = await Promise.all(
   })
 );
 
-// 4 copies = 2 showing + 2 identical looping behind = seamless scroll
 const MARQUEE_COPIES = 4;
 ---
 
@@ -31,21 +30,18 @@ const MARQUEE_COPIES = 4;
 
 <div class="layout">
 
-  <!-- Left column: title list — scrolls independently -->
+  <!-- Col 1: title list -->
   <nav class="title-col">
-
     <div class="item" data-item="about">
       <button class="item-trigger" type="button" aria-expanded="false">
         <span class="item-name">About</span>
       </button>
     </div>
-
     <div class="item" data-item="contact">
       <button class="item-trigger" type="button" aria-expanded="false">
         <span class="item-name">Contact</span>
       </button>
     </div>
-
     {projects.map(({ entry }) => (
       <div class="item" data-item={entry.id}>
         <button class="item-trigger" type="button" aria-expanded="false">
@@ -53,10 +49,9 @@ const MARQUEE_COPIES = 4;
         </button>
       </div>
     ))}
-
   </nav>
 
-  <!-- Middle column: content panels — scrolls independently -->
+  <!-- Cols 2 + 3: text and images scroll together -->
   <div class="content-col">
 
     <div class="item-panel" data-panel="about">
@@ -88,7 +83,7 @@ const MARQUEE_COPIES = 4;
 
 </div>
 
-<!-- Fixed vertical marquee — right edge -->
+<!-- Col 4: fixed vertical marquee -->
 <aside class="marquee-vert" aria-hidden="true">
   <div class="marquee-track">
     {Array.from({ length: MARQUEE_COPIES }).map(() => (
@@ -96,6 +91,11 @@ const MARQUEE_COPIES = 4;
     ))}
   </div>
 </aside>
+
+<!-- Lightbox (built by JS) -->
+<div class="lightbox-overlay" id="lightbox" hidden aria-modal="true" role="dialog">
+  <img class="lightbox-img" src="" alt="" />
+</div>
 
 </body>
 </html>
@@ -108,6 +108,8 @@ const MARQUEE_COPIES = 4;
     --mono:   'Space Mono', monospace;
     --sans:   'Noto Sans', system-ui, sans-serif;
     --col-w:  14rem;
+    /* Images in col 3 extend this far under the marquee (col 4) */
+    --img-bleed: 2.5rem;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -119,15 +121,16 @@ const MARQUEE_COPIES = 4;
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ── Three-column page layout ────────────── */
+  /* ── Layout shell ─────────────────────────────── */
   .layout {
     display: flex;
     height: 100dvh;
     overflow: hidden;
-    padding-right: var(--col-w); /* leave room for fixed marquee */
+    /* Reduced right padding so col 3 images slide slightly under the marquee */
+    padding-right: calc(var(--col-w) - var(--img-bleed));
   }
 
-  /* Left: title list — independent scroll */
+  /* ── Col 1: titles ────────────────────────────── */
   .title-col {
     flex-shrink: 0;
     height: 100%;
@@ -139,10 +142,10 @@ const MARQUEE_COPIES = 4;
   }
   .title-col::-webkit-scrollbar { display: none; }
 
-  /* Middle: content fills remaining space — independent scroll */
+  /* ── Cols 2 + 3: content ──────────────────────── */
   .content-col {
     flex: 1;
-    min-width: 0; /* prevent flex overflow */
+    min-width: 0;
     height: 100%;
     overflow-y: auto;
     scrollbar-width: none;
@@ -151,11 +154,11 @@ const MARQUEE_COPIES = 4;
   }
   .content-col::-webkit-scrollbar { display: none; }
 
-  /* Panels — instant show/hide, zero delay */
+  /* ── Panel visibility ─────────────────────────── */
   .item-panel { display: none; }
   .item-panel[data-open] { display: block; }
 
-  /* ── Trigger — width is text only ───────── */
+  /* ── Title triggers ───────────────────────────── */
   .item-trigger {
     display: inline-flex;
     align-items: center;
@@ -168,7 +171,6 @@ const MARQUEE_COPIES = 4;
     color: #fff;
   }
 
-  /* ── Item name ───────────────────────────── */
   .item-name {
     font-family: var(--mono);
     font-weight: 700;
@@ -182,33 +184,14 @@ const MARQUEE_COPIES = 4;
   .item-trigger:hover .item-name { color: #c2fe0c; }
   .item[data-open] > .item-trigger .item-name { color: #c2fe0c; }
 
-  /* ── Word-split structure (built by JS) ─── */
-  .word-wrap {
-    display: inline-block;
-    position: relative;
-    vertical-align: top;
-  }
-
-  .word-half {
-    display: block;
-    transition: transform 0.22s cubic-bezier(0.77, 0, 0.175, 1);
-    will-change: transform;
-  }
-
-  /* Split at ~58% of element height ≈ halfway through the x-height of lowercase letters */
-  .word-top { clip-path: inset(0 0 42% 0); }
-
-  .word-bot {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%;
-    clip-path: inset(58% 0 0 0);
-  }
-
-  /* When project opens: bottom half shifts 2px right */
+  /* ── Word-split ───────────────────────────────── */
+  .word-wrap { display: inline-block; position: relative; vertical-align: top; }
+  .word-half { display: block; transition: transform 0.22s cubic-bezier(0.77, 0, 0.175, 1); will-change: transform; }
+  .word-top  { clip-path: inset(0 0 42% 0); }
+  .word-bot  { position: absolute; top: 0; left: 0; width: 100%; clip-path: inset(58% 0 0 0); }
   .item[data-open] .word-bot { transform: translateX(2px); }
 
-  /* ── About / Contact prose ───────────────── */
+  /* ── About / Contact prose ────────────────────── */
   .prose-area {
     display: flex;
     flex-direction: column;
@@ -216,12 +199,8 @@ const MARQUEE_COPIES = 4;
     padding: 0.75rem clamp(1rem, 4vw, 2.5rem) 1.5rem;
     max-width: 56ch;
   }
-  .prose-area p {
-    font-family: var(--sans);
-    font-size: 0.9rem;
-    font-weight: 400;
-    line-height: 1.75;
-  }
+  .prose-area p { font-family: var(--sans); font-size: 0.9rem; font-weight: 400; line-height: 1.75; }
+
   .contact-link {
     display: block;
     font-family: var(--sans);
@@ -232,26 +211,52 @@ const MARQUEE_COPIES = 4;
     border-bottom: 1px solid transparent;
     transition: color 0.15s, border-color 0.15s;
   }
-  .contact-link:hover {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-  }
+  .contact-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
-  /* ── Project vertical report ─────────────── */
+  /* ── Project report — outer container ─────────── */
   .project-report {
-    padding: 0.75rem clamp(1rem, 4vw, 2.5rem) 2rem;
-    max-width: 680px;
+    padding-top: 0.75rem;
+    padding-bottom: 2rem;
   }
 
+  /* ── Split layout (cols 2 + 3) built by JS ───── */
+  .report-split { /* rows stack here */ }
+
+  .rs-row {
+    display: grid;
+    /* text fills remaining space; images column has a fixed width */
+    grid-template-columns: 1fr var(--img-col-w, clamp(200px, 24vw, 320px));
+    align-items: start;
+  }
+
+  /* Space between sections */
+  .rs-row + .rs-row { margin-top: 2.5rem; }
+
+  /* Col 2: text */
+  .rs-text {
+    min-width: 0;
+    padding: 0 clamp(1rem, 4vw, 2.5rem);
+  }
+
+  /* Col 3: images — flush to the content-col right edge,
+     which now reaches var(--img-bleed) under the marquee */
+  .rs-images {
+    padding-left: 1.25rem;
+    /* A thin rule visually separates col 2 from col 3 */
+    border-left: 1px solid #e8e8e8;
+  }
+
+  /* ── Project description (above sections) ─────── */
   .project-desc {
     font-family: var(--sans);
     font-weight: 700;
     font-size: 0.9rem;
     line-height: 1.7;
-    margin-bottom: 1.75rem;
+    margin-bottom: 0; /* row gap handles spacing */
     color: var(--fg);
   }
 
+  /* ── Project body text ────────────────────────── */
   .project-body {
     font-family: var(--sans);
     font-size: 0.85rem;
@@ -259,8 +264,8 @@ const MARQUEE_COPIES = 4;
     line-height: 1.9;
     color: #555;
   }
-  .project-body p { margin-bottom: 1rem; }
-  .project-body p:last-child { margin-bottom: 0; }
+  .project-body p              { margin-bottom: 0.9rem; }
+  .project-body p:last-child   { margin-bottom: 0; }
 
   .project-body h2 {
     font-family: var(--mono);
@@ -269,11 +274,9 @@ const MARQUEE_COPIES = 4;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #c2fe0c;
-    margin-top: 2rem;
     margin-bottom: 0.6rem;
+    /* No margin-top — rs-row gap creates section spacing */
   }
-  .project-body h2:first-child { margin-top: 0; }
-
   .project-body h3 {
     font-family: var(--mono);
     font-weight: 700;
@@ -281,26 +284,63 @@ const MARQUEE_COPIES = 4;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #c2fe0c;
-    margin-top: 1.25rem;
-    margin-bottom: 0.35rem;
+    margin-top: 1rem;
+    margin-bottom: 0.3rem;
   }
-  .project-body ul, .project-body ol {
-    padding-left: 1.1rem;
-    margin-bottom: 1rem;
-  }
-  .project-body li { margin-bottom: 0.2rem; }
-  .project-body a { color: var(--accent); text-decoration: underline; }
+  .project-body ul,
+  .project-body ol   { padding-left: 1.1rem; margin-bottom: 0.9rem; }
+  .project-body li   { margin-bottom: 0.2rem; }
+  .project-body a    { color: var(--accent); text-decoration: underline; }
   .project-body strong { color: var(--fg); }
-  .project-body em { font-style: italic; }
+  .project-body em   { font-style: italic; }
 
-  .project-body img {
-    max-width: 100%;
+  /* Images left in the body (non-JS fallback only) */
+  .project-body img  { max-width: 100%; height: auto; display: block; margin: 1rem 0; }
+
+  /* ── Images column items ──────────────────────── */
+  .rs-img-wrap {
+    margin-bottom: 1rem;
+    cursor: zoom-in;
+    overflow: hidden;
+  }
+  .rs-img-wrap:last-child { margin-bottom: 0; }
+
+  .rs-img-wrap img {
+    width: 100%;
     height: auto;
     display: block;
-    margin: 1.25rem 0;
+    transition: opacity 0.15s ease;
+  }
+  .rs-img-wrap:hover img { opacity: 0.88; }
+
+  /* ── Lightbox ─────────────────────────────────── */
+  .lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.90);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+  }
+  .lightbox-overlay[hidden] { display: none; }
+  .lightbox-overlay.lb-open { animation: lb-in 0.18s ease both; }
+  .lightbox-overlay.lb-out  { animation: lb-out 0.15s ease both; }
+
+  .lightbox-img {
+    max-width: min(90vw, 1200px);
+    max-height: 90dvh;
+    object-fit: contain;
+    display: block;
+    pointer-events: none; /* clicks pass through to overlay */
+    box-shadow: 0 8px 48px rgba(0,0,0,0.5);
   }
 
-  /* ── Vertical marquee ────────────────────── */
+  @keyframes lb-in  { from { opacity: 0; transform: scale(0.97); } to  { opacity: 1; transform: scale(1); } }
+  @keyframes lb-out { from { opacity: 1; transform: scale(1); }    to  { opacity: 0; transform: scale(0.97); } }
+
+  /* ── Col 4: vertical marquee (fixed) ─────────── */
   .marquee-vert {
     position: fixed;
     top: 0;
@@ -309,6 +349,12 @@ const MARQUEE_COPIES = 4;
     height: 100dvh;
     overflow: hidden;
     z-index: 10;
+    /* Solid bg covers the images that bleed under the marquee.
+       A left-edge gradient softens the transition. */
+    background: linear-gradient(to right,
+      transparent 0%,
+      var(--bg) calc(var(--img-bleed) + 0.5rem)
+    );
   }
 
   .marquee-track {
@@ -319,7 +365,6 @@ const MARQUEE_COPIES = 4;
     will-change: transform;
   }
 
-  /* rotate(180deg): letter bottoms face the window edge */
   .marquee-item {
     writing-mode: vertical-rl;
     transform: rotate(180deg);
@@ -341,43 +386,142 @@ const MARQUEE_COPIES = 4;
 </style>
 
 <script>
-  // ── Build split-word structure in each item name ──────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────
+
+  /** Returns true if el is a <p> whose only real child is an <img> (or <a><img></a>) */
+  function isImgParagraph(el) {
+    if (el.tagName !== 'P') return false;
+    const kids = Array.from(el.childNodes).filter(
+      n => !(n.nodeType === Node.TEXT_NODE && !n.textContent.trim())
+    );
+    if (kids.length !== 1) return false;
+    return kids[0].nodeName === 'IMG' ||
+      (kids[0].nodeName === 'A' && kids[0].querySelector('img') &&
+        Array.from(kids[0].childNodes).filter(
+          n => !(n.nodeType === Node.TEXT_NODE && !n.textContent.trim())
+        ).length === 1);
+  }
+
+  function buildRow(extraClass = '') {
+    const el     = document.createElement('div');
+    el.className = extraClass ? `rs-row ${extraClass}` : 'rs-row';
+    const text   = document.createElement('div');
+    text.className = 'rs-text';
+    const images = document.createElement('div');
+    images.className = 'rs-images';
+    el.appendChild(text);
+    el.appendChild(images);
+    return { el, text, images };
+  }
+
+  function wrapImg(img) {
+    const wrap = document.createElement('div');
+    wrap.className = 'rs-img-wrap';
+    img.loading = 'lazy';
+    wrap.appendChild(img);
+    return wrap;
+  }
+
+  // ── Build 2-column (text | images) layout for a project panel ─────────
+  function buildProjectLayout(panel) {
+    const report = panel.querySelector('.project-report');
+    if (!report || report.dataset.built) return;
+    report.dataset.built = '1';
+
+    const descEl = report.querySelector('.project-desc');
+    const body   = report.querySelector('.project-body');
+    if (!body) return;
+
+    // ── Parse body into sections delimited by <h2> ──
+    const sections = [];
+    let cur = { heading: null, text: [], images: [] };
+
+    Array.from(body.children).forEach(el => {
+      if (el.tagName === 'H2') {
+        // Push whatever we've accumulated
+        if (cur.heading || cur.text.length || cur.images.length) {
+          sections.push({ ...cur });
+        }
+        cur = { heading: el.cloneNode(true), text: [], images: [] };
+
+      } else if (isImgParagraph(el)) {
+        const img = el.querySelector('img');
+        if (img) cur.images.push(img.cloneNode(true));
+
+      } else if (el.tagName === 'IMG') {
+        cur.images.push(el.cloneNode(true));
+
+      } else {
+        cur.text.push(el.cloneNode(true));
+      }
+    });
+    // Push final accumulated section
+    if (cur.heading || cur.text.length || cur.images.length) {
+      sections.push({ ...cur });
+    }
+
+    // ── Build split ──────────────────────────────────
+    const split = document.createElement('div');
+    split.className = 'report-split';
+
+    // Intro row: project-desc + any content before first <h2>
+    const introSection = sections.length && !sections[0].heading ? sections.shift() : null;
+    const introRow = buildRow();
+    if (descEl) introRow.text.appendChild(descEl.cloneNode(true));
+    (introSection?.text   ?? []).forEach(el  => introRow.text.appendChild(el));
+    (introSection?.images ?? []).forEach(img => introRow.images.appendChild(wrapImg(img)));
+    split.appendChild(introRow.el);
+
+    // One row per <h2> section
+    sections.forEach(sec => {
+      const row = buildRow('rs-row--section');
+
+      // Wrap all text elements in a .project-body so existing CSS applies
+      const bodyDiv = document.createElement('div');
+      bodyDiv.className = 'project-body';
+      if (sec.heading) bodyDiv.appendChild(sec.heading);
+      sec.text.forEach(el => bodyDiv.appendChild(el));
+      row.text.appendChild(bodyDiv);
+
+      sec.images.forEach(img => row.images.appendChild(wrapImg(img)));
+      split.appendChild(row.el);
+    });
+
+    // Swap in the new structure
+    report.innerHTML = '';
+    report.appendChild(split);
+  }
+
+  // ── Word-split animation ───────────────────────────────────────────────
   function buildSplitWords(nameEl) {
     const text = nameEl.textContent?.trim() ?? '';
     nameEl.textContent = '';
     text.split(' ').forEach((word, i, arr) => {
       const wrap = document.createElement('span');
       wrap.className = 'word-wrap';
-
       const top = document.createElement('span');
       top.className = 'word-half word-top';
       top.textContent = word;
-
       const bot = document.createElement('span');
       bot.className = 'word-half word-bot';
       bot.textContent = word;
       bot.setAttribute('aria-hidden', 'true');
-
       wrap.appendChild(top);
       wrap.appendChild(bot);
       nameEl.appendChild(wrap);
-
-      if (i < arr.length - 1) {
-        nameEl.appendChild(document.createTextNode(' '));
-      }
+      if (i < arr.length - 1) nameEl.appendChild(document.createTextNode(' '));
     });
   }
 
-  // ── Instant panel swap — no animation ────────────────────────────────
-  const allItems  = Array.from(document.querySelectorAll('.item'));
-  const allPanels = Array.from(document.querySelectorAll('.item-panel'));
+  // ── Panel toggle ──────────────────────────────────────────────────────
+  const allItems   = Array.from(document.querySelectorAll('.item'));
+  const allPanels  = Array.from(document.querySelectorAll('.item-panel'));
   const contentCol = document.querySelector('.content-col');
 
   function toggle(item) {
     const id      = item.dataset.item;
     const wasOpen = item.hasAttribute('data-open');
 
-    // Close all
     allItems.forEach(i => {
       i.removeAttribute('data-open');
       i.querySelector('.item-trigger')?.setAttribute('aria-expanded', 'false');
@@ -390,52 +534,83 @@ const MARQUEE_COPIES = 4;
       const panel = document.querySelector(`[data-panel="${id}"]`);
       if (panel) {
         panel.setAttribute('data-open', '');
-        // Scroll content column back to top when switching panels
+        // Build the text/image split the first time this panel opens
+        buildProjectLayout(panel);
+        // Reset scroll to top
         contentCol?.scrollTo({ top: 0 });
       }
     }
   }
 
-  // ── Marquee hover: snap to start, seamless resume on mouseleave ───────
+  // ── Lightbox ──────────────────────────────────────────────────────────
+  const lightbox    = document.getElementById('lightbox');
+  const lightboxImg = lightbox?.querySelector('.lightbox-img');
+
+  function openLightbox(img) {
+    if (!lightbox || !lightboxImg) return;
+    lightboxImg.src = img.src;
+    lightboxImg.alt = img.alt;
+    lightbox.removeAttribute('hidden');
+    lightbox.classList.remove('lb-out');
+    lightbox.classList.add('lb-open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    if (!lightbox) return;
+    lightbox.classList.remove('lb-open');
+    lightbox.classList.add('lb-out');
+    lightbox.addEventListener('animationend', () => {
+      lightbox.setAttribute('hidden', '');
+      lightbox.classList.remove('lb-out');
+      document.body.style.overflow = '';
+    }, { once: true });
+  }
+
+  // Open on image-wrap click
+  document.addEventListener('click', e => {
+    const wrap = e.target.closest('.rs-img-wrap');
+    if (wrap) {
+      openLightbox(wrap.querySelector('img'));
+      return;
+    }
+    // Close on overlay click (anywhere outside the image)
+    if (e.target === lightbox || lightbox?.contains(e.target)) {
+      closeLightbox();
+    }
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !lightbox?.hasAttribute('hidden')) closeLightbox();
+  });
+
+  // ── Marquee hover: freeze → snap → seamless resume ────────────────────
   const marqueeVert  = document.querySelector('.marquee-vert');
   const marqueeTrack = document.querySelector('.marquee-track');
 
   if (marqueeVert && marqueeTrack) {
     marqueeVert.addEventListener('mouseenter', () => {
-      const matrix   = new DOMMatrix(window.getComputedStyle(marqueeTrack).transform);
-      const currentY = matrix.m42;
-
-      // Freeze at current position, kill animation
-      marqueeTrack.style.animation  = 'none';
-      marqueeTrack.style.transform  = `translateY(${currentY}px)`;
+      const currentY = new DOMMatrix(window.getComputedStyle(marqueeTrack).transform).m42;
+      marqueeTrack.style.animation = 'none';
+      marqueeTrack.style.transform = `translateY(${currentY}px)`;
       void marqueeTrack.offsetHeight;
-
-      // Transition toward the animation's start position
       const startY = -(marqueeTrack.scrollHeight / 2);
       marqueeTrack.style.transition = 'transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
       marqueeTrack.style.transform  = `translateY(${startY}px)`;
     });
 
     marqueeVert.addEventListener('mouseleave', () => {
-      // Read wherever the snap transition got to (may be mid-way)
-      const matrix   = new DOMMatrix(window.getComputedStyle(marqueeTrack).transform);
-      const currentY = matrix.m42;
+      const currentY = new DOMMatrix(window.getComputedStyle(marqueeTrack).transform).m42;
       const halfH    = marqueeTrack.scrollHeight / 2;
-
-      // Map currentY → equivalent elapsed time in the 140s cycle
-      // Y(t) = -halfH + (t/140)*halfH  →  t = (currentY + halfH) * 140 / halfH
-      const elapsed = (currentY + halfH) * 140 / halfH;
-      const delay   = -((elapsed % 140 + 140) % 140); // keep in range, negate
-
-      // Pin, kill transition
+      const elapsed  = (currentY + halfH) * 140 / halfH;
+      const delay    = -((elapsed % 140 + 140) % 140);
       marqueeTrack.style.transition = 'none';
       marqueeTrack.style.transform  = `translateY(${currentY}px)`;
       void marqueeTrack.offsetHeight;
-
-      // Resume animation seamlessly from the current position
       marqueeTrack.style.animation  = `march-down 140s linear ${delay.toFixed(3)}s infinite`;
       void marqueeTrack.offsetHeight;
-      marqueeTrack.style.transform  = ''; // hand control to animation
+      marqueeTrack.style.transform  = '';
     });
   }
 
@@ -444,7 +619,6 @@ const MARQUEE_COPIES = 4;
     const btn    = item.querySelector('.item-trigger');
     const nameEl = item.querySelector('.item-name');
     if (!btn || !nameEl) return;
-
     buildSplitWords(nameEl);
     btn.addEventListener('click', () => toggle(item));
   });
