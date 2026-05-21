@@ -29,74 +29,80 @@ const MARQUEE_COPIES = 4;
 </head>
 <body>
 
-  <main class="list">
+<div class="layout">
 
-    <!-- About -->
-    <div class="item">
+  <!-- Left column: title list — stays fixed while content changes -->
+  <nav class="title-col">
+
+    <div class="item" data-item="about">
       <button class="item-trigger" type="button" aria-expanded="false">
         <span class="item-name">About</span>
       </button>
-      <div class="item-body-wrap">
-        <div class="item-body-inner">
-          <div class="prose-area">
-            <p>Aspiring product designer; do you think I'm there yet?</p>
-            <p>First-year work exploring electronics, materials, manufacturing, and the relationship between objects and the people who use them.</p>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- Contact -->
-    <div class="item">
+    <div class="item" data-item="contact">
       <button class="item-trigger" type="button" aria-expanded="false">
         <span class="item-name">Contact</span>
       </button>
-      <div class="item-body-wrap">
-        <div class="item-body-inner">
-          <div class="prose-area">
-            <a class="contact-link" href="mailto:raphael.murraybrowne@gmail.com">raphael.murraybrowne@gmail.com</a>
-            <a class="contact-link" href="https://www.instagram.com/rmb_is_designing/" target="_blank" rel="noopener">↗ Instagram — RMB_IS_DESIGNING</a>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- Projects -->
-    {projects.map(({ entry, Content }) => (
-      <div class="item">
+    {projects.map(({ entry }) => (
+      <div class="item" data-item={entry.id}>
         <button class="item-trigger" type="button" aria-expanded="false">
           <span class="item-name">{entry.data.title}</span>
         </button>
-        <div class="item-body-wrap">
-          <div class="item-body-inner">
-            <div class="h-scroll">
-              {entry.data.image && (
-                <div class="h-block h-block--img">
-                  <img src={entry.data.image} alt={entry.data.title} loading="lazy" />
-                </div>
-              )}
-              <div class="h-block h-block--text">
-                <p class="project-desc">{entry.data.description}</p>
-                <div class="project-body">
-                  <Content />
-                </div>
-              </div>
+      </div>
+    ))}
+
+  </nav>
+
+  <!-- Middle column: content panels — instant show/hide, no animation -->
+  <div class="content-col">
+
+    <div class="item-panel" data-panel="about">
+      <div class="prose-area">
+        <p>Aspiring product designer; do you think I'm there yet?</p>
+        <p>First-year work exploring electronics, materials, manufacturing, and the relationship between objects and the people who use them.</p>
+      </div>
+    </div>
+
+    <div class="item-panel" data-panel="contact">
+      <div class="prose-area">
+        <a class="contact-link" href="mailto:raphael.murraybrowne@gmail.com">raphael.murraybrowne@gmail.com</a>
+        <a class="contact-link" href="https://www.instagram.com/rmb_is_designing/" target="_blank" rel="noopener">↗ Instagram — RMB_IS_DESIGNING</a>
+      </div>
+    </div>
+
+    {projects.map(({ entry, Content }) => (
+      <div class="item-panel" data-panel={entry.id}>
+        <div class="h-scroll">
+          {entry.data.image && (
+            <div class="h-block h-block--img">
+              <img src={entry.data.image} alt={entry.data.title} loading="lazy" />
+            </div>
+          )}
+          <div class="h-block h-block--text">
+            <p class="project-desc">{entry.data.description}</p>
+            <div class="project-body">
+              <Content />
             </div>
           </div>
         </div>
       </div>
     ))}
 
-  </main>
+  </div>
 
-  <!-- Fixed vertical marquee — right edge -->
-  <aside class="marquee-vert" aria-hidden="true">
-    <div class="marquee-track">
-      {Array.from({ length: MARQUEE_COPIES }).map(() => (
-        <span class="marquee-item">RAPHAEL MURRAY BROWNE</span>
-      ))}
-    </div>
-  </aside>
+</div>
+
+<!-- Fixed vertical marquee — right edge -->
+<aside class="marquee-vert" aria-hidden="true">
+  <div class="marquee-track">
+    {Array.from({ length: MARQUEE_COPIES }).map(() => (
+      <span class="marquee-item">RAPHAEL MURRAY BROWNE</span>
+    ))}
+  </div>
+</aside>
 
 </body>
 </html>
@@ -119,16 +125,35 @@ const MARQUEE_COPIES = 4;
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ── Main list ───────────────────────────── */
-  .list {
-    padding-right: var(--col-w);
+  /* ── Three-column page layout ────────────── */
+  .layout {
+    display: flex;
+    min-height: 100dvh;
+    padding-right: var(--col-w); /* leave room for fixed marquee */
+  }
+
+  /* Left: title list — doesn't move when content opens */
+  .title-col {
+    flex-shrink: 0;
     padding-top: 1rem;
     padding-bottom: 6rem;
   }
 
+  /* Middle: content fills remaining space */
+  .content-col {
+    flex: 1;
+    min-width: 0; /* prevent flex overflow */
+    padding-top: 1rem;
+    padding-bottom: 6rem;
+  }
+
+  /* Panels — instant show/hide, zero delay */
+  .item-panel { display: none; }
+  .item-panel[data-open] { display: block; }
+
   /* ── Trigger — width is text only ───────── */
   .item-trigger {
-    display: inline-flex;   /* shrinks to text width */
+    display: inline-flex;
     align-items: center;
     padding: 0.55rem clamp(1rem, 4vw, 2.5rem);
     background: none;
@@ -150,10 +175,7 @@ const MARQUEE_COPIES = 4;
     transition: color 0.18s ease;
   }
 
-  /* Hover: whole name snaps to accent */
   .item-trigger:hover .item-name { color: var(--accent); }
-
-  /* Open: name stays accent */
   .item[data-open] > .item-trigger .item-name { color: var(--accent); }
 
   /* ── Word-split structure (built by JS) ─── */
@@ -169,12 +191,8 @@ const MARQUEE_COPIES = 4;
     will-change: transform;
   }
 
-  /* top half: clips to show only the upper 50% of each character */
-  .word-top {
-    clip-path: inset(0 0 50% 0);
-  }
+  .word-top { clip-path: inset(0 0 50% 0); }
 
-  /* bottom half: overlays exactly on top, clips lower 50% */
   .word-bot {
     position: absolute;
     top: 0; left: 0;
@@ -184,15 +202,6 @@ const MARQUEE_COPIES = 4;
 
   /* When project opens: bottom half shifts 2px right */
   .item[data-open] .word-bot { transform: translateX(2px); }
-
-  /* ── Accordion body — 1.5× faster ───────── */
-  .item-body-wrap {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .item[data-open] .item-body-wrap { grid-template-rows: 1fr; }
-  .item-body-inner { overflow: hidden; }
 
   /* ── About / Contact prose ───────────────── */
   .prose-area {
@@ -273,7 +282,6 @@ const MARQUEE_COPIES = 4;
   .project-body p { margin-bottom: 0.8rem; }
   .project-body p:last-child { margin-bottom: 0; }
 
-  /* Card titles — accent, Space Mono bold */
   .project-body h2 {
     font-family: var(--mono);
     font-weight: 700;
@@ -302,6 +310,13 @@ const MARQUEE_COPIES = 4;
   .project-body strong { color: var(--fg); }
   .project-body em { font-style: italic; }
 
+  .project-body img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0.75rem 0;
+  }
+
   /* ── Vertical marquee ────────────────────── */
   .marquee-vert {
     position: fixed;
@@ -310,7 +325,6 @@ const MARQUEE_COPIES = 4;
     width: var(--col-w);
     height: 100dvh;
     overflow: hidden;
-    /* pointer-events: auto so hover fires */
     z-index: 10;
   }
 
@@ -318,20 +332,20 @@ const MARQUEE_COPIES = 4;
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* INVERTED: from -50% → 0 = scrolls downward */
     animation: march-down 140s linear infinite;
     will-change: transform;
   }
 
+  /* rotate(180deg): letter bottoms face the window edge */
   .marquee-item {
     writing-mode: vertical-rl;
+    transform: rotate(180deg);
     font-family: var(--sans);
     font-weight: 700;
     font-size: 14rem;
     line-height: 1;
     text-transform: uppercase;
     color: var(--fg);
-    /* Generous, consistent spacing between each repetition */
     padding-block: 6rem;
     white-space: nowrap;
     user-select: none;
@@ -342,24 +356,13 @@ const MARQUEE_COPIES = 4;
     to   { transform: translateY(0); }
   }
 
-  /* ── Project body images ─────────────────── */
-  .project-body img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 0.75rem 0;
-  }
-
   /* ── Card extended report ────────────────── */
-  /* Revealed when user scrolls to end of cards, or clicks a card */
   .card-extended {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .card-extended.expanded {
-    max-height: 1200px;
-  }
+  .card-extended.expanded { max-height: 1200px; }
   .card-extended-inner {
     padding-top: 1.25rem;
     border-top: 1px solid #e8e8e8;
@@ -428,21 +431,26 @@ const MARQUEE_COPIES = 4;
     });
   }
 
-  // ── One accordion open at a time ─────────────────────────────────────
-  const allItems = Array.from(document.querySelectorAll('.item'));
+  // ── Instant panel swap — no animation ────────────────────────────────
+  const allItems  = Array.from(document.querySelectorAll('.item'));
+  const allPanels = Array.from(document.querySelectorAll('.item-panel'));
 
   function toggle(item) {
+    const id      = item.dataset.item;
     const wasOpen = item.hasAttribute('data-open');
 
     // Close all
-    allItems.forEach(other => {
-      other.removeAttribute('data-open');
-      other.querySelector('.item-trigger')?.setAttribute('aria-expanded', 'false');
+    allItems.forEach(i => {
+      i.removeAttribute('data-open');
+      i.querySelector('.item-trigger')?.setAttribute('aria-expanded', 'false');
     });
+    allPanels.forEach(p => p.removeAttribute('data-open'));
 
     if (!wasOpen) {
       item.setAttribute('data-open', '');
       item.querySelector('.item-trigger')?.setAttribute('aria-expanded', 'true');
+      const panel = document.querySelector(`[data-panel="${id}"]`);
+      if (panel) panel.setAttribute('data-open', '');
     }
   }
 
@@ -482,16 +490,12 @@ const MARQUEE_COPIES = 4;
     });
     if (current.length) sections.push(current);
 
-    // Always add extended section to the first (existing) card
     addExtendedSection(textBlock);
-
     if (sections.length <= 1) return;
 
-    // Rebuild first section in place
     while (body.firstChild) body.removeChild(body.firstChild);
     sections[0].forEach(el => body.appendChild(el));
 
-    // Create new cards for remaining sections
     for (let i = 1; i < sections.length; i++) {
       const block = document.createElement('div');
       block.className = 'h-block h-block--text';
@@ -504,7 +508,7 @@ const MARQUEE_COPIES = 4;
     }
   }
 
-  // ── Drag-to-scroll (tracks drag distance to avoid spurious clicks) ────
+  // ── Drag-to-scroll ────────────────────────────────────────────────────
   function addDragScroll(el) {
     let down = false, startX = 0, scrollL = 0, dragged = false;
     el.addEventListener('mousedown', e => {
@@ -521,34 +525,49 @@ const MARQUEE_COPIES = 4;
       if (Math.abs(e.pageX - el.offsetLeft - startX) > 5) dragged = true;
       el.scrollLeft = scrollL - (e.pageX - el.offsetLeft - startX) * 1.4;
     });
-    // Expose drag state for click handlers
     el._wasDragged = () => dragged;
   }
 
-  // ── Marquee hover: fast-track back to start ───────────────────────────
+  // ── Marquee hover: snap to start, seamless resume on mouseleave ───────
   const marqueeVert  = document.querySelector('.marquee-vert');
   const marqueeTrack = document.querySelector('.marquee-track');
 
   if (marqueeVert && marqueeTrack) {
     marqueeVert.addEventListener('mouseenter', () => {
-      const style    = window.getComputedStyle(marqueeTrack);
-      const matrix   = new DOMMatrix(style.transform);
+      const matrix   = new DOMMatrix(window.getComputedStyle(marqueeTrack).transform);
       const currentY = matrix.m42;
 
+      // Freeze at current position, kill animation
       marqueeTrack.style.animation  = 'none';
       marqueeTrack.style.transform  = `translateY(${currentY}px)`;
       void marqueeTrack.offsetHeight;
 
+      // Transition toward the animation's start position
       const startY = -(marqueeTrack.scrollHeight / 2);
       marqueeTrack.style.transition = 'transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
       marqueeTrack.style.transform  = `translateY(${startY}px)`;
     });
 
     marqueeVert.addEventListener('mouseleave', () => {
+      // Read wherever the snap transition got to (may be mid-way)
+      const matrix   = new DOMMatrix(window.getComputedStyle(marqueeTrack).transform);
+      const currentY = matrix.m42;
+      const halfH    = marqueeTrack.scrollHeight / 2;
+
+      // Map currentY → equivalent elapsed time in the 140s cycle
+      // Y(t) = -halfH + (t/140)*halfH  →  t = (currentY + halfH) * 140 / halfH
+      const elapsed = (currentY + halfH) * 140 / halfH;
+      const delay   = -((elapsed % 140 + 140) % 140); // keep in range, negate
+
+      // Pin, kill transition
       marqueeTrack.style.transition = 'none';
-      marqueeTrack.style.transform  = '';
+      marqueeTrack.style.transform  = `translateY(${currentY}px)`;
       void marqueeTrack.offsetHeight;
-      marqueeTrack.style.animation  = 'march-down 140s linear infinite';
+
+      // Resume animation seamlessly from the current position
+      marqueeTrack.style.animation  = `march-down 140s linear ${delay.toFixed(3)}s infinite`;
+      void marqueeTrack.offsetHeight;
+      marqueeTrack.style.transform  = ''; // hand control to animation
     });
   }
 
@@ -566,20 +585,18 @@ const MARQUEE_COPIES = 4;
     splitIntoCards(el);
     addDragScroll(el);
 
-    // Scroll to end → expand all card-extended sections in this hscroll
+    // Scroll to end → expand all card-extended sections
     el.addEventListener('scroll', () => {
       const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 20;
       if (atEnd) {
-        el.querySelectorAll('.card-extended').forEach(ext => {
-          ext.classList.add('expanded');
-        });
+        el.querySelectorAll('.card-extended').forEach(ext => ext.classList.add('expanded'));
       }
     });
 
-    // Click on a card → expand that card's extended section
+    // Click on a card → expand its extended section
     el.querySelectorAll('.h-block--text').forEach(card => {
       card.addEventListener('click', () => {
-        if (el._wasDragged && el._wasDragged()) return; // skip drag-releases
+        if (el._wasDragged && el._wasDragged()) return;
         const ext = card.querySelector('.card-extended');
         if (ext) ext.classList.add('expanded');
       });
