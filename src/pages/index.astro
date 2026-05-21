@@ -11,8 +11,8 @@ const projects = await Promise.all(
   })
 );
 
-// 14 copies = 7 visible at a time + 7 looping behind (seamless)
-const MARQUEE_COPIES = 14;
+// 4 copies = 2 visible + 2 looping behind → seamless
+const MARQUEE_COPIES = 4;
 ---
 
 <!doctype html>
@@ -25,23 +25,20 @@ const MARQUEE_COPIES = 14;
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=Noto+Sans:wght@300;400;700&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-  <!-- ── Accordion list ─────────────────────── -->
   <main class="list">
 
     <!-- About -->
     <div class="item">
       <button class="item-trigger" type="button" aria-expanded="false">
         <span class="item-name">About</span>
-        <span class="item-toggle" aria-hidden="true">[+]</span>
       </button>
       <div class="item-body-wrap">
         <div class="item-body-inner">
           <div class="prose-area">
-            <!-- EDIT: Replace with your real bio -->
             <p>[Your bio here. 2–3 sentences about who you are and what you make.]</p>
           </div>
         </div>
@@ -52,12 +49,10 @@ const MARQUEE_COPIES = 14;
     <div class="item">
       <button class="item-trigger" type="button" aria-expanded="false">
         <span class="item-name">Contact</span>
-        <span class="item-toggle" aria-hidden="true">[+]</span>
       </button>
       <div class="item-body-wrap">
         <div class="item-body-inner">
           <div class="prose-area">
-            <!-- EDIT: Replace with your real links -->
             <a class="contact-link" href="mailto:your@email.com">your@email.com</a>
             <a class="contact-link" href="#" target="_blank" rel="noopener">↗ LinkedIn</a>
             <a class="contact-link" href="#" target="_blank" rel="noopener">↗ Instagram</a>
@@ -71,8 +66,6 @@ const MARQUEE_COPIES = 14;
       <div class="item">
         <button class="item-trigger" type="button" aria-expanded="false">
           <span class="item-name">{entry.data.title}</span>
-          <span class="item-year">{entry.data.year}</span>
-          <span class="item-toggle" aria-hidden="true">[+]</span>
         </button>
         <div class="item-body-wrap">
           <div class="item-body-inner">
@@ -96,7 +89,7 @@ const MARQUEE_COPIES = 14;
 
   </main>
 
-  <!-- ── Right-side vertical marquee ─────────── -->
+  <!-- Fixed vertical marquee — right side -->
   <aside class="marquee-vert" aria-hidden="true">
     <div class="marquee-track">
       {Array.from({ length: MARQUEE_COPIES }).map(() => (
@@ -109,15 +102,14 @@ const MARQUEE_COPIES = 14;
 </html>
 
 <style is:global>
-  /* ── Design tokens ───────────────────────── */
   :root {
     --fg:     #1c1c1c;
-    --muted:  #aaaaaa;
     --accent: #5200ff;
-    --border: #e2e2e2;
     --bg:     #ffffff;
-    --mono:   'Space Mono', 'Courier New', monospace;
-    --col-w:  2.75rem;
+    --mono:   'Space Mono', monospace;
+    --sans:   'Noto Sans', system-ui, sans-serif;
+    /* marquee column width — matches font-size so the text fills the column */
+    --col-w:  14rem;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -125,27 +117,26 @@ const MARQUEE_COPIES = 14;
   html {
     background: var(--bg);
     color: var(--fg);
-    font-family: var(--mono);
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ── Outer list ──────────────────────────── */
+  /* ── Main list ───────────────────────────── */
   .list {
-    padding-right: calc(var(--col-w) + 1px);
+    padding-right: var(--col-w);
+    padding-top: 1rem;
+    padding-bottom: 6rem;
   }
 
   /* ── Accordion item ──────────────────────── */
-  .item {
-    border-bottom: 1px solid var(--border);
-  }
+  /* No border, no dividers — pure whitespace separation */
+  .item { }
 
   /* ── Trigger row ─────────────────────────── */
   .item-trigger {
     width: 100%;
     display: flex;
     align-items: center;
-    gap: 1.25rem;
-    padding: 1rem clamp(1rem, 4vw, 2.5rem);
+    padding: 0.6rem clamp(1rem, 4vw, 2.5rem);
     background: none;
     border: none;
     cursor: pointer;
@@ -154,41 +145,21 @@ const MARQUEE_COPIES = 14;
     color: var(--fg);
   }
 
-  /* ── Item name — large bold mono ─────────── */
+  /* ── Item name ───────────────────────────── */
   .item-name {
+    font-family: var(--mono);
     font-weight: 700;
-    font-size: clamp(1rem, 2.2vw, 1.5rem);
+    font-size: clamp(1.1rem, 2.2vw, 1.6rem);
     letter-spacing: -0.01em;
     line-height: 1;
   }
 
-  /* Letter spans (injected by JS for the wave) */
+  /* Individual letter spans — NO transition, instant colour pop */
   .item-name .letter {
     display: inline-block;
-    transition: color 0.1s ease-out;
     color: var(--fg);
   }
   .item-name .letter.lit { color: var(--accent); }
-
-  /* Year badge */
-  .item-year {
-    font-weight: 400;
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    flex-shrink: 0;
-  }
-
-  /* +/– toggle pushed to far right */
-  .item-toggle {
-    margin-left: auto;
-    font-size: 0.65rem;
-    letter-spacing: 0.05em;
-    color: var(--muted);
-    flex-shrink: 0;
-    transition: color 0.2s;
-  }
-  .item[data-open] .item-toggle { color: var(--accent); }
 
   /* ── Accordion body ──────────────────────── */
   .item-body-wrap {
@@ -203,23 +174,25 @@ const MARQUEE_COPIES = 14;
   .prose-area {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
-    padding: 1.25rem clamp(1rem, 4vw, 2.5rem) 2rem;
-    max-width: 58ch;
+    gap: 0.5rem;
+    padding: 1rem clamp(1rem, 4vw, 2.5rem) 1.75rem;
+    max-width: 56ch;
   }
   .prose-area p {
-    font-size: 0.82rem;
+    font-family: var(--sans);
+    font-size: 0.9rem;
     font-weight: 400;
     line-height: 1.75;
+    color: var(--fg);
   }
   .contact-link {
     display: block;
-    font-size: 0.82rem;
+    font-family: var(--sans);
+    font-size: 0.9rem;
     color: var(--fg);
     text-decoration: none;
-    border-bottom: 1px solid transparent;
     width: fit-content;
-    padding-bottom: 0.1em;
+    border-bottom: 1px solid transparent;
     transition: color 0.15s, border-color 0.15s;
   }
   .contact-link:hover {
@@ -227,18 +200,18 @@ const MARQUEE_COPIES = 14;
     border-bottom-color: var(--accent);
   }
 
-  /* ── Horizontal scroll (project content) ─── */
+  /* ── Horizontal scroll area (projects) ───── */
   .h-scroll {
     display: flex;
-    gap: 2.5rem;
+    gap: 0;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 1.75rem clamp(1rem, 4vw, 2.5rem) 2rem;
+    padding: 1.25rem 0 1.75rem;
     align-items: flex-start;
     cursor: grab;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+    scrollbar-width: none; /* hide scrollbar — drag to scroll */
   }
+  .h-scroll::-webkit-scrollbar { display: none; }
   .h-scroll:active { cursor: grabbing; }
 
   .h-block { flex-shrink: 0; }
@@ -247,46 +220,63 @@ const MARQUEE_COPIES = 14;
     display: block;
     height: min(52vh, 460px);
     width: auto;
-    max-width: 72vw;
+    max-width: 70vw;
     object-fit: contain;
+    padding: 0 clamp(1rem, 4vw, 2.5rem);
   }
 
-  .h-block--text { width: min(460px, 78vw); }
+  /* Each text card is a fixed-width column */
+  .h-block--text {
+    width: clamp(280px, 35vw, 440px);
+    padding: 0 clamp(1rem, 4vw, 2.5rem);
+    border-right: 1px solid #e8e8e8;
+  }
+  .h-block--text:last-child { border-right: none; }
 
   .project-desc {
+    font-family: var(--sans);
     font-weight: 700;
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     line-height: 1.6;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.1rem;
+    color: var(--fg);
   }
 
   .project-body {
-    font-size: 0.76rem;
+    font-family: var(--sans);
+    font-size: 0.78rem;
     font-weight: 400;
     line-height: 1.9;
     color: #555;
   }
-  .project-body p { margin-bottom: 0.85rem; }
+  .project-body p { margin-bottom: 0.8rem; }
   .project-body p:last-child { margin-bottom: 0; }
-  .project-body h2, .project-body h3 {
+  .project-body h2 {
+    font-family: var(--sans);
     font-weight: 700;
     font-size: 0.62rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--muted);
-    margin-top: 1.4rem;
+    color: #aaa;
+    margin-top: 1.25rem;
     margin-bottom: 0.4rem;
+  }
+  .project-body h3 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #aaa;
+    margin-top: 1rem;
+    margin-bottom: 0.3rem;
   }
   .project-body ul, .project-body ol {
     padding-left: 1.1rem;
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.8rem;
   }
-  .project-body li { margin-bottom: 0.2rem; }
-  .project-body a {
-    color: var(--accent);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
+  .project-body li { margin-bottom: 0.15rem; }
+  .project-body a { color: var(--accent); text-decoration: underline; }
   .project-body strong { color: var(--fg); }
   .project-body em { font-style: italic; }
 
@@ -298,29 +288,29 @@ const MARQUEE_COPIES = 14;
     width: var(--col-w);
     height: 100dvh;
     overflow: hidden;
-    border-left: 1px solid var(--border);
     pointer-events: none;
     z-index: 10;
+    /* No border */
   }
 
   .marquee-track {
     display: flex;
     flex-direction: column;
     align-items: center;
-    animation: march-up 22s linear infinite;
+    animation: march-up 200s linear infinite;
     will-change: transform;
   }
 
   .marquee-item {
     writing-mode: vertical-lr;
     transform: rotate(180deg);
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-weight: 700;
-    font-size: 0.5rem;
-    letter-spacing: 0.4em;
+    font-size: 14rem;
+    line-height: 1;
     text-transform: uppercase;
-    color: var(--border);
-    padding-block: 3rem;
+    color: var(--fg);         /* off-black, same as body text */
+    padding-block: 4rem;
     white-space: nowrap;
     user-select: none;
   }
@@ -332,53 +322,98 @@ const MARQUEE_COPIES = 14;
 </style>
 
 <script>
-  // Split text into individual letter <span>s
+  // ── Split letter spans into the item name ────────────────────────────
   function wrapLetters(el) {
     const raw = el.textContent ?? '';
     el.innerHTML = [...raw].map(ch =>
-      ch === ' '
-        ? ' '
-        : `<span class="letter">${ch}</span>`
+      ch === ' ' ? ' ' : `<span class="letter">${ch}</span>`
     ).join('');
   }
 
-  // Left-to-right colour wave on hover
-  function wave(nameEl) {
-    if (nameEl._waving) return;
-    nameEl._waving = true;
+  // ── Continuous wave while hovering (one lit letter chases left→right) ─
+  function startWave(nameEl) {
+    stopWave(nameEl); // clear any existing
     const letters = nameEl.querySelectorAll('.letter');
-    const GAP  = 38;   // ms between letters
-    const HOLD = 260;  // ms each letter stays lit
-    letters.forEach((l, i) => {
-      setTimeout(() => l.classList.add('lit'),    i * GAP);
-      setTimeout(() => l.classList.remove('lit'), i * GAP + HOLD);
-    });
-    setTimeout(() => { nameEl._waving = false; }, letters.length * GAP + HOLD);
+    if (!letters.length) return;
+    const GAP = 110; // ms per letter — slower than before
+    let i = 0, prev = null;
+    function tick() {
+      if (prev) prev.classList.remove('lit');
+      letters[i].classList.add('lit');
+      prev = letters[i];
+      i = (i + 1) % letters.length;
+      nameEl._waveTimer = setTimeout(tick, GAP);
+    }
+    tick();
   }
 
-  // Accordion open/close
+  function stopWave(nameEl) {
+    clearTimeout(nameEl._waveTimer);
+    nameEl.querySelectorAll('.letter.lit').forEach(l => l.classList.remove('lit'));
+  }
+
+  // ── One accordion open at a time ─────────────────────────────────────
+  const allItems = Array.from(document.querySelectorAll('.item'));
+
   function toggle(item) {
-    const isOpen = item.hasAttribute('data-open');
-    const btn    = item.querySelector('.item-trigger');
-    const tog    = item.querySelector('.item-toggle');
-    if (isOpen) {
-      item.removeAttribute('data-open');
-      btn?.setAttribute('aria-expanded', 'false');
-      if (tog) tog.textContent = '[+]';
-    } else {
+    const wasOpen = item.hasAttribute('data-open');
+
+    // Close everything
+    allItems.forEach(other => {
+      other.removeAttribute('data-open');
+      other.querySelector('.item-trigger')?.setAttribute('aria-expanded', 'false');
+    });
+
+    // Open this one only if it was previously closed
+    if (!wasOpen) {
       item.setAttribute('data-open', '');
-      btn?.setAttribute('aria-expanded', 'true');
-      if (tog) tog.textContent = '[–]';
+      item.querySelector('.item-trigger')?.setAttribute('aria-expanded', 'true');
     }
   }
 
-  // Drag-to-scroll on horizontal project areas
+  // ── Split project body into horizontal cards by h2 heading ───────────
+  function splitIntoCards(hscroll) {
+    const textBlock = hscroll.querySelector('.h-block--text');
+    if (!textBlock) return;
+    const body = textBlock.querySelector('.project-body');
+    if (!body) return;
+
+    const children = Array.from(body.children);
+    const sections = [];
+    let current = [];
+
+    children.forEach(el => {
+      if (el.tagName === 'H2' && current.length > 0) {
+        sections.push([...current]);
+        current = [el];
+      } else {
+        current.push(el);
+      }
+    });
+    if (current.length) sections.push(current);
+    if (sections.length <= 1) return; // Nothing to split
+
+    // Replace body contents with first section
+    while (body.firstChild) body.removeChild(body.firstChild);
+    sections[0].forEach(el => body.appendChild(el));
+
+    // Append remaining sections as new sibling h-blocks
+    for (let i = 1; i < sections.length; i++) {
+      const block = document.createElement('div');
+      block.className = 'h-block h-block--text';
+      const newBody = document.createElement('div');
+      newBody.className = 'project-body';
+      sections[i].forEach(el => newBody.appendChild(el));
+      block.appendChild(newBody);
+      hscroll.appendChild(block);
+    }
+  }
+
+  // ── Drag-to-scroll on horizontal areas ───────────────────────────────
   function addDragScroll(el) {
     let down = false, startX = 0, scrollL = 0;
     el.addEventListener('mousedown', e => {
-      down = true;
-      startX = e.pageX - el.offsetLeft;
-      scrollL = el.scrollLeft;
+      down = true; startX = e.pageX - el.offsetLeft; scrollL = el.scrollLeft;
     });
     el.addEventListener('mouseleave', () => { down = false; });
     el.addEventListener('mouseup',    () => { down = false; });
@@ -389,15 +424,21 @@ const MARQUEE_COPIES = 14;
     });
   }
 
-  // Init everything
-  document.querySelectorAll('.item').forEach(item => {
+  // ── Init ─────────────────────────────────────────────────────────────
+  allItems.forEach(item => {
     const btn    = item.querySelector('.item-trigger');
     const nameEl = item.querySelector('.item-name');
     if (!btn || !nameEl) return;
+
     wrapLetters(nameEl);
-    btn.addEventListener('mouseenter', () => wave(nameEl));
+
+    btn.addEventListener('mouseenter', () => startWave(nameEl));
+    btn.addEventListener('mouseleave', () => stopWave(nameEl));
     btn.addEventListener('click',      () => toggle(item));
   });
 
-  document.querySelectorAll('.h-scroll').forEach(addDragScroll);
+  document.querySelectorAll('.h-scroll').forEach(el => {
+    splitIntoCards(el);
+    addDragScroll(el);
+  });
 </script>
