@@ -182,8 +182,8 @@ const MARQUEE_COPIES = 4;
     clip-path: inset(50% 0 0 0);
   }
 
-  /* When project opens: top half flies up; .word-bot translateY is set by JS */
-  .item[data-open] .word-top { transform: translateY(-55%); }
+  /* When project opens: bottom half shifts 8px right */
+  .item[data-open] .word-bot { transform: translateX(8px); }
 
   /* ── Accordion body — 1.5× faster ───────── */
   .item-body-wrap {
@@ -434,27 +434,15 @@ const MARQUEE_COPIES = 4;
   function toggle(item) {
     const wasOpen = item.hasAttribute('data-open');
 
-    // Close all — reset word-bot inline transforms too
+    // Close all
     allItems.forEach(other => {
       other.removeAttribute('data-open');
       other.querySelector('.item-trigger')?.setAttribute('aria-expanded', 'false');
-      other.querySelectorAll('.word-bot').forEach(bot => {
-        bot.style.transform = '';
-      });
     });
 
     if (!wasOpen) {
       item.setAttribute('data-open', '');
       item.querySelector('.item-trigger')?.setAttribute('aria-expanded', 'true');
-
-      // Word-bot: travel to the bottom of the revealed content area
-      const inner = item.querySelector('.item-body-inner');
-      if (inner) {
-        const contentH = inner.scrollHeight;
-        item.querySelectorAll('.word-bot').forEach(bot => {
-          bot.style.transform = `translateY(${contentH}px)`;
-        });
-      }
     }
   }
 
