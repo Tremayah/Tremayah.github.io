@@ -409,12 +409,13 @@ const TEST_COLORS = [
 
   /* ── Marquee start position fix ─────────────────────
      rotate(180deg) puts R at the visual BOTTOM of each copy's bounding box.
-     At -50% the viewport lands on copy3's TOP = E (wrong).
-     At -75% the viewport lands on copy3's BOTTOM = R (correct).
-     Loop: -75% → -25% = 2 copies' travel; copy3→copy1 are identical = seamless. */
+     translateY(-75%) alone is relative to the track, not the viewport, so it
+     lands mid-copy. calc(-75% + 100dvh) shifts so the copy's bottom (R) sits
+     exactly at the viewport bottom. Loop: same +100dvh offset at -25% aligns
+     copy1 bottom = same visual frame → seamless. */
   @keyframes march-down {
-    from { transform: translateY(-75%); }
-    to   { transform: translateY(-25%); }
+    from { transform: translateY(calc(-75% + 100dvh)); }
+    to   { transform: translateY(calc(-25% + 100dvh)); }
   }
 
   /* ── Test controls ──────────────────────────────── */
@@ -628,8 +629,8 @@ const TEST_COLORS = [
       marqueeTrack.style.animation = 'none';
       marqueeTrack.style.transform = `translateY(${currentY}px)`;
       void marqueeTrack.offsetHeight;
-      // Snap to animation start: -75% of track height = where R sits at viewport top
-      const startY = -(marqueeTrack.scrollHeight * 0.75);
+      // Snap to R at bottom of viewport: copy3 bottom (75% of track) at y=viewportH
+      const startY = -(marqueeTrack.scrollHeight * 0.75) + window.innerHeight;
       marqueeTrack.style.transition = 'transform 1s cubic-bezier(0.25,0.46,0.45,0.94)';
       marqueeTrack.style.transform  = `translateY(${startY}px)`;
     });
@@ -637,8 +638,9 @@ const TEST_COLORS = [
     marqueeVert.addEventListener('mouseleave', () => {
       const currentY = new DOMMatrix(window.getComputedStyle(marqueeTrack).transform).m42;
       const totalH   = marqueeTrack.scrollHeight;
-      // Animation runs from -75%*totalH to -25%*totalH (range = 50%*totalH)
-      const fromY    = -(totalH * 0.75);
+      const vh       = window.innerHeight;
+      // Animation: from (-75%*totalH + vh) to (-25%*totalH + vh), range = 50%*totalH
+      const fromY    = -(totalH * 0.75) + vh;
       const rangeH   =   totalH * 0.5;
       const elapsed  = (currentY - fromY) / rangeH * 140;
       const delay    = -((elapsed % 140 + 140) % 140);
