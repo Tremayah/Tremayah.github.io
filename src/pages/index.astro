@@ -112,6 +112,20 @@ const TEST_COLORS = [
 <!-- ── TEST CONTROLS (remove when done) ──────────────────────── -->
 <div id="test-controls">
   <label>
+    col 1 bg
+    <select id="pick-col1bg">
+      <option value="">—</option>
+      {TEST_COLORS.map(c => <option value={c.value}>{c.label}</option>)}
+    </select>
+  </label>
+  <label>
+    col 1 text
+    <select id="pick-col1text">
+      <option value="">—</option>
+      {TEST_COLORS.map(c => <option value={c.value}>{c.label}</option>)}
+    </select>
+  </label>
+  <label>
     col 2 bg
     <select id="pick-bg">
       <option value="">—</option>
@@ -168,6 +182,8 @@ const TEST_COLORS = [
     --img-text-overlap:  3rem;
 
     /* Testable tokens */
+    --col1-bg:        var(--accent);
+    --col1-color:     #fff;
     --col2-bg:        var(--bg);
     --body-color:     #555;
     --title-color:    #c2fe0c;
@@ -201,7 +217,7 @@ const TEST_COLORS = [
     scrollbar-width: none;
     padding-top: 1rem;
     padding-bottom: 6rem;
-    background: var(--accent);
+    background: var(--col1-bg);
   }
   .title-col::-webkit-scrollbar { display: none; }
 
@@ -236,7 +252,7 @@ const TEST_COLORS = [
     cursor: pointer;
     text-align: left;
     font-family: var(--mono);
-    color: #fff;
+    color: var(--col1-color);
   }
   .item-name {
     font-family: var(--mono);
@@ -655,6 +671,16 @@ const TEST_COLORS = [
 
   // ── Test colour controls ───────────────────────────────────────────────
   const root = document.documentElement;
+
+  document.getElementById('pick-col1bg')?.addEventListener('change', e => {
+    const v = (e.target as HTMLSelectElement).value;
+    root.style.setProperty('--col1-bg', v || 'var(--accent)');
+  });
+
+  document.getElementById('pick-col1text')?.addEventListener('change', e => {
+    const v = (e.target as HTMLSelectElement).value;
+    root.style.setProperty('--col1-color', v || '#fff');
+  });
 
   document.getElementById('pick-bg')?.addEventListener('change', e => {
     const v = (e.target as HTMLSelectElement).value;
