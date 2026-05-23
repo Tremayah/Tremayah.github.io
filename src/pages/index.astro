@@ -132,6 +132,20 @@ const TEST_COLORS = [
       {TEST_COLORS.map(c => <option value={c.value}>{c.label}</option>)}
     </select>
   </label>
+  <label>
+    marquee text
+    <select id="pick-marquee">
+      <option value="">—</option>
+      {TEST_COLORS.map(c => <option value={c.value}>{c.label}</option>)}
+    </select>
+  </label>
+  <label>
+    col 4 bg
+    <select id="pick-col4bg">
+      <option value="">—</option>
+      {TEST_COLORS.map(c => <option value={c.value}>{c.label}</option>)}
+    </select>
+  </label>
 </div>
 
 </body>
@@ -154,9 +168,11 @@ const TEST_COLORS = [
     --img-text-overlap:  3rem;
 
     /* Testable tokens */
-    --col2-bg:      var(--bg);
-    --body-color:   #555;
-    --title-color:  #c2fe0c;
+    --col2-bg:        var(--bg);
+    --body-color:     #555;
+    --title-color:    #c2fe0c;
+    --marquee-color:  var(--fg);
+    --col4-bg:        transparent;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -376,7 +392,7 @@ const TEST_COLORS = [
     position: fixed; top: 0; right: 0;
     width: var(--col-w); height: 100dvh;
     overflow: hidden; z-index: 10;
-    /* No background — col 3 images layer above via z-index */
+    background: var(--col4-bg);
   }
   .marquee-track {
     display: flex; flex-direction: column; align-items: center;
@@ -384,11 +400,22 @@ const TEST_COLORS = [
   }
   .marquee-item {
     writing-mode: vertical-rl; transform: rotate(180deg);
-    font-family: var(--sans); font-weight: 700; font-size: 14rem;
-    line-height: 1; text-transform: uppercase; color: var(--fg);
+    font-family: var(--sans); font-weight: 700;
+    /* 80% of original 14rem */
+    font-size: 11.2rem;
+    line-height: 1; text-transform: uppercase; color: var(--marquee-color);
     padding-block: 6rem; white-space: nowrap; user-select: none;
   }
-  @keyframes march-down { from { transform: translateY(-50%); } to { transform: translateY(0); } }
+
+  /* ── Marquee start position fix ─────────────────────
+     rotate(180deg) puts R at the visual BOTTOM of each copy's bounding box.
+     At -50% the viewport lands on copy3's TOP = E (wrong).
+     At -75% the viewport lands on copy3's BOTTOM = R (correct).
+     Loop: -75% → -25% = 2 copies' travel; copy3→copy1 are identical = seamless. */
+  @keyframes march-down {
+    from { transform: translateY(-75%); }
+    to   { transform: translateY(-25%); }
+  }
 
   /* ── Test controls ──────────────────────────────── */
   #test-controls {
@@ -601,15 +628,19 @@ const TEST_COLORS = [
       marqueeTrack.style.animation = 'none';
       marqueeTrack.style.transform = `translateY(${currentY}px)`;
       void marqueeTrack.offsetHeight;
-      const startY = -(marqueeTrack.scrollHeight / 2);
+      // Snap to animation start: -75% of track height = where R sits at viewport top
+      const startY = -(marqueeTrack.scrollHeight * 0.75);
       marqueeTrack.style.transition = 'transform 1s cubic-bezier(0.25,0.46,0.45,0.94)';
       marqueeTrack.style.transform  = `translateY(${startY}px)`;
     });
 
     marqueeVert.addEventListener('mouseleave', () => {
       const currentY = new DOMMatrix(window.getComputedStyle(marqueeTrack).transform).m42;
-      const halfH    = marqueeTrack.scrollHeight / 2;
-      const elapsed  = (currentY + halfH) * 140 / halfH;
+      const totalH   = marqueeTrack.scrollHeight;
+      // Animation runs from -75%*totalH to -25%*totalH (range = 50%*totalH)
+      const fromY    = -(totalH * 0.75);
+      const rangeH   =   totalH * 0.5;
+      const elapsed  = (currentY - fromY) / rangeH * 140;
       const delay    = -((elapsed % 140 + 140) % 140);
       marqueeTrack.style.transition = 'none';
       marqueeTrack.style.transform  = `translateY(${currentY}px)`;
@@ -636,6 +667,16 @@ const TEST_COLORS = [
   document.getElementById('pick-title')?.addEventListener('change', e => {
     const v = (e.target as HTMLSelectElement).value;
     root.style.setProperty('--title-color', v || '#c2fe0c');
+  });
+
+  document.getElementById('pick-marquee')?.addEventListener('change', e => {
+    const v = (e.target as HTMLSelectElement).value;
+    root.style.setProperty('--marquee-color', v || 'var(--fg)');
+  });
+
+  document.getElementById('pick-col4bg')?.addEventListener('change', e => {
+    const v = (e.target as HTMLSelectElement).value;
+    root.style.setProperty('--col4-bg', v || 'transparent');
   });
 
   // ── Init ──────────────────────────────────────────────────────────────
