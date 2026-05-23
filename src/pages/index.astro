@@ -99,8 +99,9 @@ const MARQUEE_COPIES = 4;
 
 <!-- ── TEST CONTROLS (remove when done) ──────────────────────── -->
 <div id="test-controls">
-  <label>col 1 bg<input type="color" id="pick-col1bg"   value="#5200ff"></label>
+  <label>col 1 bg<input type="color" id="pick-col1bg"    value="#5200ff"></label>
   <label>col 1 text<input type="color" id="pick-col1text" value="#ffffff"></label>
+  <label>col 1 hover<input type="color" id="pick-col1hover" value="#c2fe0c"></label>
   <label>col 2 bg<input type="color" id="pick-bg"       value="#ffffff"></label>
   <label>body text<input type="color" id="pick-body"    value="#555555"></label>
   <label>titles<input type="color" id="pick-title"      value="#c2fe0c"></label>
@@ -130,6 +131,7 @@ const MARQUEE_COPIES = 4;
     /* Testable tokens */
     --col1-bg:        var(--accent);
     --col1-color:     #fff;
+    --col1-hover:     #c2fe0c;
     --col2-bg:        var(--bg);
     --body-color:     #555;
     --title-color:    #c2fe0c;
@@ -209,8 +211,8 @@ const MARQUEE_COPIES = 4;
     text-transform: lowercase;
     transition: color 0.18s ease;
   }
-  .item-trigger:hover .item-name          { color: #c2fe0c; }
-  .item[data-open] > .item-trigger .item-name { color: #c2fe0c; }
+  .item-trigger:hover .item-name          { color: var(--col1-hover); }
+  .item[data-open] > .item-trigger .item-name { color: var(--col1-hover); }
 
   /* ── Word-split ─────────────────────────────────── */
   .word-wrap { display: inline-block; position: relative; vertical-align: top; }
@@ -623,8 +625,9 @@ const MARQUEE_COPIES = 4;
   const root = document.documentElement;
 
   const colorPickers: [string, string][] = [
-    ['pick-col1bg',   '--col1-bg'],
-    ['pick-col1text', '--col1-color'],
+    ['pick-col1bg',    '--col1-bg'],
+    ['pick-col1text',  '--col1-color'],
+    ['pick-col1hover', '--col1-hover'],
     ['pick-bg',       '--col2-bg'],
     ['pick-body',     '--body-color'],
     ['pick-title',    '--title-color'],
