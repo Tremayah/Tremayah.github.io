@@ -12,18 +12,6 @@ const projects = await Promise.all(
 );
 
 const MARQUEE_COPIES = 4;
-
-const TEST_COLORS = [
-  { label: '#c2fe0b — lime',   value: '#c2fe0b' },
-  { label: '#01ffff — cyan',   value: '#01ffff' },
-  { label: '#ff0d1a — red',    value: '#ff0d1a' },
-  { label: '#5200ff — purple', value: '#5200ff' },
-  { label: '#ffffff — white',  value: '#ffffff' },
-  { label: '#8e8e8e — grey',   value: '#8e8e8e' },
-  { label: '#f81d78 — pink',   value: '#f81d78' },
-  { label: '#fd6c1d — orange', value: '#fd6c1d' },
-  { label: '#000000 — black',  value: '#000000' },
-];
 ---
 
 <!doctype html>
@@ -111,55 +99,13 @@ const TEST_COLORS = [
 
 <!-- ── TEST CONTROLS (remove when done) ──────────────────────── -->
 <div id="test-controls">
-  <label>
-    col 1 bg
-    <select id="pick-col1bg">
-      <option value="">—</option>
-      {TEST_COLORS.map(c => <option value={c.value}>{c.label}</option>)}
-    </select>
-  </label>
-  <label>
-    col 1 text
-    <select id="pick-col1text">
-      <option value="">—</option>
-      {TEST_COLORS.map(c => <option value={c.value}>{c.label}</option>)}
-    </select>
-  </label>
-  <label>
-    col 2 bg
-    <select id="pick-bg">
-      <option value="">—</option>
-      {TEST_COLORS.map(c => <option value={c.value}>{c.label}</option>)}
-    </select>
-  </label>
-  <label>
-    body text
-    <select id="pick-body">
-      <option value="">—</option>
-      {TEST_COLORS.map(c => <option value={c.value}>{c.label}</option>)}
-    </select>
-  </label>
-  <label>
-    titles (col 2)
-    <select id="pick-title">
-      <option value="">—</option>
-      {TEST_COLORS.map(c => <option value={c.value}>{c.label}</option>)}
-    </select>
-  </label>
-  <label>
-    marquee text
-    <select id="pick-marquee">
-      <option value="">—</option>
-      {TEST_COLORS.map(c => <option value={c.value}>{c.label}</option>)}
-    </select>
-  </label>
-  <label>
-    col 4 bg
-    <select id="pick-col4bg">
-      <option value="">—</option>
-      {TEST_COLORS.map(c => <option value={c.value}>{c.label}</option>)}
-    </select>
-  </label>
+  <label>col 1 bg<input type="color" id="pick-col1bg"   value="#5200ff"></label>
+  <label>col 1 text<input type="color" id="pick-col1text" value="#ffffff"></label>
+  <label>col 2 bg<input type="color" id="pick-bg"       value="#ffffff"></label>
+  <label>body text<input type="color" id="pick-body"    value="#555555"></label>
+  <label>titles<input type="color" id="pick-title"      value="#c2fe0c"></label>
+  <label>marquee<input type="color" id="pick-marquee"   value="#1c1c1c"></label>
+  <label>col 4 bg<input type="color" id="pick-col4bg"   value="#ffffff"></label>
 </div>
 
 </body>
@@ -452,11 +398,15 @@ const TEST_COLORS = [
   #test-controls label {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 0.2rem;
   }
-  #test-controls select {
-    font-family: monospace;
-    font-size: 0.65rem;
+  #test-controls input[type="color"] {
+    width: 2rem;
+    height: 1.4rem;
+    padding: 0;
+    border: 1px solid #ccc;
+    cursor: pointer;
   }
 </style>
 
@@ -672,39 +622,19 @@ const TEST_COLORS = [
   // ── Test colour controls ───────────────────────────────────────────────
   const root = document.documentElement;
 
-  document.getElementById('pick-col1bg')?.addEventListener('change', e => {
-    const v = (e.target as HTMLSelectElement).value;
-    root.style.setProperty('--col1-bg', v || 'var(--accent)');
-  });
-
-  document.getElementById('pick-col1text')?.addEventListener('change', e => {
-    const v = (e.target as HTMLSelectElement).value;
-    root.style.setProperty('--col1-color', v || '#fff');
-  });
-
-  document.getElementById('pick-bg')?.addEventListener('change', e => {
-    const v = (e.target as HTMLSelectElement).value;
-    root.style.setProperty('--col2-bg', v || 'var(--bg)');
-  });
-
-  document.getElementById('pick-body')?.addEventListener('change', e => {
-    const v = (e.target as HTMLSelectElement).value;
-    root.style.setProperty('--body-color', v || '#555');
-  });
-
-  document.getElementById('pick-title')?.addEventListener('change', e => {
-    const v = (e.target as HTMLSelectElement).value;
-    root.style.setProperty('--title-color', v || '#c2fe0c');
-  });
-
-  document.getElementById('pick-marquee')?.addEventListener('change', e => {
-    const v = (e.target as HTMLSelectElement).value;
-    root.style.setProperty('--marquee-color', v || 'var(--fg)');
-  });
-
-  document.getElementById('pick-col4bg')?.addEventListener('change', e => {
-    const v = (e.target as HTMLSelectElement).value;
-    root.style.setProperty('--col4-bg', v || 'transparent');
+  const colorPickers: [string, string][] = [
+    ['pick-col1bg',   '--col1-bg'],
+    ['pick-col1text', '--col1-color'],
+    ['pick-bg',       '--col2-bg'],
+    ['pick-body',     '--body-color'],
+    ['pick-title',    '--title-color'],
+    ['pick-marquee',  '--marquee-color'],
+    ['pick-col4bg',   '--col4-bg'],
+  ];
+  colorPickers.forEach(([id, prop]) => {
+    document.getElementById(id)?.addEventListener('input', e => {
+      root.style.setProperty(prop, (e.target as HTMLInputElement).value);
+    });
   });
 
   // ── Init ──────────────────────────────────────────────────────────────
