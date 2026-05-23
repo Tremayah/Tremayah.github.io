@@ -7,7 +7,7 @@ tags: ["Arduino", "Metalwork", "Electronics", "Fusion 360", "Prototyping"]
 order: 2
 ---
 
-"A lamp that – just like its owner – moves, responds, and evolves." An ambitious first-year finale: autonomous movement, hand gesture recognition, and a design philosophy borrowed from bioluminescent organisms and Bungie's Marathon.
+An ambitious first-year finale: autonomous movement, hand gesture recognition, and a design philosophy borrowed from bioluminescent organisms and Bungie's Marathon.
 
 ## Research
 
