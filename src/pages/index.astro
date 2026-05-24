@@ -225,7 +225,8 @@ const MARQUEE_COPIES = 4;
   .word-half { display: block; transition: transform 0.22s cubic-bezier(0.77,0,0.175,1); will-change: transform; }
   .word-top  { clip-path: inset(0 0 42% 0); }
   .word-bot  { position: absolute; top:0; left:0; width:100%; clip-path: inset(58% 0 0 0); }
-  .item[data-open] .word-bot { transform: translateX(2px); }
+  .item[data-open] .word-top { transform: translateX(1px); }
+  .item[data-open] .word-bot { transform: translateX(-1px); }
 
   /* ── About / Contact prose ──────────────────────── */
   .prose-area {
