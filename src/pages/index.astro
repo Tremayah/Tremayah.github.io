@@ -25,6 +25,7 @@ const MARQUEE_COPIES = 4;
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=Noto+Sans:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://use.typekit.net/var1bvf.css" />
 </head>
 <body>
 
@@ -118,6 +119,7 @@ const MARQUEE_COPIES = 4;
     --accent: #5200ff;
     --bg:     #ffffff;
     --mono:   'Space Mono', monospace;
+    --pixel:  'argent-pixel-cf', monospace;
     --sans:   'Noto Sans', system-ui, sans-serif;
     --col-w:  14rem;
 
@@ -283,7 +285,7 @@ const MARQUEE_COPIES = 4;
   /* ── Project body ───────────────────────────────── */
   .project-body {
     font-family: var(--sans);
-    font-size: 0.85rem;
+    font-size: 1rem;
     font-weight: 400;
     line-height: 1.9;
     color: var(--body-color);
@@ -291,19 +293,17 @@ const MARQUEE_COPIES = 4;
   .project-body p            { margin-bottom: 0.9rem; }
   .project-body p:last-child { margin-bottom: 0; }
   .project-body h2 {
-    font-family: var(--mono);
-    font-weight: 700;
-    font-size: 0.7rem;
-    letter-spacing: 0.08em;
+    font-family: var(--pixel);
+    font-weight: 400;
+    font-size: 0.75rem;
     text-transform: uppercase;
     color: var(--title-color);
     margin-bottom: 0.6rem;
   }
   .project-body h3 {
-    font-family: var(--mono);
-    font-weight: 700;
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
+    font-family: var(--pixel);
+    font-weight: 400;
+    font-size: 0.65rem;
     text-transform: uppercase;
     color: var(--title-color);
     margin-top: 1rem;
