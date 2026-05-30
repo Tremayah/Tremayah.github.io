@@ -311,9 +311,10 @@ const MARQUEE_COPIES = 4;
     background: var(--col4-bg);
   }
   .marquee-track {
-    display: flex; flex-direction: column; align-items: center;
+    display: flex; flex-direction: column; align-items: flex-end;
     animation: march-down 140s linear infinite; will-change: transform;
   }
+  .marquee-vert { cursor: pointer; }
   .marquee-item {
     writing-mode: vertical-rl; transform: rotate(180deg);
     font-family: var(--marquee-font); font-weight: 400;
@@ -531,6 +532,11 @@ const MARQUEE_COPIES = 4;
       marqueeTrack.style.animation  = `march-down 140s linear ${delay.toFixed(3)}s infinite`;
       void marqueeTrack.offsetHeight;
       marqueeTrack.style.transform  = '';
+    });
+
+    marqueeVert.addEventListener('click', () => {
+      const aboutItem = document.querySelector('.item[data-item="about"]') as HTMLElement | null;
+      if (aboutItem) toggle(aboutItem);
     });
   }
 
