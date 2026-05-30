@@ -116,7 +116,8 @@ const MARQUEE_COPIES = 4;
     --fg:     #1c1c1c;
     --accent: #5200ff;
     --bg:     #fafafa;
-    --font:   'cofo-sans-pixel', sans-serif;
+    --font:         'cofo-sans-pixel', sans-serif;
+    --marquee-font: 'jacquarda-bastarda-9', sans-serif;
     --col-w:  14rem;
 
     /* Testable tokens */
@@ -315,7 +316,7 @@ const MARQUEE_COPIES = 4;
   }
   .marquee-item {
     writing-mode: vertical-rl; transform: rotate(180deg);
-    font-family: var(--font); font-weight: 400;
+    font-family: var(--marquee-font); font-weight: 400;
     font-size: 11.2rem;
     line-height: 1; text-transform: uppercase; color: var(--marquee-color);
     padding-block: 6rem; white-space: nowrap; user-select: none;
