@@ -22,9 +22,6 @@ const MARQUEE_COPIES = 4;
   <meta name="description" content="Portfolio of Raphael Murray-Browne — product designer." />
   <title>Raphael Murray-Browne</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=Noto+Sans:wght@300;400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://use.typekit.net/var1bvf.css" />
 </head>
 <body>
@@ -100,14 +97,15 @@ const MARQUEE_COPIES = 4;
 
 <!-- ── TEST CONTROLS (remove when done) ──────────────────────── -->
 <div id="test-controls">
-  <label>col 1 bg<input type="color" id="pick-col1bg"    value="#5200ff"></label>
-  <label>col 1 text<input type="color" id="pick-col1text" value="#ffffff"></label>
-  <label>col 1 hover<input type="color" id="pick-col1hover" value="#c2fe0c"></label>
-  <label>col 2 bg<input type="color" id="pick-bg"       value="#ffffff"></label>
-  <label>body text<input type="color" id="pick-body"    value="#555555"></label>
-  <label>titles<input type="color" id="pick-title"      value="#c2fe0c"></label>
-  <label>marquee<input type="color" id="pick-marquee"   value="#1c1c1c"></label>
-  <label>col 4 bg<input type="color" id="pick-col4bg"   value="#ffffff"></label>
+  <label>col 1 bg<input type="color" id="pick-col1bg"      value="#eebe11"></label>
+  <label>col 1 text<input type="color" id="pick-col1text"   value="#fafafa"></label>
+  <label>col 1 hover<input type="color" id="pick-col1hover" value="#0913ff"></label>
+  <label>col 2 bg<input type="color" id="pick-bg"          value="#fafafa"></label>
+  <label>body text<input type="color" id="pick-body"        value="#f80d0d"></label>
+  <label>titles<input type="color" id="pick-title"          value="#0913ff"></label>
+  <label>marquee<input type="color" id="pick-marquee"       value="#eebe12"></label>
+  <label>marquee hover<input type="color" id="pick-marquee-hover" value="#0913ff"></label>
+  <label>col 4 bg<input type="color" id="pick-col4bg"       value="#fafafa"></label>
 </div>
 
 </body>
@@ -117,28 +115,20 @@ const MARQUEE_COPIES = 4;
   :root {
     --fg:     #1c1c1c;
     --accent: #5200ff;
-    --bg:     #ffffff;
-    --mono:   'Space Mono', monospace;
-    --pixel:  'argent-pixel-cf', sans-serif;
-    --sans:   'Noto Sans', system-ui, sans-serif;
+    --bg:     #fafafa;
+    --font:   'cofo-sans-pixel', sans-serif;
     --col-w:  14rem;
 
-    /* Col 3 image sizing */
-    --img-col-w:     clamp(180px, 22vw, 280px);
-    /* How far the content col (and its images) extends under the marquee */
-    --img-marquee-bleed: 2rem;
-    /* How much image column shifts left into the text — creates the "over text" effect */
-    --img-text-overlap:  3rem;
-
     /* Testable tokens */
-    --col1-bg:        var(--accent);
-    --col1-color:     #fff;
-    --col1-hover:     #c2fe0c;
-    --col2-bg:        var(--bg);
-    --body-color:     #555;
-    --title-color:    #c2fe0c;
-    --marquee-color:  var(--fg);
-    --col4-bg:        transparent;
+    --col1-bg:        #eebe11;
+    --col1-color:     #fafafa;
+    --col1-hover:     #0913ff;
+    --col2-bg:        #fafafa;
+    --body-color:     #f80d0d;
+    --title-color:    #0913ff;
+    --marquee-color:  #eebe12;
+    --marquee-hover:  #0913ff;
+    --col4-bg:        #fafafa;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -155,8 +145,7 @@ const MARQUEE_COPIES = 4;
     display: flex;
     height: 100dvh;
     overflow: hidden;
-    /* Content col extends --img-marquee-bleed under the marquee on the right */
-    padding-right: calc(var(--col-w) - var(--img-marquee-bleed));
+    padding-right: var(--col-w);
   }
 
   /* ── Col 1: titles ──────────────────────────────── */
@@ -181,8 +170,6 @@ const MARQUEE_COPIES = 4;
     padding-top: 1rem;
     padding-bottom: 6rem;
     background: var(--col2-bg);
-    /* z-index above the marquee (z-index: 10) so col 3 images
-       that extend into the marquee area render in front of it */
     position: relative;
     z-index: 15;
   }
@@ -201,11 +188,11 @@ const MARQUEE_COPIES = 4;
     border: none;
     cursor: pointer;
     text-align: left;
-    font-family: var(--mono);
+    font-family: var(--font);
     color: var(--col1-color);
   }
   .item-name {
-    font-family: var(--pixel);
+    font-family: var(--font);
     font-weight: 400;
     font-style: normal;
     font-size: clamp(1.1rem, 2.2vw, 1.6rem);
@@ -225,8 +212,8 @@ const MARQUEE_COPIES = 4;
   .word-half { display: block; transition: transform 0.22s cubic-bezier(0.77,0,0.175,1); will-change: transform; }
   .word-top  { clip-path: inset(0 0 42% 0); }
   .word-bot  { position: absolute; top:0; left:0; width:100%; clip-path: inset(58% 0 0 0); }
-  .item[data-open] .word-top { transform: translateX(1px); }
-  .item[data-open] .word-bot { transform: translateX(-1px); }
+  .item[data-open] .word-top { transform: translateX(2px); }
+  .item[data-open] .word-bot { transform: translateX(-2px); }
 
   /* ── About / Contact prose ──────────────────────── */
   .prose-area {
@@ -236,77 +223,51 @@ const MARQUEE_COPIES = 4;
     padding: 0.75rem clamp(1rem, 4vw, 2.5rem) 1.5rem;
     max-width: 56ch;
   }
-  .prose-area p { font-family: var(--sans); font-size: 0.9rem; font-weight: 400; line-height: 1.75; }
+  .prose-area p { font-family: var(--font); font-size: 0.9rem; font-weight: 400; line-height: 1.75; }
   .contact-link {
-    display: block; font-family: var(--sans); font-size: 0.9rem;
+    display: block; font-family: var(--font); font-size: 0.9rem;
     color: var(--fg); text-decoration: none; width: fit-content;
     border-bottom: 1px solid transparent; transition: color 0.15s, border-color 0.15s;
   }
   .contact-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
   /* ── Project report container ───────────────────── */
-  .project-report { padding-top: 0.75rem; padding-bottom: 2rem; }
-
-  /* ── Split rows (built by JS) ───────────────────── */
-  .rs-row {
-    display: grid;
-    /* Col 2 text gets 1fr; col 3 images get a fixed width */
-    grid-template-columns: 1fr var(--img-col-w);
-    align-items: start;
-    /* No column-gap — images shift left via negative margin */
-    column-gap: 0;
-  }
-  .rs-row + .rs-row { margin-top: 2.5rem; }
-
-  /* Col 2: text */
-  .rs-text {
-    min-width: 0;
-    padding: 0 clamp(1rem, 4vw, 2.5rem);
-  }
-
-  /* Col 3: images
-     - Wider than its grid track by --img-text-overlap
-     - Negative left margin shifts it left that same amount
-     - Net effect: right edge stays flush with content-col right;
-       left edge intrudes --img-text-overlap into the text column
-     - position: relative + z-index ensures images paint above text */
-  .rs-images {
-    width: calc(var(--img-col-w) + var(--img-text-overlap));
-    margin-left: calc(-1 * var(--img-text-overlap));
-    position: relative;
-    z-index: 2;
-    padding-top: 0.25rem;
+  .project-report {
+    padding: 0.75rem clamp(1rem, 4vw, 2.5rem) 2rem;
   }
 
   /* ── Project desc ───────────────────────────────── */
   .project-desc {
-    font-family: var(--sans);
+    font-family: var(--font);
     font-weight: 700;
     font-size: 0.9rem;
     line-height: 1.7;
     color: var(--fg);
+    margin-bottom: 1rem;
   }
 
   /* ── Project body ───────────────────────────────── */
   .project-body {
-    font-family: var(--sans);
+    font-family: var(--font);
     font-size: 1rem;
     font-weight: 400;
-    line-height: 1.9;
+    line-height: 1.75;
+    letter-spacing: -0.01em;
     color: var(--body-color);
   }
   .project-body p            { margin-bottom: 0.9rem; }
   .project-body p:last-child { margin-bottom: 0; }
   .project-body h2 {
-    font-family: var(--pixel);
+    font-family: var(--font);
     font-weight: 400;
     font-size: 0.75rem;
     text-transform: uppercase;
     color: var(--title-color);
-    margin-bottom: 0.6rem;
+    margin-top: 1.8rem;
+    margin-bottom: 0.5rem;
   }
   .project-body h3 {
-    font-family: var(--pixel);
+    font-family: var(--font);
     font-weight: 400;
     font-size: 0.65rem;
     text-transform: uppercase;
@@ -318,24 +279,9 @@ const MARQUEE_COPIES = 4;
   .project-body ol   { padding-left: 1.1rem; margin-bottom: 0.9rem; }
   .project-body li   { margin-bottom: 0.2rem; }
   .project-body a    { color: var(--accent); text-decoration: underline; }
-  .project-body strong { color: var(--fg); }
+  .project-body strong { font-weight: 700; }
   .project-body em   { font-style: italic; }
-  /* Fallback: images not extracted by JS */
-  .project-body img  { max-width: 100%; height: auto; display: block; margin: 1rem 0; }
-
-  /* ── Image wrappers ─────────────────────────────── */
-  .rs-img-wrap {
-    margin-bottom: 0.75rem;
-    cursor: zoom-in;
-  }
-  .rs-img-wrap:last-child { margin-bottom: 0; }
-  .rs-img-wrap img {
-    width: 100%;
-    height: auto;
-    display: block;
-    transition: opacity 0.15s;
-  }
-  .rs-img-wrap:hover img { opacity: 0.85; }
+  .project-body img  { max-width: 100%; height: auto; display: block; margin: 1.5rem 0; cursor: zoom-in; }
 
   /* ── Lightbox ───────────────────────────────────── */
   .lightbox-overlay {
@@ -369,12 +315,13 @@ const MARQUEE_COPIES = 4;
   }
   .marquee-item {
     writing-mode: vertical-rl; transform: rotate(180deg);
-    font-family: var(--sans); font-weight: 700;
-    /* 80% of original 14rem */
+    font-family: var(--font); font-weight: 400;
     font-size: 11.2rem;
     line-height: 1; text-transform: uppercase; color: var(--marquee-color);
     padding-block: 6rem; white-space: nowrap; user-select: none;
+    transition: color 0.3s ease;
   }
+  .marquee-vert:hover .marquee-item { color: var(--marquee-hover); }
 
   /* ── Marquee start position fix ─────────────────────
      rotate(180deg) puts R at the visual BOTTOM of each copy's bounding box.
@@ -418,96 +365,54 @@ const MARQUEE_COPIES = 4;
 </style>
 
 <script>
-  // ── Helpers ────────────────────────────────────────────────────────────
+  // ── Typing animation ───────────────────────────────────────────────────
+  let typingTimer: ReturnType<typeof setInterval> | null = null;
 
-  function isImgParagraph(el) {
-    if (el.tagName !== 'P') return false;
-    const kids = Array.from(el.childNodes).filter(
-      n => !(n.nodeType === Node.TEXT_NODE && !n.textContent.trim())
-    );
-    if (kids.length !== 1) return false;
-    return kids[0].nodeName === 'IMG' ||
-      (kids[0].nodeName === 'A' && kids[0].querySelector('img') &&
-        Array.from(kids[0].childNodes).filter(
-          n => !(n.nodeType === Node.TEXT_NODE && !n.textContent.trim())
-        ).length === 1);
+  function cancelTyping() {
+    if (typingTimer !== null) { clearInterval(typingTimer); typingTimer = null; }
   }
 
-  function buildRow(extraClass = '') {
-    const el     = document.createElement('div');
-    el.className = extraClass ? `rs-row ${extraClass}` : 'rs-row';
-    const text   = document.createElement('div');
-    text.className = 'rs-text';
-    const images = document.createElement('div');
-    images.className = 'rs-images';
-    el.appendChild(text);
-    el.appendChild(images);
-    return { el, text, images };
-  }
+  function typeInPanel(panel: Element) {
+    cancelTyping();
 
-  function wrapImg(img) {
-    const wrap = document.createElement('div');
-    wrap.className = 'rs-img-wrap';
-    img.loading = 'lazy';
-    wrap.appendChild(img);
-    return wrap;
-  }
+    // Restore original HTML on re-open so animation replays fresh
+    const p = panel as HTMLElement;
+    if (p.dataset.origHtml !== undefined) {
+      p.innerHTML = p.dataset.origHtml;
+    } else {
+      p.dataset.origHtml = p.innerHTML;
+    }
 
-  // ── Build text / image split layout for a project panel ────────────────
-  function buildProjectLayout(panel) {
-    const report = panel.querySelector('.project-report');
-    if (!report || report.dataset.built) return;
-    report.dataset.built = '1';
-
-    const descEl = report.querySelector('.project-desc');
-    const body   = report.querySelector('.project-body');
-    if (!body) return;
-
-    // Parse body into sections delimited by H2
-    const sections = [];
-    let cur = { heading: null, text: [], images: [] };
-
-    Array.from(body.children).forEach(el => {
-      if (el.tagName === 'H2') {
-        if (cur.heading || cur.text.length || cur.images.length) sections.push({ ...cur });
-        cur = { heading: el.cloneNode(true), text: [], images: [] };
-      } else if (isImgParagraph(el)) {
-        const img = el.querySelector('img');
-        if (img) cur.images.push(img.cloneNode(true));
-      } else if (el.tagName === 'IMG') {
-        cur.images.push(el.cloneNode(true));
-      } else {
-        cur.text.push(el.cloneNode(true));
+    // Walk every text node and replace each character with a hidden <span>
+    const chars: HTMLElement[] = [];
+    function walk(node: Node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent ?? '';
+        if (!text) return;
+        const frag = document.createDocumentFragment();
+        for (const ch of text) {
+          const span = document.createElement('span');
+          span.textContent = ch;
+          span.style.opacity = '0';
+          chars.push(span);
+          frag.appendChild(span);
+        }
+        node.parentNode?.replaceChild(frag, node);
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        Array.from(node.childNodes).forEach(walk);
       }
-    });
-    if (cur.heading || cur.text.length || cur.images.length) sections.push({ ...cur });
+    }
+    walk(panel);
 
-    // Build split
-    const split = document.createElement('div');
-    split.className = 'report-split';
-
-    // Intro row: desc + pre-H2 content
-    const introSection = sections.length && !sections[0].heading ? sections.shift() : null;
-    const introRow = buildRow();
-    if (descEl) introRow.text.appendChild(descEl.cloneNode(true));
-    (introSection?.text   ?? []).forEach(el  => introRow.text.appendChild(el));
-    (introSection?.images ?? []).forEach(img => introRow.images.appendChild(wrapImg(img)));
-    split.appendChild(introRow.el);
-
-    // One row per H2 section
-    sections.forEach(sec => {
-      const row = buildRow('rs-row--section');
-      const bodyDiv = document.createElement('div');
-      bodyDiv.className = 'project-body';
-      if (sec.heading) bodyDiv.appendChild(sec.heading);
-      sec.text.forEach(el => bodyDiv.appendChild(el));
-      row.text.appendChild(bodyDiv);
-      sec.images.forEach(img => row.images.appendChild(wrapImg(img)));
-      split.appendChild(row.el);
-    });
-
-    report.innerHTML = '';
-    report.appendChild(split);
+    let idx = 0;
+    const CHUNK = 40; // chars revealed per tick (~60fps → ~2400 chars/s)
+    const TICK  = 16; // ms
+    typingTimer = setInterval(() => {
+      for (let i = 0; i < CHUNK && idx < chars.length; i++, idx++) {
+        chars[idx].style.opacity = '1';
+      }
+      if (idx >= chars.length) { clearInterval(typingTimer!); typingTimer = null; }
+    }, TICK);
   }
 
   // ── Word-split animation ───────────────────────────────────────────────
@@ -552,8 +457,8 @@ const MARQUEE_COPIES = 4;
       const panel = document.querySelector(`[data-panel="${id}"]`);
       if (panel) {
         panel.setAttribute('data-open', '');
-        buildProjectLayout(panel);
         contentCol?.scrollTo({ top: 0 });
+        typeInPanel(panel);
       }
     }
   }
@@ -584,9 +489,11 @@ const MARQUEE_COPIES = 4;
   }
 
   document.addEventListener('click', e => {
-    const wrap = e.target.closest('.rs-img-wrap');
-    if (wrap) { openLightbox(wrap.querySelector('img')); return; }
-    if (e.target === lightbox || lightbox?.contains(e.target)) closeLightbox();
+    const el = e.target as Element;
+    if (el.tagName === 'IMG' && el.closest('.project-body')) {
+      openLightbox(el as HTMLImageElement); return;
+    }
+    if (e.target === lightbox || lightbox?.contains(e.target as Node)) closeLightbox();
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !lightbox?.hasAttribute('hidden')) closeLightbox();
@@ -630,14 +537,15 @@ const MARQUEE_COPIES = 4;
   const root = document.documentElement;
 
   const colorPickers: [string, string][] = [
-    ['pick-col1bg',    '--col1-bg'],
-    ['pick-col1text',  '--col1-color'],
-    ['pick-col1hover', '--col1-hover'],
-    ['pick-bg',       '--col2-bg'],
-    ['pick-body',     '--body-color'],
-    ['pick-title',    '--title-color'],
-    ['pick-marquee',  '--marquee-color'],
-    ['pick-col4bg',   '--col4-bg'],
+    ['pick-col1bg',         '--col1-bg'],
+    ['pick-col1text',       '--col1-color'],
+    ['pick-col1hover',      '--col1-hover'],
+    ['pick-bg',             '--col2-bg'],
+    ['pick-body',           '--body-color'],
+    ['pick-title',          '--title-color'],
+    ['pick-marquee',        '--marquee-color'],
+    ['pick-marquee-hover',  '--marquee-hover'],
+    ['pick-col4bg',         '--col4-bg'],
   ];
   colorPickers.forEach(([id, prop]) => {
     document.getElementById(id)?.addEventListener('input', e => {
