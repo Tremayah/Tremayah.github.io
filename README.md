@@ -1,43 +1,36 @@
-# Astro Starter Kit: Minimal
+# raphael.murraybrowne.com
 
-```sh
-npm create astro@latest -- --template minimal
-```
+Portfolio of Raphael Murray-Browne — product designer. Built with [Astro](https://astro.build),
+deployed to GitHub Pages, served from `raphael.murraybrowne.com` (Cloudflare DNS).
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Architecture
 
-## 🚀 Project Structure
+A single-page site. Everything lives in **`src/pages/index.astro`** — markup, scoped
+styles, and the client script (panel toggling, typing reveal, lightbox, marquee).
 
-Inside of your Astro project, you'll see the following folders and files:
+- **Projects** are Markdown files in `src/content/projects/`, validated by the schema in
+  `src/content.config.ts`. Frontmatter: `title`, `description`, `year`, `category`,
+  `tags`, `order` (controls nav order). Drop a new `.md` in to add a project.
+- **Fonts** load from Adobe Fonts (Typekit kit `var1bvf`). Active families are set via CSS
+  custom properties: `--nav-font`, `--body-font`, `--dropcap-font`, `--marquee-font`.
+- **Image galleries**: use `<div class="img-grid">` (3-up square crops) or
+  `<div class="hero-pair">` (2-up 3:2) inside Markdown.
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+### Dev-only font tester
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+Under `npm run dev`, four text inputs appear bottom-left for live-swapping each font family.
+They are gated behind `import.meta.env.DEV`, so they never ship to the production build.
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+## Commands
 
-Any static assets, like images, can be placed in the `public/` directory.
+| Command           | Action                               |
+| :---------------- | :----------------------------------- |
+| `npm install`     | Install dependencies                 |
+| `npm run dev`     | Dev server at `localhost:4321`       |
+| `npm run build`   | Build to `./dist/`                   |
+| `npm run preview` | Preview the production build locally |
 
-## 🧞 Commands
+## Deployment
 
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Pushing to `main` runs the GitHub Actions workflow in `.github/workflows/`, which builds with
+Astro and deploys `./dist/` to GitHub Pages. `public/CNAME` holds the custom domain.
