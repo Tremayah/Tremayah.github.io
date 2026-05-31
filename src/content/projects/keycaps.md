@@ -27,6 +27,18 @@ Figma was chosen for the taxonomy after evaluating Freeform and Illustrator — 
 
 **Prototype 3 — Jesmonite + Sand:** Attempted to achieve a matte, stone-like texture. The aggregate weakened thin walls and the result was fragile.
 
+<div class="img-grid">
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2025/10/img_0738.jpeg" alt="Prototype workshop" />
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2025/10/img_0796.jpeg" alt="Prototype workshop" />
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/img_0810-edited-2.jpeg" alt="Prototype workshop" />
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2025/10/img_3576.jpeg" alt="Mould making" />
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2025/10/img_3578.jpeg" alt="Mould making" />
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2025/10/img_3580.jpeg" alt="Mould making" />
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2025/10/idg_20251010_154946_502.jpeg" alt="Workshop process" />
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2025/10/idg_20251010_155100_190.jpeg" alt="Workshop process" />
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2025/10/idg_20251010_155200_877.jpeg" alt="Workshop process" />
+</div>
+
 ## CAD
 
 All 3D work was built in a single Rhino file. The design challenge was personalising a standardised keycap form while preserving the functional underside geometry required by mechanical switches. Iterations included:
@@ -35,6 +47,11 @@ All 3D work was built in a single Rhino file. The design challenge was personali
 - **Clicker Box** — housing for a mechanical switch; became an unexpectedly satisfying fidget object
 - **Geometric Ergonomic Keycap** — rounded geometry, showing resin printing lines clearly
 - **Mould Maker V1 and V2** — progressive refinements for plaster mould creation, scaled to 1.1× to account for shrinkage
+
+<div class="img-grid">
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/keycap-render-1.png" alt="CAD render" />
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/keycap-render-2.png" alt="CAD render" />
+</div>
 
 ## Ceramic process
 
@@ -54,3 +71,10 @@ Wall thickness varied with pouring duration. The thinnest walls that still left 
 ## Outcome
 
 The finished keycaps are glazed porcelain with concealed Jesmonite components. They feel good to touch. They came out smaller than expected — shrinkage from the second firing combined with the trapezoidal proportions of a keycap makes the final piece look compact. They are mounted and working on a Bluetooth numpad.
+
+<div class="img-grid">
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/idg_20251209_131520_977.jpeg" alt="Glazed ceramic keycaps" />
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/idg_20251209_131502_423.jpeg" alt="Glazed ceramic keycaps" />
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/idg_20251209_131410_990.jpeg" alt="Glazed ceramic keycaps" />
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/image-3.png" alt="Keycaps on Bluetooth numpad" />
+</div>

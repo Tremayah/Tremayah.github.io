@@ -106,6 +106,14 @@ const MARQUEE_COPIES = 4;
   <label>marquee<input type="color" id="pick-marquee"       value="#eebe12"></label>
   <label>marquee hover<input type="color" id="pick-marquee-hover" value="#0913ff"></label>
   <label>col 4 bg<input type="color" id="pick-col4bg"       value="#fafafa"></label>
+  <label style="flex-direction:row;align-items:center;gap:0.3rem;">
+    body font<input type="text" id="pick-font" placeholder="cofo-sans-pixel"
+      style="width:11rem;font-family:monospace;font-size:0.6rem;padding:0.2rem 0.3rem;border:1px solid #ccc;">
+  </label>
+  <label style="flex-direction:row;align-items:center;gap:0.3rem;">
+    marquee font<input type="text" id="pick-marquee-font" placeholder="bitcount-mono-single-square"
+      style="width:11rem;font-family:monospace;font-size:0.6rem;padding:0.2rem 0.3rem;border:1px solid #ccc;">
+  </label>
 </div>
 
 </body>
@@ -146,7 +154,13 @@ const MARQUEE_COPIES = 4;
     display: flex;
     height: 100dvh;
     overflow: hidden;
-    padding-right: var(--col-w);
+    /* --right-gap (slider) = desired gap from body text to marquee letters.
+       Marquee text is 11.2rem wide in a 14rem column → 2.8rem dead zone on left.
+       padding-right = (col-w − 2.8rem) + right-gap so that
+         right-gap = 0  → text flush with marquee letters
+         right-gap = 45px ≈ 2.8rem → text at marquee column edge
+       Content-col z-index 15 safely overlaps the marquee dead zone. */
+    padding-right: calc(var(--col-w) - 2.8rem - 12px);
   }
 
   /* ── Col 1: titles ──────────────────────────────── */
@@ -194,7 +208,7 @@ const MARQUEE_COPIES = 4;
   }
   .item-name {
     font-family: var(--font);
-    font-weight: 400;
+    font-weight: 700;
     font-style: normal;
     font-size: clamp(1.1rem, 2.2vw, 1.6rem);
     line-height: 1.1;
@@ -234,7 +248,7 @@ const MARQUEE_COPIES = 4;
 
   /* ── Project report container ───────────────────── */
   .project-report {
-    padding: 0.75rem clamp(1rem, 4vw, 2.5rem) 2rem;
+    padding: 0.75rem 0.4rem 2rem clamp(1rem, 4vw, 2.5rem);
   }
 
   /* ── Project desc ───────────────────────────────── */
@@ -260,7 +274,7 @@ const MARQUEE_COPIES = 4;
   .project-body p:last-child { margin-bottom: 0; }
   .project-body h2 {
     font-family: var(--font);
-    font-weight: 400;
+    font-weight: 700;
     font-size: 0.75rem;
     text-transform: uppercase;
     color: var(--title-color);
@@ -269,7 +283,7 @@ const MARQUEE_COPIES = 4;
   }
   .project-body h3 {
     font-family: var(--font);
-    font-weight: 400;
+    font-weight: 700;
     font-size: 0.65rem;
     text-transform: uppercase;
     color: var(--title-color);
@@ -284,14 +298,36 @@ const MARQUEE_COPIES = 4;
   .project-body em   { font-style: italic; }
   .project-body img  { max-width: 100%; height: auto; display: block; margin: 1.5rem 0; cursor: zoom-in; }
 
+  /* ── Image grid: 3-column square-crop ───────────────
+     Use <div class="img-grid"> in markdown to get a
+     responsive 3-up grid with object-fit cover crops. */
+  .img-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+    margin: 1.5rem 0;
+    clear: both;
+  }
+  .img-grid img {
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    width: 100%;
+    margin: 0;
+    display: block;
+    cursor: zoom-in;
+  }
+
   /* ── Keycaps: enlarged body + drop-cap headers ─────────────
      Scoped to [data-panel="keycaps"] while experimenting.
-     Drop-cap maths (same line-height on both → zero padding needed):
-       body  2rem × 1.2 = 2.4rem per line
-       h2    4rem × 1.2 = 4.8rem float = exactly 2 × 2.4rem ✓
-     Half-leading: h2 = 0.4rem, body = 0.2rem → 0.2rem visual offset only. */
+     Drop-cap maths:
+       body line height  2rem × 1.2 = 2.4rem
+       body half-leading (2rem × 0.2) / 2 = 0.2rem above chars
+       h2 line-height: 1 → 0 half-leading; margin-top: 0.2rem aligns char tops
+       float footprint   0.2rem + 4rem = 4.2rem
+       line 2 top 2.4rem < 4.2rem → wraps ✓
+       line 3 top 4.8rem > 4.2rem → full width ✓  */
   [data-panel="keycaps"] .project-report {
-    padding: 0.55rem clamp(0.75rem, 3vw, 1.875rem) 1.5rem;
+    padding: 0.55rem 0.4rem 1.5rem clamp(0.75rem, 3vw, 1.875rem);
   }
   [data-panel="keycaps"] .project-desc {
     font-size: 2rem;        /* normal body size; stays black */
@@ -315,13 +351,17 @@ const MARQUEE_COPIES = 4;
     float: left;
     clear: both;            /* each header clears the previous section's float */
     font-size: 4rem;
-    line-height: 1.2;       /* 4rem × 1.2 = 4.8rem = exactly 2 body lines     */
+    line-height: 1;         /* no half-leading → h2 text starts at top of box  */
     font-family: var(--font);
-    font-weight: 400;
+    font-weight: 700;
     font-style: normal;
     color: var(--title-color);
     text-transform: uppercase;
-    margin: 0.5rem 0.75rem 0 0;  /* top: section gap; right: text-wrap gutter  */
+    /* margin-top = body half-leading = (2rem × (1.2−1)) / 2 = 0.2rem
+       → aligns h2 character tops with body line-1 character tops
+       Float footprint = 0.2 + 4rem = 4.2rem → exactly 2 body lines wrap:
+         line 2 top (2.4rem) < 4.2rem ✓   line 3 top (4.8rem) > 4.2rem ✓  */
+    margin: 0.2rem 0.75rem 0 0;
   }
 
   /* ── Lightbox ───────────────────────────────────── */
@@ -614,6 +654,19 @@ const MARQUEE_COPIES = 4;
       root.style.setProperty(prop, (e.target as HTMLInputElement).value);
     });
   });
+
+  // ── Font pickers (type any installed system font name, press Enter) ────
+  function applyFont(inputId: string, prop: string) {
+    const el = document.getElementById(inputId) as HTMLInputElement | null;
+    if (!el) return;
+    el.addEventListener('change', () => {
+      const val = el.value.trim();
+      if (val) root.style.setProperty(prop, `'${val}', sans-serif`);
+    });
+  }
+  applyFont('pick-font',         '--font');
+  applyFont('pick-marquee-font', '--marquee-font');
+
 
   // ── Init ──────────────────────────────────────────────────────────────
   allItems.forEach(item => {
