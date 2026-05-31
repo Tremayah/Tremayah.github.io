@@ -494,6 +494,9 @@ const MARQUEE_COPIES = 4;
         }
         node.parentNode?.replaceChild(frag, node);
       } else if (node.nodeType === Node.ELEMENT_NODE) {
+        // Skip image grids — wrapping their whitespace text nodes in spans
+        // would create extra grid items that break the 3-column layout.
+        if ((node as Element).classList?.contains('img-grid')) return;
         Array.from(node.childNodes).forEach(walk);
       }
     }
