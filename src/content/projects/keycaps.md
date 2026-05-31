@@ -7,6 +7,11 @@ tags: ["Ceramics", "CAD", "Prototyping", "Rhino"]
 order: 1
 ---
 
+<div class="hero-pair">
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/keycap-render-2.png" alt="Keycap render" />
+  <img src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/image-3.png" alt="Ceramic keycaps on numpad" />
+</div>
+
 The brief had two parts. The first: build a *Taxonomy of Materiality* — a personal classification system documenting critical exploration of at least ten materials and ten production processes, presented as an elegantly designed PDF. The second: design a simple object optimised for two-part moulding, with CAD models, drawings, visualisations, and two physical prototypes.
 
 ## Starting point

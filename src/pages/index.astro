@@ -299,6 +299,29 @@ const MARQUEE_COPIES = 4;
   .project-body em   { font-style: italic; }
   .project-body img  { max-width: 100%; height: auto; display: block; margin: 1.5rem 0; cursor: zoom-in; }
 
+  /* ── Hero pair: 2-up landscape (3:2) ───────────────
+     Use <div class="hero-pair"> for two side-by-side
+     hero images above the body text. */
+  .hero-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+    /* Bleed to col1 left edge and content right edge */
+    background: var(--body-color);
+    margin-left: calc(-1 * clamp(1rem, 4vw, 2.5rem));
+    margin-right: -0.4rem;
+    padding: 0.4rem 0;
+  }
+  .hero-pair img {
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    width: 100%;
+    margin: 0;
+    display: block;
+    cursor: zoom-in;
+  }
+
   /* ── Image grid: 3-column square-crop ───────────────
      Use <div class="img-grid"> in markdown to get a
      responsive 3-up grid with object-fit cover crops. */
@@ -308,6 +331,11 @@ const MARQUEE_COPIES = 4;
     gap: 0.4rem;
     margin: 1.5rem 0;
     clear: both;
+    /* Bleed to col1 left edge and content right edge */
+    background: var(--body-color);
+    margin-left: calc(-1 * clamp(1rem, 4vw, 2.5rem));
+    margin-right: -0.4rem;
+    padding: 0.4rem 0;
   }
   .img-grid img {
     aspect-ratio: 1 / 1;
@@ -329,6 +357,11 @@ const MARQUEE_COPIES = 4;
        line 3 top 4.8rem > 4.2rem → full width ✓  */
   [data-panel="keycaps"] .project-report {
     padding: 0.55rem 0.4rem 1.5rem clamp(0.75rem, 3vw, 1.875rem);
+  }
+  /* Keycaps has tighter left padding — correct the bleed margins */
+  [data-panel="keycaps"] .img-grid,
+  [data-panel="keycaps"] .hero-pair {
+    margin-left: calc(-1 * clamp(0.75rem, 3vw, 1.875rem));
   }
   [data-panel="keycaps"] .project-desc {
     font-size: 2rem;        /* normal body size; stays black */
@@ -495,9 +528,10 @@ const MARQUEE_COPIES = 4;
         }
         node.parentNode?.replaceChild(frag, node);
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        // Skip image grids — wrapping their whitespace text nodes in spans
-        // would create extra grid items that break the 3-column layout.
-        if ((node as Element).classList?.contains('img-grid')) return;
+        // Skip image containers — wrapping whitespace text nodes in spans
+        // creates extra grid items that break layout.
+        const cls = (node as Element).classList;
+        if (cls?.contains('img-grid') || cls?.contains('hero-pair')) return;
         Array.from(node.childNodes).forEach(walk);
       }
     }
