@@ -313,7 +313,9 @@ const MARQUEE_COPIES = 4;
   .marquee-track {
     display: flex; flex-direction: column; align-items: flex-end;
     width: 100%;
-    animation: march-down 140s linear infinite; will-change: transform;
+    animation: march-down 140s linear 1s infinite;
+    animation-fill-mode: backwards;
+    will-change: transform;
   }
   .marquee-vert { cursor: pointer; }
   .marquee-item {
@@ -328,13 +330,12 @@ const MARQUEE_COPIES = 4;
 
   /* ── Marquee start position fix ─────────────────────
      rotate(180deg) puts R at the visual BOTTOM of each copy's bounding box.
-     translateY(-75%) alone is relative to the track, not the viewport, so it
-     lands mid-copy. calc(-75% + 100dvh) shifts so the copy's bottom (R) sits
-     exactly at the viewport bottom. Loop: same +100dvh offset at -25% aligns
-     copy1 bottom = same visual frame → seamless. */
+     +100dvh shifts so the copy CSS-bottom aligns with the viewport bottom.
+     +6rem corrects for padding-inline-end (below R in visual space).
+     Loop: -25% = copy1 bottom → same visual frame → seamless. */
   @keyframes march-down {
-    from { transform: translateY(calc(-75% + 100dvh)); }
-    to   { transform: translateY(calc(-25% + 100dvh)); }
+    from { transform: translateY(calc(-75% + 100dvh + 6rem)); }
+    to   { transform: translateY(calc(-25% + 100dvh + 6rem)); }
   }
 
   /* ── Test controls ──────────────────────────────── */
@@ -512,8 +513,9 @@ const MARQUEE_COPIES = 4;
       marqueeTrack.style.animation = 'none';
       marqueeTrack.style.transform = `translateY(${currentY}px)`;
       void marqueeTrack.offsetHeight;
-      // Snap to R at bottom of viewport: copy3 bottom (75% of track) at y=viewportH
-      const startY = -(marqueeTrack.scrollHeight * 0.75) + window.innerHeight;
+      // Snap to R at bottom of viewport (+6rem corrects for padding-inline below R)
+      const rem    = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const startY = -(marqueeTrack.scrollHeight * 0.75) + window.innerHeight + 6 * rem;
       marqueeTrack.style.transition = 'transform 1s cubic-bezier(0.25,0.46,0.45,0.94)';
       marqueeTrack.style.transform  = `translateY(${startY}px)`;
     });
@@ -522,8 +524,9 @@ const MARQUEE_COPIES = 4;
       const currentY = new DOMMatrix(window.getComputedStyle(marqueeTrack).transform).m42;
       const totalH   = marqueeTrack.scrollHeight;
       const vh       = window.innerHeight;
-      // Animation: from (-75%*totalH + vh) to (-25%*totalH + vh), range = 50%*totalH
-      const fromY    = -(totalH * 0.75) + vh;
+      // Animation: from (-75%*totalH + vh + 6rem) to (-25%*totalH + vh + 6rem)
+      const rem      = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const fromY    = -(totalH * 0.75) + vh + 6 * rem;
       const rangeH   =   totalH * 0.5;
       const elapsed  = (currentY - fromY) / rangeH * 140;
       const delay    = -((elapsed % 140 + 140) % 140);
