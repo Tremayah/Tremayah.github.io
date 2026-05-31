@@ -97,17 +97,16 @@ const MARQUEE_COPIES = 4;
 
 <!-- ── TEST CONTROLS (remove when done) ──────────────────────── -->
 <div id="test-controls">
-  <label>col 1 bg<input type="color" id="pick-col1bg"      value="#eebe11"></label>
-  <label>col 1 text<input type="color" id="pick-col1text"   value="#fafafa"></label>
-  <label>col 1 hover<input type="color" id="pick-col1hover" value="#0913ff"></label>
-  <label>col 2 bg<input type="color" id="pick-bg"          value="#fafafa"></label>
-  <label>body text<input type="color" id="pick-body"        value="#f80d0d"></label>
-  <label>titles<input type="color" id="pick-title"          value="#f80d0d"></label>
-  <label>marquee<input type="color" id="pick-marquee"       value="#eebe12"></label>
-  <label>marquee hover<input type="color" id="pick-marquee-hover" value="#0913ff"></label>
-  <label>col 4 bg<input type="color" id="pick-col4bg"       value="#fafafa"></label>
   <label style="flex-direction:row;align-items:center;gap:0.3rem;">
-    body font<input type="text" id="pick-font" placeholder="cofo-sans-pixel"
+    nav font<input type="text" id="pick-nav-font" placeholder="cofo-sans-pixel"
+      style="width:11rem;font-family:monospace;font-size:0.6rem;padding:0.2rem 0.3rem;border:1px solid #ccc;">
+  </label>
+  <label style="flex-direction:row;align-items:center;gap:0.3rem;">
+    body font<input type="text" id="pick-body-font" placeholder="cofo-sans-pixel"
+      style="width:11rem;font-family:monospace;font-size:0.6rem;padding:0.2rem 0.3rem;border:1px solid #ccc;">
+  </label>
+  <label style="flex-direction:row;align-items:center;gap:0.3rem;">
+    drop cap font<input type="text" id="pick-dropcap-font" placeholder="cofo-sans-pixel"
       style="width:11rem;font-family:monospace;font-size:0.6rem;padding:0.2rem 0.3rem;border:1px solid #ccc;">
   </label>
   <label style="flex-direction:row;align-items:center;gap:0.3rem;">
@@ -124,7 +123,9 @@ const MARQUEE_COPIES = 4;
     --fg:     #1c1c1c;
     --accent: #5200ff;
     --bg:     #fafafa;
-    --font:         'cofo-sans-pixel', sans-serif;
+    --nav-font:     'cofo-sans-pixel', sans-serif;
+    --body-font:    'cofo-sans-pixel', sans-serif;
+    --dropcap-font: 'cofo-sans-pixel', sans-serif;
     --marquee-font: 'bitcount-mono-single-square', sans-serif;
     --col-w:  14rem;
 
@@ -203,11 +204,11 @@ const MARQUEE_COPIES = 4;
     border: none;
     cursor: pointer;
     text-align: left;
-    font-family: var(--font);
+    font-family: var(--nav-font);
     color: var(--col1-color);
   }
   .item-name {
-    font-family: var(--font);
+    font-family: var(--nav-font);
     font-weight: 700;
     font-style: normal;
     font-size: clamp(1.1rem, 2.2vw, 1.6rem);
@@ -238,9 +239,9 @@ const MARQUEE_COPIES = 4;
     padding: 0.75rem clamp(1rem, 4vw, 2.5rem) 1.5rem;
     max-width: 56ch;
   }
-  .prose-area p { font-family: var(--font); font-size: 0.9rem; font-weight: 400; line-height: 1.75; }
+  .prose-area p { font-family: var(--body-font); font-size: 0.9rem; font-weight: 400; line-height: 1.75; }
   .contact-link {
-    display: block; font-family: var(--font); font-size: 0.9rem;
+    display: block; font-family: var(--body-font); font-size: 0.9rem;
     color: var(--fg); text-decoration: none; width: fit-content;
     border-bottom: 1px solid transparent; transition: color 0.15s, border-color 0.15s;
   }
@@ -253,7 +254,7 @@ const MARQUEE_COPIES = 4;
 
   /* ── Project desc ───────────────────────────────── */
   .project-desc {
-    font-family: var(--font);
+    font-family: var(--body-font);
     font-weight: 700;
     font-size: 0.9rem;
     line-height: 1.7;
@@ -263,7 +264,7 @@ const MARQUEE_COPIES = 4;
 
   /* ── Project body ───────────────────────────────── */
   .project-body {
-    font-family: var(--font);
+    font-family: var(--body-font);
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.75;
@@ -273,7 +274,7 @@ const MARQUEE_COPIES = 4;
   .project-body p            { margin-bottom: 0.9rem; }
   .project-body p:last-child { margin-bottom: 0; }
   .project-body h2 {
-    font-family: var(--font);
+    font-family: var(--body-font);
     font-weight: 700;
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -282,7 +283,7 @@ const MARQUEE_COPIES = 4;
     margin-bottom: 0.5rem;
   }
   .project-body h3 {
-    font-family: var(--font);
+    font-family: var(--body-font);
     font-weight: 700;
     font-size: 0.65rem;
     text-transform: uppercase;
@@ -352,7 +353,7 @@ const MARQUEE_COPIES = 4;
     clear: both;            /* each header clears the previous section's float */
     font-size: 4rem;
     line-height: 1;         /* no half-leading → h2 text starts at top of box  */
-    font-family: var(--font);
+    font-family: var(--dropcap-font);
     font-weight: 700;
     font-style: normal;
     color: var(--title-color);
@@ -638,36 +639,21 @@ const MARQUEE_COPIES = 4;
     });
   }
 
-  // ── Test colour controls ───────────────────────────────────────────────
-  const root = document.documentElement;
-
-  const colorPickers: [string, string][] = [
-    ['pick-col1bg',         '--col1-bg'],
-    ['pick-col1text',       '--col1-color'],
-    ['pick-col1hover',      '--col1-hover'],
-    ['pick-bg',             '--col2-bg'],
-    ['pick-body',           '--body-color'],
-    ['pick-title',          '--title-color'],
-    ['pick-marquee',        '--marquee-color'],
-    ['pick-marquee-hover',  '--marquee-hover'],
-    ['pick-col4bg',         '--col4-bg'],
-  ];
-  colorPickers.forEach(([id, prop]) => {
-    document.getElementById(id)?.addEventListener('input', e => {
-      root.style.setProperty(prop, (e.target as HTMLInputElement).value);
-    });
-  });
-
   // ── Font pickers (type any installed system font name, press Enter) ────
+  const root = document.documentElement;
   function applyFont(inputId: string, prop: string) {
     const el = document.getElementById(inputId) as HTMLInputElement | null;
     if (!el) return;
-    el.addEventListener('change', () => {
+    const apply = () => {
       const val = el.value.trim();
       if (val) root.style.setProperty(prop, `'${val}', sans-serif`);
-    });
+    };
+    el.addEventListener('change', apply);
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') apply(); });
   }
-  applyFont('pick-font',         '--font');
+  applyFont('pick-nav-font',     '--nav-font');
+  applyFont('pick-body-font',    '--body-font');
+  applyFont('pick-dropcap-font', '--dropcap-font');
   applyFont('pick-marquee-font', '--marquee-font');
 
 
