@@ -102,7 +102,7 @@ const MARQUEE_COPIES = 4;
   <label>col 1 hover<input type="color" id="pick-col1hover" value="#0913ff"></label>
   <label>col 2 bg<input type="color" id="pick-bg"          value="#fafafa"></label>
   <label>body text<input type="color" id="pick-body"        value="#f80d0d"></label>
-  <label>titles<input type="color" id="pick-title"          value="#0913ff"></label>
+  <label>titles<input type="color" id="pick-title"          value="#f80d0d"></label>
   <label>marquee<input type="color" id="pick-marquee"       value="#eebe12"></label>
   <label>marquee hover<input type="color" id="pick-marquee-hover" value="#0913ff"></label>
   <label>col 4 bg<input type="color" id="pick-col4bg"       value="#fafafa"></label>
@@ -126,7 +126,7 @@ const MARQUEE_COPIES = 4;
     --col1-hover:     #0913ff;
     --col2-bg:        #fafafa;
     --body-color:     #f80d0d;
-    --title-color:    #0913ff;
+    --title-color:    #f80d0d;
     --marquee-color:  #eebe12;
     --marquee-hover:  #0913ff;
     --col4-bg:        #fafafa;
@@ -284,6 +284,46 @@ const MARQUEE_COPIES = 4;
   .project-body em   { font-style: italic; }
   .project-body img  { max-width: 100%; height: auto; display: block; margin: 1.5rem 0; cursor: zoom-in; }
 
+  /* ── Keycaps: enlarged body + drop-cap headers ─────────────
+     Scoped to [data-panel="keycaps"] while experimenting.
+     Drop-cap maths (same line-height on both → zero padding needed):
+       body  2rem × 1.2 = 2.4rem per line
+       h2    4rem × 1.2 = 4.8rem float = exactly 2 × 2.4rem ✓
+     Half-leading: h2 = 0.4rem, body = 0.2rem → 0.2rem visual offset only. */
+  [data-panel="keycaps"] .project-report {
+    padding: 0.55rem clamp(0.75rem, 3vw, 1.875rem) 1.5rem;
+  }
+  [data-panel="keycaps"] .project-desc {
+    font-size: 2rem;        /* normal body size; stays black */
+    line-height: 1.4;
+    margin-bottom: 1.5rem;
+  }
+  [data-panel="keycaps"] .project-body {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+  [data-panel="keycaps"] .project-body p {
+    text-align: justify;
+    hyphens: auto;
+  }
+  [data-panel="keycaps"] .project-body::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+  [data-panel="keycaps"] .project-body h2 {
+    float: left;
+    clear: both;            /* each header clears the previous section's float */
+    font-size: 4rem;
+    line-height: 1.2;       /* 4rem × 1.2 = 4.8rem = exactly 2 body lines     */
+    font-family: var(--font);
+    font-weight: 400;
+    font-style: normal;
+    color: var(--title-color);
+    text-transform: uppercase;
+    margin: 0.5rem 0.75rem 0 0;  /* top: section gap; right: text-wrap gutter  */
+  }
+
   /* ── Lightbox ───────────────────────────────────── */
   .lightbox-overlay {
     position: fixed; inset: 0;
@@ -331,11 +371,22 @@ const MARQUEE_COPIES = 4;
   /* ── Marquee start position fix ─────────────────────
      rotate(180deg) puts R at the visual BOTTOM of each copy's bounding box.
      +100dvh shifts so the copy CSS-bottom aligns with the viewport bottom.
-     +6rem corrects for padding-inline-end (below R in visual space).
-     Loop: -25% = copy1 bottom → same visual frame → seamless. */
+     +3rem corrects for padding-inline-end (below R in visual space).
+     Loop: -25% = copy1 bottom → same visual frame → seamless.
+     0% keyframe timing: ease-in for first 2% (~2.8s) → soft start. */
   @keyframes march-down {
-    from { transform: translateY(calc(-75% + 100dvh + 6rem)); }
-    to   { transform: translateY(calc(-25% + 100dvh + 6rem)); }
+    0% {
+      transform: translateY(calc(-75% + 100dvh + 3rem));
+      animation-timing-function: cubic-bezier(0.1, 0, 0.5, 0.5);
+    }
+    2% {
+      /* -75% + (2% × 50% range) = -74%. Explicit value required so the
+         timing-function switch takes effect; without it, ease-in applies
+         to the full 140 s. Bezier chosen so end-speed = 1× linear — no jerk. */
+      transform: translateY(calc(-74% + 100dvh + 3rem));
+      animation-timing-function: linear;
+    }
+    100% { transform: translateY(calc(-25% + 100dvh + 3rem)); }
   }
 
   /* ── Test controls ──────────────────────────────── */
@@ -513,9 +564,9 @@ const MARQUEE_COPIES = 4;
       marqueeTrack.style.animation = 'none';
       marqueeTrack.style.transform = `translateY(${currentY}px)`;
       void marqueeTrack.offsetHeight;
-      // Snap to R at bottom of viewport (+6rem corrects for padding-inline below R)
+      // Snap to R at bottom of viewport (+3rem corrects for padding-inline below R)
       const rem    = parseFloat(getComputedStyle(document.documentElement).fontSize);
-      const startY = -(marqueeTrack.scrollHeight * 0.75) + window.innerHeight + 6 * rem;
+      const startY = -(marqueeTrack.scrollHeight * 0.75) + window.innerHeight + 3 * rem;
       marqueeTrack.style.transition = 'transform 1s cubic-bezier(0.25,0.46,0.45,0.94)';
       marqueeTrack.style.transform  = `translateY(${startY}px)`;
     });
@@ -524,9 +575,9 @@ const MARQUEE_COPIES = 4;
       const currentY = new DOMMatrix(window.getComputedStyle(marqueeTrack).transform).m42;
       const totalH   = marqueeTrack.scrollHeight;
       const vh       = window.innerHeight;
-      // Animation: from (-75%*totalH + vh + 6rem) to (-25%*totalH + vh + 6rem)
+      // Animation: from (-75%*totalH + vh + 3rem) to (-25%*totalH + vh + 3rem)
       const rem      = parseFloat(getComputedStyle(document.documentElement).fontSize);
-      const fromY    = -(totalH * 0.75) + vh + 6 * rem;
+      const fromY    = -(totalH * 0.75) + vh + 3 * rem;
       const rangeH   =   totalH * 0.5;
       const elapsed  = (currentY - fromY) / rangeH * 140;
       const delay    = -((elapsed % 140 + 140) % 140);
