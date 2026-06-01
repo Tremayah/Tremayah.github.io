@@ -52,6 +52,15 @@ const MARQUEE_COPIES = 4;
   <!-- Col 2: project text panels (one shown at a time) -->
   <div class="content-col">
 
+    <!-- Landing splash — visible by default, hidden once any panel opens -->
+    <div class="landing">
+      <img class="landing-girl" src="/girl.svg" alt="" aria-hidden="true" />
+      <div class="landing-text">
+        <p class="landing-name">Raphael Murray Browne</p>
+        <p class="landing-sub">3rd Year Product &amp; Furniture<br />Design Student</p>
+      </div>
+    </div>
+
     <div class="item-panel" data-panel="about">
       <div class="prose-area">
         <p>Aspiring product designer; do you think I'm there yet?</p>
@@ -187,6 +196,42 @@ const MARQUEE_COPIES = 4;
     z-index: 15;
   }
   .content-col::-webkit-scrollbar { display: none; }
+
+  /* ── Landing splash ─────────────────────────────── */
+  .landing {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem;
+    /* padding-top compensates for the asymmetric 1rem/6rem padding on .content-col
+       so the content centres on the actual viewport midpoint, not the column midpoint */
+    padding: 5rem clamp(1.5rem, 5vw, 4rem) 0;
+  }
+  /* Hide when any panel is open */
+  .content-col:has(.item-panel[data-open]) .landing { display: none; }
+
+  .landing-girl {
+    width: 16rem;
+    height: auto;
+    flex-shrink: 0;
+    image-rendering: pixelated;
+  }
+  .landing-name {
+    font-family: 'lores-15', sans-serif;
+    font-weight: 700;
+    font-size: 2.75rem;
+    color: var(--marquee-color);
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+  }
+  .landing-sub {
+    font-family: 'lores-15', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--marquee-color);
+    line-height: 1.6;
+  }
 
   /* ── Panel visibility ───────────────────────────── */
   .item-panel { display: none; }
