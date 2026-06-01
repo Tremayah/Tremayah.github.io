@@ -55,10 +55,8 @@ const MARQUEE_COPIES = 4;
     <!-- Landing splash — visible by default, hidden once any panel opens -->
     <div class="landing">
       <img class="landing-girl" src="/girl.svg" alt="" aria-hidden="true" />
-      <div class="landing-text">
-        <p class="landing-name">Raphael Murray Browne</p>
-        <p class="landing-sub">3rd Year Product &amp; Furniture<br />Design Student</p>
-      </div>
+      <p class="landing-name">Raphael Murray Browne</p>
+      <p class="landing-sub">3rd Year Product &amp; Furniture<br />Design Student<br />University of Plymouth, UK</p>
     </div>
 
     <div class="item-panel" data-panel="about">
@@ -119,6 +117,10 @@ const MARQUEE_COPIES = 4;
     <label>
       marquee font<input type="text" id="pick-marquee-font" placeholder="bitcount-mono-single-square">
     </label>
+  </div>
+  <div id="drag-tool">
+    <button id="drag-toggle">⠿ drag mode</button>
+    <span id="drag-readout">off</span>
   </div>
 )}
 
@@ -199,41 +201,44 @@ const MARQUEE_COPIES = 4;
 
   /* ── Landing splash ─────────────────────────────── */
   .landing {
+    position: relative;
     height: 100%;
-    display: flex;
-    align-items: center;
-    /* padding-top compensates for the asymmetric 1rem/6rem padding on .content-col
-       so the content centres on the actual viewport midpoint, not the column midpoint */
-    padding: 5rem 0 0;
   }
   /* Hide when any panel is open */
   .content-col:has(.item-panel[data-open]) .landing { display: none; }
 
+  /* Positions baked from drag-tool readout at 1280×800.
+     left  = cx% of content column width
+     top   = (cy_viewport% × 800 − 16) / 688  (converts viewport% → landing-container%) */
   .landing-girl {
-    /* margin-left centres the girl at 40% of the column width
-       regardless of how wide the text next to her is */
-    margin-left: calc(36% - 7rem);
+    position: absolute;
+    left: 51.4%;
+    top: 55.1%;
+    transform: translate(-50%, -50%);
     width: 14rem;
     height: auto;
-    flex-shrink: 0;
     image-rendering: pixelated;
   }
-  .landing-text {
-    margin-left: 2rem;
-    padding-right: 4rem;
-  }
   .landing-name {
-    font-family: 'lores-15', sans-serif;
+    position: absolute;
+    left: 77.3%;
+    top: 38.7%;
+    transform: translate(-50%, -50%);
+    font-family: 'lores-12-narrow', sans-serif;
     font-weight: 700;
     font-size: 2.25rem;
     color: var(--marquee-color);
     line-height: 1.1;
-    margin-bottom: 0.5rem;
+    white-space: nowrap;
   }
   .landing-sub {
-    font-family: 'lores-15', sans-serif;
+    position: absolute;
+    left: 72.1%;
+    top: 48.4%;
+    transform: translate(-50%, -50%);
+    font-family: 'lores-12-narrow', sans-serif;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.1rem;
     color: var(--marquee-color);
     line-height: 1.6;
   }
@@ -520,6 +525,36 @@ const MARQUEE_COPIES = 4;
     padding: 0.2rem 0.3rem;
     border: 1px solid #ccc;
   }
+  #drag-tool {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    background: #1c1c1c;
+    color: #eebe12;
+    font-family: monospace;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    white-space: pre;
+  }
+  #drag-toggle {
+    background: #5200ff;
+    color: #fff;
+    border: none;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 0.7rem;
+    border-radius: 3px;
+  }
+  #drag-toggle.active { background: #f80d0d; }
+  .drag-active { cursor: grab !important; outline: 2px dashed #5200ff; }
+  .drag-active:active { cursor: grabbing !important; }
 </style>
 
 <script>
@@ -718,6 +753,86 @@ const MARQUEE_COPIES = 4;
   applyFont('pick-body-font',    '--body-font');
   applyFont('pick-dropcap-font', '--dropcap-font');
   applyFont('pick-marquee-font', '--marquee-font');
+
+  // ── Landing drag tool (dev only) ──────────────────────────────────────
+  (() => {
+    const toggleBtn  = document.getElementById('drag-toggle') as HTMLButtonElement | null;
+    const readout    = document.getElementById('drag-readout') as HTMLElement | null;
+    if (!toggleBtn || !readout) return;
+
+    const col  = document.querySelector('.content-col') as HTMLElement;
+    const girl = document.querySelector('.landing-girl') as HTMLElement;
+    const name = document.querySelector('.landing-name') as HTMLElement;
+    const sub  = document.querySelector('.landing-sub')  as HTMLElement;
+    const els  = [girl, name, sub];
+
+    let enabled = false;
+
+    // Per-element accumulated drag offset
+    const state = new Map<HTMLElement, { ox: number; oy: number }>();
+
+    function fmt(el: HTMLElement, label: string) {
+      const cR = col.getBoundingClientRect();
+      const r  = el.getBoundingClientRect();
+      const cx = ((r.left + r.width  / 2 - cR.left) / cR.width  * 100).toFixed(1);
+      const cy = ((r.top  + r.height / 2)            / window.innerHeight * 100).toFixed(1);
+      return `${label}  cx:${cx}%  cy:${cy}%`;
+    }
+
+    function updateReadout() {
+      readout.textContent =
+        fmt(girl, 'girl') + '     ' +
+        fmt(name, 'name') + '     ' +
+        fmt(sub,  'sub');
+    }
+
+    function attachDrag(el: HTMLElement) {
+      el.addEventListener('mousedown', (e: MouseEvent) => {
+        if (!enabled) return;
+        e.preventDefault();
+        const cur    = state.get(el) ?? { ox: 0, oy: 0 };
+        const startX = e.clientX - cur.ox;
+        const startY = e.clientY - cur.oy;
+        el.style.cursor = 'grabbing';
+
+        function onMove(ev: MouseEvent) {
+          const ox = ev.clientX - startX;
+          const oy = ev.clientY - startY;
+          state.set(el, { ox, oy });
+          // Compose with the CSS -50%/-50% centering transform
+          el.style.transform = `translate(calc(-50% + ${ox}px), calc(-50% + ${oy}px))`;
+          updateReadout();
+        }
+        function onUp() {
+          el.style.cursor = 'grab';
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup',   onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup',   onUp);
+      });
+    }
+
+    els.forEach(attachDrag);
+
+    toggleBtn.addEventListener('click', () => {
+      enabled = !enabled;
+      toggleBtn.classList.toggle('active', enabled);
+      toggleBtn.textContent = enabled ? '⠿ drag ON' : '⠿ drag mode';
+
+      if (enabled) {
+        els.forEach(el => el.classList.add('drag-active'));
+        updateReadout();
+      } else {
+        els.forEach(el => {
+          el.classList.remove('drag-active');
+          el.style.transform = 'translate(-50%, -50%)';
+        });
+        state.clear();
+        readout.textContent = 'off';
+      }
+    });
+  })();
 
 
   // ── Init ──────────────────────────────────────────────────────────────
