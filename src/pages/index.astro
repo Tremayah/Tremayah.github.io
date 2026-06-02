@@ -54,12 +54,9 @@ const MARQUEE_COPIES = 4;
 
     <!-- Landing splash — visible by default, hidden once any panel opens -->
     <div class="landing">
-      <!-- COMBINED IMAGE VERSION -->
-      <img class="landing-combined" src="/landing.png" alt="Raphael Murray Browne — 3rd Year Product &amp; Furniture Design Student at University of Plymouth, UK" />
-      <!-- ORIGINAL ELEMENTS (kept for revert) -->
-      <!-- <img class="landing-girl" src="/girl.svg" alt="" aria-hidden="true" /> -->
-      <!-- <p class="landing-name">Raphael Murray Browne</p> -->
-      <!-- <p class="landing-sub">3rd Year Product &amp; Furniture<br />Design Student<br />University of Plymouth, UK</p> -->
+      <img class="landing-girl" src="/landing.png" alt="" aria-hidden="true" />
+      <p class="landing-name">Raphael Murray Browne</p>
+      <p class="landing-sub">3rd Year Product &amp; Furniture<br />Design Student<br />University of Plymouth, UK</p>
     </div>
 
     <div class="item-panel" data-panel="about">
@@ -210,18 +207,6 @@ const MARQUEE_COPIES = 4;
   /* Hide when any panel is open */
   .content-col:has(.item-panel[data-open]) .landing { display: none; }
 
-  /* ── Combined landing image ─────────────────────────────────────────── */
-  .landing-combined {
-    position: absolute;
-    left: 40%;
-    top: 60%;
-    transform: translate(-50%, -50%);
-    width: 45%;
-    height: auto;
-    image-rendering: pixelated;
-  }
-
-  /* ── Original separate elements (kept for revert) ───────────────────── */
   /* Positions baked from drag-tool readout at 1280×800.
      left  = cx% of content column width
      top   = (cy_viewport% × 800 − 16) / 688  (converts viewport% → landing-container%) */
@@ -776,10 +761,10 @@ const MARQUEE_COPIES = 4;
     if (!toggleBtn || !readout) return;
 
     const col  = document.querySelector('.content-col') as HTMLElement;
-    const girl = (document.querySelector('.landing-combined') ?? document.querySelector('.landing-girl')) as HTMLElement;
+    const girl = document.querySelector('.landing-girl') as HTMLElement;
     const name = document.querySelector('.landing-name') as HTMLElement;
     const sub  = document.querySelector('.landing-sub')  as HTMLElement;
-    const els  = [girl, name, sub].filter(Boolean) as HTMLElement[];
+    const els  = [girl, name, sub];
 
     let enabled = false;
 
