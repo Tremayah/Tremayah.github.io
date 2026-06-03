@@ -1,0 +1,14 @@
+---
+/*  Column 4 — the fixed vertical marquee.
+    Persists across navigations so its scroll animation runs uninterrupted.
+    Hover pause/reposition and click-to-About are wired up in site.ts. */
+const MARQUEE_COPIES = 4;
+---
+
+<aside class="marquee-vert" aria-hidden="true" transition:persist="marquee">
+  <div class="marquee-track">
+    {Array.from({ length: MARQUEE_COPIES }).map(() => (
+      <span class="marquee-item">RAPHAEL MURRAY BROWNE</span>
+    ))}
+  </div>
+</aside>

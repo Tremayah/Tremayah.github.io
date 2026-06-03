@@ -1,0 +1,448 @@
+/* ============================================================================
+   Raphael Murray-Browne — portfolio
+   Global stylesheet. Imported once by SiteLayout.astro.
+
+   Layout is a fixed three-column shell that never scrolls as a whole:
+     col 1  .title-col     yellow nav list (persists across page navigations)
+     col 2  .content-col   the per-page content (the bit that swaps)
+     col 4  .marquee-vert  fixed vertical marquee (persists; overlaps col 2's
+                           reserved right gutter)
+   ========================================================================== */
+
+:root {
+  --fg:     #1c1c1c;
+  --accent: #5200ff;
+  --bg:     #fafafa;
+
+  /* One canonical brand yellow (previously split as #eebe11 / #eebe12) */
+  --yellow: #eebe12;
+
+  --nav-font:     'cofo-sans-pixel', sans-serif;
+  --body-font:    'argent-pixel-cf', sans-serif;
+  --dropcap-font: 'lores-9-plus-narrow', sans-serif;
+  --marquee-font: 'bitcount-mono-single-square', sans-serif;
+  --col-w:  14rem;
+
+  /* Colour tokens */
+  --col1-bg:        var(--yellow);
+  --col1-color:     #fafafa;
+  --col1-hover:     #0913ff;
+  --col2-bg:        #fafafa;
+  --body-color:     #f80d0d;
+  --title-color:    #f80d0d;
+  --marquee-color:  var(--yellow);
+  --marquee-hover:  #0913ff;
+  --col4-bg:        #fafafa;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout shell ───────────────────────────────── */
+.layout {
+  display: flex;
+  height: 100dvh;
+  overflow: hidden;
+  /* The 14rem marquee column carries an 11.2rem-wide letter on its right
+     edge, leaving a 2.8rem dead zone on its left. Reserving
+     (col-w − 2.8rem − 12px) lets the content column (z-index 15) sit right
+     up against the letters, overlapping that empty strip. −12px is the
+     hand-tuned gap between body text and marquee. */
+  padding-right: calc(var(--col-w) - 2.8rem - 12px);
+}
+
+/* ── Col 1: titles ──────────────────────────────── */
+.title-col {
+  flex-shrink: 0;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding-top: 1rem;
+  padding-bottom: 6rem;
+  background: var(--col1-bg);
+}
+.title-col::-webkit-scrollbar { display: none; }
+
+/* ── Col 2: content ─────────────────────────────── */
+.content-col {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding-top: 1rem;
+  padding-bottom: 6rem;
+  background: var(--col2-bg);
+  position: relative;
+  z-index: 15;
+}
+.content-col::-webkit-scrollbar { display: none; }
+
+/* ── Landing splash (the content of "/") ────────── */
+.landing {
+  position: relative;
+  height: 100%;
+}
+/* Positions baked from drag-tool readout at 1280×800.
+   left  = cx% of content column width
+   top   = (cy_viewport% × 800 − 16) / 688  (converts viewport% → landing-container%) */
+.landing-girl {
+  position: absolute;
+  left: 36.4%;
+  top: 65.1%;
+  transform: translate(-50%, -50%);
+  width: 14rem;
+  height: auto;
+  image-rendering: pixelated;
+}
+.landing-name {
+  position: absolute;
+  left: 63.3%;
+  top: 43.7%;
+  transform: translate(-50%, -50%);
+  font-family: 'argent-pixel-cf', sans-serif;
+  font-weight: 700;
+  font-size: 2.25rem;
+  color: var(--fg);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.landing-sub {
+  position: absolute;
+  left: 54.1%;
+  top: 53.4%;
+  transform: translate(-50%, -50%);
+  font-family: 'lores-12-narrow', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--fg);
+  line-height: 1.6;
+}
+
+/* ── Title triggers (now <a> links) ─────────────── */
+.item-trigger {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem calc(clamp(1rem, 4vw, 2.5rem) + 0.35rem) 0.55rem clamp(1rem, 4vw, 2.5rem);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  font-family: var(--nav-font);
+  color: var(--col1-color);
+}
+.item-name {
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-style: normal;
+  font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+  line-height: 1.1;
+  color: inherit;
+  text-transform: lowercase;
+  transition: color 0.18s ease;
+}
+.item-trigger:hover .item-name,
+.item-trigger[aria-current="page"] .item-name {
+  color: var(--col1-hover);
+  font-style: italic;
+}
+
+/* ── Word-split hover animation ─────────────────── */
+.word-wrap { display: inline-block; position: relative; vertical-align: top; }
+.word-half { display: block; transition: transform 0.22s cubic-bezier(0.77,0,0.175,1); will-change: transform; }
+.word-top  { clip-path: inset(0 0 42% 0); }
+.word-bot  { position: absolute; top:0; left:0; width:100%; clip-path: inset(58% 0 0 0); }
+.item-trigger[aria-current="page"] .word-top { transform: translateX(2px); }
+.item-trigger[aria-current="page"] .word-bot { transform: translateX(-2px); }
+
+/* ── About / Contact prose ──────────────────────── */
+.prose-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem clamp(1rem, 4vw, 2.5rem) 1.5rem;
+  max-width: 56ch;
+}
+.prose-area p { font-family: var(--body-font); font-size: 0.9rem; font-weight: 400; line-height: 1.75; }
+.contact-link {
+  display: block; font-family: var(--body-font); font-size: 0.9rem;
+  color: var(--fg); text-decoration: none; width: fit-content;
+  border-bottom: 1px solid transparent; transition: color 0.15s, border-color 0.15s;
+}
+.contact-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── Project report container ───────────────────── */
+.project-report {
+  padding: 0.75rem 0.4rem 2rem clamp(1rem, 4vw, 2.5rem);
+}
+
+/* ── Project desc ───────────────────────────────── */
+.project-desc {
+  font-family: var(--body-font);
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--fg);
+  margin-bottom: 1rem;
+}
+
+/* ── Project body ───────────────────────────────── */
+.project-body {
+  font-family: var(--body-font);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.75;
+  letter-spacing: -0.01em;
+  color: var(--body-color);
+}
+.project-body p            { margin-bottom: 0.9rem; }
+.project-body p:last-child { margin-bottom: 0; }
+.project-body h2 {
+  font-family: var(--body-font);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--title-color);
+  margin-top: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+.project-body h3 {
+  font-family: var(--body-font);
+  font-weight: 700;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--title-color);
+  margin-top: 1rem;
+  margin-bottom: 0.3rem;
+}
+.project-body ul,
+.project-body ol   { padding-left: 1.1rem; margin-bottom: 0.9rem; }
+.project-body li   { margin-bottom: 0.2rem; }
+.project-body a    { color: var(--accent); text-decoration: underline; }
+.project-body strong { font-weight: 700; }
+.project-body em   { font-style: italic; }
+.project-body img  { max-width: 100%; height: auto; display: block; margin: 1.5rem 0; cursor: zoom-in; }
+
+/* ── Hero pair: 2-up landscape (3:2) ───────────────
+   Use <div class="hero-pair"> for two side-by-side
+   hero images above the body text. */
+.hero-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+}
+.hero-pair img {
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  width: 100%;
+  margin: 0;
+  display: block;
+  cursor: zoom-in;
+}
+
+/* ── Image grid: 3-column square-crop ───────────────
+   Use <div class="img-grid"> in markdown to get a
+   responsive 3-up grid with object-fit cover crops. */
+.img-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  margin: 1.5rem 0;
+  clear: both;
+}
+.img-grid img {
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  width: 100%;
+  margin: 0;
+  display: block;
+  cursor: zoom-in;
+}
+
+/* ── Keycaps: enlarged body + drop-cap headers ─────────────
+   Scoped to [data-project="keycaps"] while experimenting.
+   Drop-cap maths:
+     body line height  2rem × 1.2 = 2.4rem
+     body half-leading (2rem × 0.2) / 2 = 0.2rem above chars
+     h2 line-height: 1 → 0 half-leading; margin-top: 0.2rem aligns char tops
+     float footprint   0.2rem + 4rem = 4.2rem
+     line 2 top 2.4rem < 4.2rem → wraps ✓
+     line 3 top 4.8rem > 4.2rem → full width ✓  */
+[data-project="keycaps"].project-report {
+  padding: 0.55rem 0.4rem 1.5rem clamp(0.75rem, 3vw, 1.875rem);
+}
+[data-project="keycaps"] .project-desc {
+  font-size: 2rem;        /* normal body size; stays black */
+  line-height: 1.4;
+  margin-bottom: 1.5rem;
+}
+[data-project="keycaps"] .project-body {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+[data-project="keycaps"] .project-body p {
+  text-align: justify;
+  hyphens: auto;
+}
+[data-project="keycaps"] .project-body::after {
+  content: '';
+  display: table;
+  clear: both;
+}
+[data-project="keycaps"] .project-body h2 {
+  float: left;
+  clear: both;            /* each header clears the previous section's float */
+  font-size: 4rem;
+  line-height: 1;         /* no half-leading → h2 text starts at top of box  */
+  font-family: var(--dropcap-font);
+  font-weight: 700;
+  font-style: normal;
+  color: var(--title-color);
+  text-transform: uppercase;
+  /* margin-top = body half-leading = (2rem × (1.2−1)) / 2 = 0.2rem
+     → aligns h2 character tops with body line-1 character tops
+     Float footprint = 0.2 + 4rem = 4.2rem → exactly 2 body lines wrap:
+       line 2 top (2.4rem) < 4.2rem ✓   line 3 top (4.8rem) > 4.2rem ✓  */
+  margin: 0.2rem 0.75rem 0 0;
+}
+
+/* ── Lightbox ───────────────────────────────────── */
+.lightbox-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.90);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  cursor: zoom-out;
+}
+.lightbox-overlay[hidden] { display: none; }
+.lightbox-overlay.lb-open { animation: lb-in 0.18s ease both; }
+.lightbox-overlay.lb-out  { animation: lb-out 0.15s ease both; }
+.lightbox-img {
+  max-width: min(90vw, 1200px); max-height: 90dvh;
+  object-fit: contain; display: block; pointer-events: none;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.5);
+}
+@keyframes lb-in  { from { opacity:0; transform:scale(0.97); } to { opacity:1; transform:scale(1); } }
+@keyframes lb-out { from { opacity:1; transform:scale(1); }   to { opacity:0; transform:scale(0.97); } }
+
+/* ── Col 4: marquee ─────────────────────────────── */
+.marquee-vert {
+  position: fixed; top: 0; right: 0;
+  width: var(--col-w); height: 100dvh;
+  overflow: hidden; z-index: 10;
+  background: var(--col4-bg);
+  cursor: pointer;
+}
+.marquee-track {
+  display: flex; flex-direction: column; align-items: flex-end;
+  width: 100%;
+  animation: march-down 140s linear 1s infinite;
+  animation-fill-mode: backwards;
+  will-change: transform;
+}
+.marquee-item {
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  font-family: var(--marquee-font); font-weight: 400;
+  font-size: 11.2rem;
+  line-height: 1; text-transform: uppercase; color: var(--marquee-color);
+  padding-inline: 6rem; white-space: nowrap; user-select: none;
+  transition: color 0.3s ease;
+}
+.marquee-vert:hover .marquee-item { color: var(--marquee-hover); }
+
+/* ── Marquee start position fix ─────────────────────
+   rotate(180deg) puts R at the visual BOTTOM of each copy's bounding box.
+   +100dvh shifts so the copy CSS-bottom aligns with the viewport bottom.
+   +3rem corrects for padding-inline-end (below R in visual space).
+   Loop: -25% = copy1 bottom → same visual frame → seamless.
+   0% keyframe timing: ease-in for first 2% (~2.8s) → soft start. */
+@keyframes march-down {
+  0% {
+    transform: translateY(calc(-75% + 100dvh + 3rem));
+    animation-timing-function: cubic-bezier(0.1, 0, 0.5, 0.5);
+  }
+  2% {
+    /* -75% + (2% × 50% range) = -74%. Explicit value required so the
+       timing-function switch takes effect; without it, ease-in applies
+       to the full 140 s. Bezier chosen so end-speed = 1× linear — no jerk. */
+    transform: translateY(calc(-74% + 100dvh + 3rem));
+    animation-timing-function: linear;
+  }
+  100% { transform: translateY(calc(-25% + 100dvh + 3rem)); }
+}
+
+/* ── Dev-only tools (font pickers + landing drag) ─────────────────────────
+   Markup only rendered under `import.meta.env.DEV`; these styles are inert
+   in production because the elements never exist there. */
+#test-controls {
+  position: fixed;
+  bottom: 1rem;
+  left: 14rem;            /* just past the title column */
+  z-index: 100;
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(240,240,240,0.95);
+  font-family: monospace;
+  font-size: 0.65rem;
+}
+#test-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+#test-controls input[type="text"] {
+  width: 11rem;
+  font-family: monospace;
+  font-size: 0.6rem;
+  padding: 0.2rem 0.3rem;
+  border: 1px solid #ccc;
+}
+#drag-tool {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  background: #1c1c1c;
+  color: var(--yellow);
+  font-family: monospace;
+  font-size: 0.7rem;
+  border-radius: 4px;
+  white-space: pre;
+}
+#drag-toggle {
+  background: #5200ff;
+  color: #fff;
+  border: none;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 0.7rem;
+  border-radius: 3px;
+}
+#drag-toggle.active { background: #f80d0d; }
+.drag-active { cursor: grab !important; outline: 2px dashed #5200ff; }
+.drag-active:active { cursor: grabbing !important; }
+
+/* ── Instant page transitions ─────────────────────────────────────────────
+   <ClientRouter /> applies a default cross-fade to the whole document on
+   navigation. Disable it so the swap is immediate — the persistent nav and
+   marquee stay put, the content area changes in a single frame, and the
+   typing reveal then plays on the fresh content. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
