@@ -6,20 +6,18 @@ category: "Product Design"
 tags: ["Batch Production", "Lighting", "Acrylic", "Woodwork", "Metalwork", "Corian", "Laser Cutting"]
 order: 3
 ---
-
 <div class="hero-trio">
   <img src="/images/exploration/hero-wooden.jpg" alt="Wooden sandwich lamp glowing, with knurled bolts on a larch top" />
   <img src="/images/exploration/hero-metal.jpg" alt="Stainless steel sandwich lamp with knurled bolts and a toggle switch" />
   <img src="/images/exploration/hero-corian.jpg" alt="Jade Corian sandwich lamp lit from within its acrylic layer" />
 </div>
-
-The brief was batch production: design and make ten products to sell at the next Bovey Tracey craft fair. The knowledge that the objects would actually be sold set a high bar, while the requirement to make ten of them kept the design grounded in what could realistically be repeated.
+Sandwich Lamp refers to a series of lamps I made for a batch production module in university. 4 lamps were made in total: 3 square, and one long lamp created from offcuts. The lamp explores how light and layered acrylic interact, as well as the construction of simple geometrical forms.
 
 ## Initial ideas
 
-The starting point was a CNC carving — a topographical map cut into plywood, with light bouncing off the relief. That idea quickly folded into a broader interest: the relationship between layered acrylic and light. An early test cube was built from sheets of acrylic bonded with a plastic-weld chemical, sanded down, then sandblasted — a technique left over from a previous steam-bending project that I had never actually used.
+In a previous project, a test cube was built from sheets of acrylic bonded with a plastic-weld chemical, sanded down, then sandblasted. The cube interacted with light in a fascinating way, making me curious of the possibilities of layered acrylic.
 
-The cube was modelled in Rhino, layer by layer. Originally 100mm across, it grew to 200mm to better suit a traditional bulb — but doubling the size doubled the number of 5mm layers from sixteen to thirty-two. Across ten lamps that meant more than three hundred panels of acrylic. At roughly £12 for a 600 × 600 × 5mm sheet, a single 200mm lamp worked out at nearly £43 in material alone — far too high for one of ten units. Downsizing fixed it: at 120mm the same lamp cost under £10, and the design was rescaled accordingly.
+The cube was modelled in Rhino, before being sliced into layers. Originally 100mm across, it grew to 200mm to better suit a traditional bulb — but doubling the size doubled the number of 5mm layers from sixteen to thirty-two. Across ten lamps that meant more than three hundred panels of acrylic. At roughly £12 for a 600 × 600 × 5mm sheet, a single 200mm lamp worked out at nearly £43 in material alone — far too high for one of ten units. Downsizing fixed it: at 120mm the same lamp cost under £10, and the design was rescaled accordingly.
 
 ## Research
 
