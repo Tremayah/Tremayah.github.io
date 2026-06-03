@@ -46,10 +46,15 @@ function runTyping(container: HTMLElement): void {
       }
       node.parentNode?.replaceChild(frag, node);
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-      // Skip image grids — wrapping their whitespace text nodes in spans
-      // would create stray grid items and break the layout.
+      // Skip image containers — wrapping their whitespace text nodes in spans
+      // would create stray grid/slide items and break the layout.
       const cls = (node as Element).classList;
-      if (cls?.contains('img-grid') || cls?.contains('hero-pair')) return;
+      if (
+        cls?.contains('img-grid') ||
+        cls?.contains('hero-pair') ||
+        cls?.contains('hero-trio') ||
+        cls?.contains('carousel')
+      ) return;
       Array.from(node.childNodes).forEach(walk);
     }
   };
@@ -108,6 +113,65 @@ function updateActiveNav(): void {
 /* ── Reset the inner scroll container on each navigation ─────────────── */
 function resetScroll(): void {
   document.querySelector('.content-col')?.scrollTo({ top: 0 });
+}
+
+/* ── Carousels (per page) ────────────────────────────────────────────────
+   Turns each <div class="carousel"><img/>…</div> into a one-at-a-time
+   scroll-snap slider with prev/next buttons and a counter. Idempotent: a
+   carousel is only enhanced once (guarded by data-car-init). */
+function initCarousels(): void {
+  document.querySelectorAll<HTMLElement>('.carousel').forEach((car) => {
+    if (car.dataset.carInit) return;
+    const imgs = Array.from(car.querySelectorAll<HTMLImageElement>(':scope > img'));
+    if (imgs.length === 0) return;
+    car.dataset.carInit = '1';
+
+    // Move the images into a scroll-snap track
+    const track = document.createElement('div');
+    track.className = 'carousel-track';
+    imgs.forEach((img) => {
+      const slide = document.createElement('div');
+      slide.className = 'carousel-slide';
+      slide.appendChild(img);
+      track.appendChild(slide);
+    });
+    car.appendChild(track);
+
+    const mkBtn = (cls: string, label: string, glyph: string): HTMLButtonElement => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = `carousel-btn ${cls}`;
+      b.setAttribute('aria-label', label);
+      b.textContent = glyph;
+      return b;
+    };
+    const prev = mkBtn('carousel-prev', 'Previous image', '‹');
+    const next = mkBtn('carousel-next', 'Next image', '›');
+    const counter = document.createElement('div');
+    counter.className = 'carousel-counter';
+    counter.textContent = `1 / ${imgs.length}`;
+    car.append(prev, next, counter);
+
+    let idx = 0;
+    const setCounter = () => { counter.textContent = `${idx + 1} / ${imgs.length}`; };
+    const go = (i: number) => {
+      idx = (i + imgs.length) % imgs.length;
+      track.scrollTo({ left: track.clientWidth * idx, behavior: 'smooth' });
+      setCounter();
+    };
+    prev.addEventListener('click', () => go(idx - 1));
+    next.addEventListener('click', () => go(idx + 1));
+
+    // Keep the counter in sync when the user swipes/scrolls manually
+    let raf = 0;
+    track.addEventListener('scroll', () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const i = Math.round(track.scrollLeft / track.clientWidth);
+        if (i !== idx) { idx = i; setCounter(); }
+      });
+    });
+  });
 }
 
 /* ── Lightbox (bound once) ───────────────────────────────────────────── */
@@ -317,6 +381,7 @@ function onPageLoad(): void {
   // has neither, so it never types — exactly as before.
   const typeTarget = document.querySelector<HTMLElement>('.project-report, .prose-area');
   if (typeTarget) runTyping(typeTarget);
+  initCarousels();
 }
 
 // Fires on the initial load and after every <ClientRouter /> navigation.

@@ -15,10 +15,17 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+
+// Projects that use the enlarged-body + drop-cap "feature" layout.
+// Add a project id here to give its page the keycaps-style treatment.
+const FEATURE = ['keycaps', 'exploration'];
+const reportClass = ['project-report', FEATURE.includes(entry.id) && 'report--feature']
+  .filter(Boolean)
+  .join(' ');
 ---
 
 <SiteLayout title={`${entry.data.title} — Raphael Murray-Browne`} description={entry.data.description}>
-  <article class="project-report" data-project={entry.id}>
+  <article class={reportClass} data-project={entry.id}>
     <p class="project-desc">{entry.data.description}</p>
     <div class="project-body">
       <Content />

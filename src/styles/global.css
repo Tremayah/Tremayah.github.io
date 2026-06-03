@@ -267,8 +267,90 @@ html, body {
   cursor: zoom-in;
 }
 
-/* ── Keycaps: enlarged body + drop-cap headers ─────────────
-   Scoped to [data-project="keycaps"] while experimenting.
+/* ── Hero trio: 3-up landscape (3:2) ────────────────
+   Like .hero-pair but three across — e.g. one image per product line. */
+.hero-trio {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+}
+.hero-trio img {
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  width: 100%;
+  margin: 0;
+  display: block;
+  cursor: zoom-in;
+}
+
+/* ── Carousel: one-at-a-time slider for >3 images ───────────────────────────
+   Authored in Markdown as <div class="carousel"><img/>…</div>; site.ts wraps
+   the images in a scroll-snap track and adds the buttons + counter. Works
+   without JS too (it degrades to a horizontally scrollable strip). */
+.carousel {
+  position: relative;
+  margin: 1.5rem 0;
+  clear: both;
+}
+.carousel-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.carousel-track::-webkit-scrollbar { display: none; }
+.carousel-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+}
+.carousel-slide img,
+.carousel > img {           /* > img: pre-JS / no-JS fallback */
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  display: block;
+  margin: 0;
+  cursor: zoom-in;
+}
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.4rem;
+  height: 2.4rem;
+  border: none;
+  background: rgba(28, 28, 28, 0.55);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+.carousel-btn:hover { background: var(--accent); }
+.carousel-prev { left: 0.4rem; }
+.carousel-next { right: 0.4rem; }
+.carousel-counter {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  background: rgba(28, 28, 28, 0.55);
+  color: #fff;
+  font-family: var(--body-font);
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 0.25rem 0.45rem;
+}
+
+/* ── Feature report: enlarged body + drop-cap headers ──────
+   Applied to projects listed in FEATURE in [slug].astro (e.g. keycaps,
+   exploration). Add a project id there to give it this treatment.
    Drop-cap maths:
      body line height  2rem × 1.2 = 2.4rem
      body half-leading (2rem × 0.2) / 2 = 0.2rem above chars
@@ -276,28 +358,28 @@ html, body {
      float footprint   0.2rem + 4rem = 4.2rem
      line 2 top 2.4rem < 4.2rem → wraps ✓
      line 3 top 4.8rem > 4.2rem → full width ✓  */
-[data-project="keycaps"].project-report {
+.project-report.report--feature {
   padding: 0.55rem 0.4rem 1.5rem clamp(0.75rem, 3vw, 1.875rem);
 }
-[data-project="keycaps"] .project-desc {
+.report--feature .project-desc {
   font-size: 2rem;        /* normal body size; stays black */
   line-height: 1.4;
   margin-bottom: 1.5rem;
 }
-[data-project="keycaps"] .project-body {
+.report--feature .project-body {
   font-size: 2rem;
   line-height: 1.2;
 }
-[data-project="keycaps"] .project-body p {
+.report--feature .project-body p {
   text-align: justify;
   hyphens: auto;
 }
-[data-project="keycaps"] .project-body::after {
+.report--feature .project-body::after {
   content: '';
   display: table;
   clear: both;
 }
-[data-project="keycaps"] .project-body h2 {
+.report--feature .project-body h2 {
   float: left;
   clear: both;            /* each header clears the previous section's float */
   font-size: 4rem;
