@@ -11,6 +11,7 @@ order: 3
   <img src="/images/exploration/hero-metal.jpg" alt="Stainless steel sandwich lamp with knurled bolts and a toggle switch" />
   <img src="/images/exploration/hero-corian.jpg" alt="Jade Corian sandwich lamp lit from within its acrylic layer" />
 </div>
+
 Sandwich Lamp refers to a series of lamps I made for a batch production module in university. 4 lamps were made in total: 3 square, and one long lamp created from offcuts. The lamp explores how light and layered acrylic interact, as well as the construction of simple geometrical forms.
 
 ## Initial ideas

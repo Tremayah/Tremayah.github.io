@@ -5,8 +5,14 @@
  * Bidirectional sync between src/content/projects/*.md and the
  * "Plain Text" folder in the Personal Projects directory.
  *
+ * txt FORMAT (what you edit):
+ *   [BLACK]   <text>   — the project description (shown in black at the top of the page)
+ *   [DROPCAP] HEADING  — section heading in a feature project (large floating drop-cap letter)
+ *   [SECTION] HEADING  — section heading in a standard project
+ *   (plain text)       — body prose (shown in red on the page)
+ *
  * Directions:
- *   md  →  txt  (export):  strip formatting, write clean prose files
+ *   md  →  txt  (export):  strip formatting, tag styled text, write txt files
  *   txt →  md   (import):  sync user edits back into the md, preserving
  *                          all structure (images, carousels, grids, etc.)
  *
@@ -14,6 +20,7 @@
  *   1. Detects any txt files the user edited (mtime > last export timestamp)
  *   2. Imports those back into the md and `git add`s the md
  *   3. Exports all md → txt and refreshes timestamps
+ *   4. If any files were synced, writes .pending-review and warns to review formatting
  *
  * Usage (manual):
  *   node scripts/export-plain-text.js          # export only
@@ -31,24 +38,35 @@ const ROOT       = join(__dirname, '..');
 const SRC        = join(ROOT, 'src/content/projects');
 const DEST       = '/Users/raphael/Documents/Personal Projects/Portfolio Website (git)/Plain Text';
 const CACHE_FILE = join(DEST, '.export-times.json');
+const REVIEW_FILE = join(DEST, '.pending-review');
+
+// Projects that use the enlarged-body + drop-cap "feature" layout.
+// Keep in sync with the FEATURE array in src/pages/[slug].astro.
+const FEATURE = new Set(['keycaps', 'exploration']);
 
 // ── Timestamp cache ───────────────────────────────────────────────────────────
 
 async function loadCache() {
-  try {
-    return JSON.parse(await readFile(CACHE_FILE, 'utf8'));
-  } catch {
-    return {};
-  }
+  try { return JSON.parse(await readFile(CACHE_FILE, 'utf8')); }
+  catch { return {}; }
 }
-
 async function saveCache(cache) {
   await writeFile(CACHE_FILE, JSON.stringify(cache, null, 2), 'utf8');
 }
 
 // ── md → txt (export) ─────────────────────────────────────────────────────────
 
-function stripMarkdownToPlainText(raw) {
+function extractFrontmatterField(raw, field) {
+  const m = raw.match(new RegExp(`^---[\\s\\S]*?\\n${field}:\\s*"([^"]*)"[\\s\\S]*?---`, 'm'));
+  return m ? m[1] : null;
+}
+
+function stripMarkdownToPlainText(raw, slug) {
+  const isFeature = FEATURE.has(slug);
+
+  // ── Extract description from frontmatter for [BLACK] line ─────────────────
+  const description = extractFrontmatterField(raw, 'description');
+
   let text = raw;
 
   // Remove YAML frontmatter
@@ -59,32 +77,29 @@ function stripMarkdownToPlainText(raw) {
   text = text.replace(/<br\s*\/?>/gi,    '\n');
   text = text.replace(/<hr\s*\/?>/gi,    '');
 
-  // Remove block-level HTML containers (keep inner content — handled next)
-  text = text.replace(/<(div|aside|figure|section)[^>]*>/gi,  '');
-  text = text.replace(/<\/(div|aside|figure|section)>/gi,     '');
+  // Remove block-level HTML containers (keep inner content)
+  text = text.replace(/<(div|aside|figure|section)[^>]*>/gi, '');
+  text = text.replace(/<\/(div|aside|figure|section)>/gi,    '');
 
   // Remove any remaining HTML tags
   text = text.replace(/<[^>]+>/g, '');
 
   // Decode common HTML entities
-  text = text.replace(/&amp;/g,  '&')
-             .replace(/&lt;/g,   '<')
-             .replace(/&gt;/g,   '>')
-             .replace(/&quot;/g, '"')
-             .replace(/&#039;/g, "'");
+  text = text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+             .replace(/&quot;/g, '"').replace(/&#039;/g, "'");
 
-  // Remove markdown images BEFORE processing links (otherwise the link regex
-  // eats the [alt](url) part and leaves a stray "!" character)
+  // Remove markdown images BEFORE links (link regex eats [alt](url), leaving stray !)
   text = text.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
 
-  // Convert markdown headings → UPPERCASE plain labels
-  text = text.replace(/^#{1,6}\s+(.+)$/gm, (_, title) => title.toUpperCase());
+  // Convert markdown headings → tagged labels
+  const headingTag = isFeature ? '[DROPCAP]' : '[SECTION]';
+  text = text.replace(/^#{1,6}\s+(.+)$/gm, (_, title) =>
+    `${headingTag} ${title.toUpperCase()}`
+  );
 
   // Remove bold / italic markers
-  text = text.replace(/\*{3}(.+?)\*{3}/g, '$1')
-             .replace(/\*{2}(.+?)\*{2}/g, '$1')
-             .replace(/\*(.+?)\*/g,        '$1')
-             .replace(/_(.+?)_/g,          '$1');
+  text = text.replace(/\*{3}(.+?)\*{3}/g, '$1').replace(/\*{2}(.+?)\*{2}/g, '$1')
+             .replace(/\*(.+?)\*/g, '$1').replace(/_(.+?)_/g, '$1');
 
   // Remove markdown links, keep visible text
   text = text.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
@@ -92,7 +107,7 @@ function stripMarkdownToPlainText(raw) {
   // Remove horizontal rules
   text = text.replace(/^[-*_]{3,}\s*$/gm, '');
 
-  // Collapse consecutive blank lines to a single blank line
+  // Collapse consecutive blank lines to one
   const lines = text.split('\n').map(l => l.trimEnd());
   const collapsed = [];
   let lastBlank = false;
@@ -102,8 +117,14 @@ function stripMarkdownToPlainText(raw) {
     collapsed.push(line);
     lastBlank = blank;
   }
+  text = collapsed.join('\n').trim();
 
-  return collapsed.join('\n').trim();
+  // Prepend the [BLACK] description at the very top
+  if (description) {
+    text = `[BLACK] ${description}\n\n${text}`;
+  }
+
+  return text;
 }
 
 // ── txt → md (import) ─────────────────────────────────────────────────────────
@@ -113,38 +134,50 @@ function stripMarkdownToPlainText(raw) {
  * return an updated md that incorporates the prose changes while
  * preserving all structure (images, carousels, grids, frontmatter).
  */
-function rebuildMdFromTxt(originalMd, newTxt) {
-  // ── 1. Preserve frontmatter verbatim ──────────────────────────────────────
-  const fmMatch = originalMd.match(/^(---[\s\S]*?---\n)/);
+function rebuildMdFromTxt(originalMd, newTxt, slug) {
+  // ── 1. Handle [BLACK] description ─────────────────────────────────────────
+  const blackMatch = newTxt.match(/^\[BLACK\]\s+(.+?)(?:\n|$)/);
+  let updatedMd = originalMd;
+  let txtBody   = newTxt;
+
+  if (blackMatch) {
+    const newDesc = blackMatch[1].trim();
+    // Update description in frontmatter
+    updatedMd = updatedMd.replace(
+      /(^---[\s\S]*?\ndescription:\s*)"[^"]*"([\s\S]*?---)/m,
+      `$1"${newDesc}"$2`
+    );
+    // Remove [BLACK] line from the txt so the rest parses as body prose
+    txtBody = newTxt.slice(blackMatch[0].length).replace(/^\n+/, '');
+  }
+
+  // ── 2. Preserve frontmatter verbatim ──────────────────────────────────────
+  const fmMatch = updatedMd.match(/^(---[\s\S]*?---\n)/);
   const frontmatter = fmMatch ? fmMatch[1] : '';
-  const mdBody      = originalMd.slice(frontmatter.length);
+  const mdBody      = updatedMd.slice(frontmatter.length);
 
-  // ── 2. Split md body into sections separated by ## headings ───────────────
-  const mdSections = splitMdSections(mdBody);
+  // ── 3. Split md body into sections separated by ## headings ───────────────
+  const mdSections  = splitMdSections(mdBody);
 
-  // ── 3. Split txt into sections by UPPERCASE headings ──────────────────────
-  const txtSections = splitTxtSections(newTxt);
+  // ── 4. Split txt body into sections by [DROPCAP]/[SECTION] tags ───────────
+  const txtSections = splitTxtSections(txtBody);
 
   // Build lookup: normalised heading → txt prose
   const txtByKey = new Map(
     txtSections.map(s => [normaliseHeading(s.heading), s.body])
   );
 
-  // ── 4. Rebuild each md section ────────────────────────────────────────────
-  const rebuilt = mdSections.map((section, i) => {
+  // ── 5. Rebuild each md section ────────────────────────────────────────────
+  const rebuilt = mdSections.map((section) => {
     if (!section.heading) {
-      // Preamble (before first ##)
       const txtProse = txtSections[0]?.heading === '' ? txtSections[0].body : null;
       if (!txtProse) return section.raw;
-      // Preserve the trailing newlines that precede the next section heading
-      const updatedBody = updateSectionProse(section.body, txtProse);
-      return updatedBody;
+      return updateSectionProse(section.body, txtProse);
     }
-    const key = normaliseHeading(section.heading);
+    const key      = normaliseHeading(section.heading);
     const txtProse = txtByKey.get(key);
     if (txtProse === undefined) return section.raw;
     const updatedBody = updateSectionProse(section.body, txtProse);
-    // md convention: blank line before ## heading
     return '\n' + section.headingLine + '\n' + updatedBody;
   });
 
@@ -153,7 +186,7 @@ function rebuildMdFromTxt(originalMd, newTxt) {
 
 /** Split md body into sections. First entry is the preamble (heading = ''). */
 function splitMdSections(body) {
-  const lines   = body.split('\n');
+  const lines    = body.split('\n');
   const sections = [];
   let current    = { heading: '', headingLine: '', body: '', raw: '' };
   let bodyLines  = [];
@@ -169,9 +202,8 @@ function splitMdSections(body) {
   for (const line of lines) {
     const m = line.match(/^(#{1,6})\s+(.+)$/);
     if (m) {
-      flush();
-      bodyLines = [];
-      current   = { heading: m[2], headingLine: line, body: '', raw: '' };
+      flush(); bodyLines = [];
+      current = { heading: m[2], headingLine: line, body: '', raw: '' };
     } else {
       bodyLines.push(line);
     }
@@ -180,11 +212,15 @@ function splitMdSections(body) {
   return sections;
 }
 
-/** Split txt into sections. First entry covers any prose before the first heading. */
+/**
+ * Split txt body into sections.
+ * Headings are lines like: [DROPCAP] STARTING POINT  or  [SECTION] INTRO
+ * Old-style bare-uppercase lines are also accepted for backwards compat.
+ */
 function splitTxtSections(txt) {
   const lines    = txt.split('\n');
   const sections = [];
-  let current    = { heading: '', body: '' };
+  let current    = { heading: '', headingTag: '', body: '' };
   let bodyLines  = [];
 
   const flush = () => {
@@ -193,20 +229,26 @@ function splitTxtSections(txt) {
   };
 
   for (const line of lines) {
-    // An uppercase-only line (letters, spaces, &, /, ,, -, ', digits) = heading
-    if (/^[A-Z][A-Z0-9\s&,'\/\-]+$/.test(line.trim()) && line.trim().length > 2) {
-      flush();
-      bodyLines = [];
-      current   = { heading: line.trim(), body: '' };
-    } else {
-      bodyLines.push(line);
+    // Tagged heading: [DROPCAP] HEADING  or  [SECTION] HEADING
+    const taggedMatch = line.match(/^\[(DROPCAP|SECTION)\]\s+(.+)$/);
+    if (taggedMatch) {
+      flush(); bodyLines = [];
+      current = { heading: taggedMatch[2].trim(), headingTag: taggedMatch[1], body: '' };
+      continue;
     }
+    // Legacy bare-uppercase heading (backwards compat)
+    if (/^[A-Z][A-Z0-9\s&,'\/\-]+$/.test(line.trim()) && line.trim().length > 2) {
+      flush(); bodyLines = [];
+      current = { heading: line.trim(), headingTag: '', body: '' };
+      continue;
+    }
+    bodyLines.push(line);
   }
   flush();
   return sections;
 }
 
-/** "INITIAL IDEAS" → "initial ideas" (for matching with md heading "Initial ideas") */
+/** Normalise heading text for section matching: "INITIAL IDEAS" ↔ "Initial ideas" */
 function normaliseHeading(h) {
   return (h || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 }
@@ -217,54 +259,34 @@ function normaliseHeading(h) {
  * but unchanged structure (img grids, carousels, hero divs, etc.).
  */
 function updateSectionProse(mdBody, newProseFlat) {
-  // Parse body into alternating prose / structure chunks
-  const chunks = parseMdChunks(mdBody);
-
-  // Extract the original prose chunks (normalised for comparison)
+  const chunks      = parseMdChunks(mdBody);
   const proseChunks = chunks.filter(c => !c.isStructure);
   const origProse   = proseChunks.map(c => c.lines.join('\n').trim());
   const origFlat    = origProse.join('\n\n');
 
-  // If unchanged, return as-is
   if (normaliseForCompare(origFlat) === normaliseForCompare(newProseFlat)) {
-    return mdBody;
+    return mdBody; // unchanged
   }
 
-  // Split the new flat prose into paragraphs
-  const newParas = splitParagraphs(newProseFlat);
-
-  // Distribute new paragraphs across the prose chunks using fuzzy matching
+  const newParas    = splitParagraphs(newProseFlat);
   const distributed = distributeParagraphs(origProse, newParas);
 
-  // Reconstruct: replace prose chunk text while preserving the surrounding
-  // blank-line separators exactly as they were in the original body.
   let proseIdx = 0;
-  let result   = mdBody;
-
-  // Work backwards through the chunks so offsets stay valid
   const rebuiltParts = [];
   for (const chunk of chunks) {
     if (chunk.isStructure) {
       rebuiltParts.push(chunk.raw);
     } else {
-      const updated = distributed[proseIdx++] ?? '';
-      // Preserve leading/trailing blank lines from the original prose chunk
-      const origRaw    = chunk.raw;
-      const leadBlanks = origRaw.match(/^\n*/)?.[0] ?? '';
-      const trailBlanks = origRaw.match(/\n*$/)?.[0] ?? '';
+      const updated     = distributed[proseIdx++] ?? '';
+      const leadBlanks  = chunk.raw.match(/^\n*/)?.[0]  ?? '';
+      const trailBlanks = chunk.raw.match(/\n*$/)?.[0]  ?? '';
       rebuiltParts.push(leadBlanks + updated + trailBlanks);
     }
   }
-
-  result = rebuiltParts.join('');
-  return result;
+  return rebuiltParts.join('');
 }
 
-/**
- * Parse a section body into alternating prose and structure blocks.
- * Each chunk carries its original raw text so we can reconstruct
- * the document without losing blank-line separators.
- */
+/** Parse a section body into alternating prose / structure blocks. */
 function parseMdChunks(body) {
   const lines  = body.split('\n');
   const chunks = [];
@@ -273,13 +295,7 @@ function parseMdChunks(body) {
 
   const push = () => {
     if (cur.lines.length > 0) {
-      // Preserve the raw text for structure blocks; extract prose text for prose blocks
-      chunks.push({
-        isStructure: cur.isStructure,
-        lines: cur.lines,
-        // raw = what to emit unchanged if nothing changed
-        raw: cur.lines.join('\n'),
-      });
+      chunks.push({ isStructure: cur.isStructure, lines: cur.lines, raw: cur.lines.join('\n') });
     }
     cur = { isStructure: false, lines: [] };
   };
@@ -287,27 +303,18 @@ function parseMdChunks(body) {
   for (const line of lines) {
     const openMatch = line.match(/^\s*<(div|aside|figure|section)(\s[^>]*)?>$/);
     if (openMatch && depth === 0) {
-      push();
-      cur = { isStructure: true, lines: [line] };
-      depth = 1;
-      continue;
+      push(); cur = { isStructure: true, lines: [line] }; depth = 1; continue;
     }
-
     if (depth > 0) {
       cur.lines.push(line);
-      const opens  = (line.match(/<(div|aside|figure|section)(\s[^>]*)?>/g) || []).length;
-      const closes = (line.match(/<\/(div|aside|figure|section)>/g)          || []).length;
-      depth += opens - closes;
+      depth += (line.match(/<(div|aside|figure|section)(\s[^>]*)?>/g) || []).length;
+      depth -= (line.match(/<\/(div|aside|figure|section)>/g)          || []).length;
       if (depth <= 0) { depth = 0; push(); }
       continue;
     }
-
     if (/^!\[[^\]]*\]\([^)]*\)/.test(line) || /^<img[^>]*\/?>/.test(line)) {
-      push();
-      chunks.push({ isStructure: true, lines: [line], raw: line });
-      continue;
+      push(); chunks.push({ isStructure: true, lines: [line], raw: line }); continue;
     }
-
     if (cur.isStructure) push();
     cur.lines.push(line);
   }
@@ -315,74 +322,42 @@ function parseMdChunks(body) {
   return chunks;
 }
 
-/** Split flat prose text into paragraph strings. */
 function splitParagraphs(text) {
-  return text
-    .split(/\n\n+/)
-    .map(p => p.trim())
-    .filter(Boolean);
+  return text.split(/\n\n+/).map(p => p.trim()).filter(Boolean);
 }
 
-/**
- * Distribute newParas across origProse zones.
- *
- * Strategy: for each original prose zone, find the paragraphs in newParas
- * that best correspond to it using fuzzy similarity.  The last zone absorbs
- * any additions or removals.
- */
 function distributeParagraphs(origZones, newParas) {
   if (origZones.length === 0) return [];
   if (origZones.length === 1) return [newParas.join('\n\n')];
 
-  // Build an N×M similarity matrix (orig paras vs new paras)
-  const origParas = origZones.flatMap(z => splitParagraphs(z));
-  const sim = buildSimilarityMatrix(origParas, newParas);
-
-  // Greedy forward pass: assign each new para to the orig para it's most similar to
-  const assignments = assignParas(origParas, newParas, sim);
-
-  // Group by which orig zone each new para belongs to
+  const origParas      = origZones.flatMap(z => splitParagraphs(z));
+  const sim            = origParas.map(op => newParas.map(np => jaccardSimilarity(op, np)));
+  const assignments    = assignParas(origParas, newParas, sim);
   const origCumulative = cumulative(origZones.map(z => splitParagraphs(z).length));
-  const zones = origZones.map(() => []);
+  const zones          = origZones.map(() => []);
 
   newParas.forEach((para, ni) => {
-    const oi = assignments[ni]; // which orig para index
-    // Find which zone this orig para belonged to
+    const oi      = assignments[ni];
     const zoneIdx = origCumulative.findIndex(cum => oi < cum);
     zones[zoneIdx >= 0 ? zoneIdx : zones.length - 1].push(para);
   });
-
   return zones.map(z => z.join('\n\n'));
 }
 
-function buildSimilarityMatrix(orig, next) {
-  return orig.map(op =>
-    next.map(np => jaccardSimilarity(op, np))
-  );
-}
-
-/** Assign each new paragraph to the closest original paragraph (greedy, forward). */
 function assignParas(orig, next, sim) {
   const assignments = new Array(next.length).fill(0);
   let origPtr = 0;
-
   for (let ni = 0; ni < next.length; ni++) {
-    // Find the best orig match from origPtr onwards
-    let bestScore = -1;
-    let bestOi    = origPtr;
+    let bestScore = -1, bestOi = origPtr;
     for (let oi = origPtr; oi < orig.length; oi++) {
       if (sim[oi][ni] > bestScore) { bestScore = sim[oi][ni]; bestOi = oi; }
     }
     assignments[ni] = bestOi;
-    // If this new para closely matches an orig para, advance the pointer
-    if (bestScore > 0.4 && bestOi === origPtr && origPtr < orig.length - 1) {
-      origPtr++;
-    }
+    if (bestScore > 0.4 && bestOi === origPtr && origPtr < orig.length - 1) origPtr++;
   }
   return assignments;
 }
 
-/** Jaccard similarity on word sets. */
 function jaccardSimilarity(a, b) {
   const wa = new Set(a.toLowerCase().split(/\W+/).filter(Boolean));
   const wb = new Set(b.toLowerCase().split(/\W+/).filter(Boolean));
@@ -392,7 +367,6 @@ function jaccardSimilarity(a, b) {
   return union === 0 ? 0 : inter / union;
 }
 
-/** Cumulative sums, e.g. [2,3,1] → [2,5,6] */
 function cumulative(arr) {
   let s = 0;
   return arr.map(n => { s += n; return s; });
@@ -407,16 +381,13 @@ function normaliseForCompare(s) {
 async function exportAll(cache) {
   await mkdir(DEST, { recursive: true });
   const files = (await readdir(SRC)).filter(f => f.endsWith('.md'));
-  const now   = Date.now();
 
   for (const file of files) {
     const slug    = basename(file, '.md');
     const outPath = join(DEST, slug + '.txt');
     const raw     = await readFile(join(SRC, file), 'utf8');
-    const txt     = stripMarkdownToPlainText(raw);
+    const txt     = stripMarkdownToPlainText(raw, slug);
     await writeFile(outPath, txt, 'utf8');
-    // Record the file's actual mtime AFTER the write so the comparison
-    // `txtMtime <= lastExport` is exact rather than relying on Date.now().
     cache[slug] = (await stat(outPath)).mtimeMs;
     console.log(`  ✓  ${file}  →  ${slug}.txt`);
   }
@@ -424,44 +395,40 @@ async function exportAll(cache) {
 
 async function importChanged(cache) {
   await mkdir(DEST, { recursive: true });
-  const files = (await readdir(SRC)).filter(f => f.endsWith('.md'));
-  let changed  = 0;
+  const files   = (await readdir(SRC)).filter(f => f.endsWith('.md'));
+  const synced  = [];
 
   for (const file of files) {
     const slug    = basename(file, '.md');
     const txtPath = join(DEST, slug + '.txt');
     const mdPath  = join(SRC, file);
 
-    if (!existsSync(txtPath)) continue; // no txt file yet
+    if (!existsSync(txtPath)) continue;
 
     const lastExport = cache[slug] ?? 0;
-    const txtStat    = await stat(txtPath);
-    const txtMtime   = txtStat.mtimeMs;
-
-    // Only sync if the txt was modified after we last exported it
+    const txtMtime   = (await stat(txtPath)).mtimeMs;
     if (txtMtime <= lastExport) continue;
 
     const originalMd = await readFile(mdPath, 'utf8');
     const newTxt     = await readFile(txtPath, 'utf8');
+    const updatedMd  = rebuildMdFromTxt(originalMd, newTxt, slug);
 
-    const updatedMd  = rebuildMdFromTxt(originalMd, newTxt);
     if (updatedMd === originalMd) {
       console.log(`  ○  ${slug}.txt  unchanged prose, skipping`);
       continue;
     }
 
     await writeFile(mdPath, updatedMd, 'utf8');
-    // Stage the md so it's included in the current commit
     try {
       execSync(`git -C "${ROOT}" add "${mdPath}"`, { stdio: 'inherit' });
     } catch {
       console.warn(`  !  Could not git-add ${file} — stage it manually`);
     }
     console.log(`  ↑  ${slug}.txt  →  ${file}  (synced + staged)`);
-    changed++;
+    synced.push(slug);
   }
 
-  return changed;
+  return synced;
 }
 
 // ── Entry point ───────────────────────────────────────────────────────────────
@@ -472,16 +439,45 @@ async function main() {
 
   const cache = await loadCache();
 
+  let synced = [];
   if (doSync) {
-    const n = await importChanged(cache);
-    if (n > 0) console.log(`\nImported ${n} edited file(s) into md.\n`);
+    synced = await importChanged(cache);
+    if (synced.length > 0) {
+      console.log(`\nImported ${synced.length} edited file(s) into md.\n`);
+    }
   }
 
   console.log('Exporting md → txt...');
   await exportAll(cache);
   await saveCache(cache);
 
+  // Write .pending-review if any files were synced
+  if (synced.length > 0) {
+    const timestamp = new Date().toISOString();
+    const reviewContent = [
+      `Synced at: ${timestamp}`,
+      `Files: ${synced.join(', ')}`,
+      '',
+      'Ask Claude to check formatting and correct any issues.',
+    ].join('\n');
+    await writeFile(REVIEW_FILE, reviewContent, 'utf8');
+  } else {
+    // Clear any previous review request once nothing needs reviewing
+    if (existsSync(REVIEW_FILE)) {
+      // Leave it in place — only Claude should clear it after reviewing
+    }
+  }
+
   console.log(`\nDone. Plain Text folder:\n  ${DEST}\n`);
+  return synced;
 }
 
-main().catch(err => { console.error(err); process.exit(1); });
+main().then(synced => {
+  if (synced?.length > 0) {
+    console.log('─'.repeat(60));
+    console.log('⚠  FORMATTING REVIEW NEEDED');
+    console.log(`   ${synced.join(', ')} was synced from txt → md.`);
+    console.log('   Ask Claude to check formatting before the next deploy.');
+    console.log('─'.repeat(60));
+  }
+}).catch(err => { console.error(err); process.exit(1); });
