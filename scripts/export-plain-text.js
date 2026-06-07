@@ -41,7 +41,7 @@
  *   node scripts/export-plain-text.js --sync   # import changed, then export
  */
 
-import { readdir, readFile, writeFile, mkdir, stat } from 'fs/promises';
+import { readdir, readFile, writeFile, mkdir, stat, rm } from 'fs/promises';
 import { existsSync }                                  from 'fs';
 import { join, basename }                              from 'path';
 import { fileURLToPath }                               from 'url';
@@ -526,6 +526,22 @@ async function exportAll(cache) {
   }
 }
 
+/** Remove .txt files whose source .md no longer exists (deleted projects). */
+async function pruneOrphans(cache) {
+  const slugs = new Set(
+    (await readdir(SRC)).filter(f => f.endsWith('.md')).map(f => basename(f, '.md'))
+  );
+  const txtFiles = (await readdir(DEST)).filter(f => f.endsWith('.txt'));
+  for (const txt of txtFiles) {
+    const slug = basename(txt, '.txt');
+    if (!slugs.has(slug)) {
+      await rm(join(DEST, txt));
+      delete cache[slug];
+      console.log(`  ✗  removed orphan ${txt} (source .md deleted)`);
+    }
+  }
+}
+
 async function importChanged(cache) {
   await mkdir(DEST, { recursive: true });
   const files       = (await readdir(SRC)).filter(f => f.endsWith('.md'));
@@ -586,6 +602,7 @@ async function main() {
 
   console.log('Exporting md → txt...');
   await exportAll(cache);
+  await pruneOrphans(cache);
   await saveCache(cache);
 
   // Write .pending-review if there's anything to action
