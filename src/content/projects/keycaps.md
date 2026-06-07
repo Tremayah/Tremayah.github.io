@@ -4,7 +4,8 @@ description: "Ceramic and Jesmonite keycaps designed for two-part moulding, expl
 year: 2024
 category: "Product Design"
 tags: ["Ceramics", "CAD", "Prototyping", "Rhino"]
-order: 1
+order: 4
+cover: "https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/idg_20251209_132030_658.jpeg?w=1024"
 ---
 
 <div class="hero-pair">

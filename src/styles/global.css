@@ -44,17 +44,11 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Layout shell ───────────────────────────────── */
+/* ── Layout shell (project / about / contact pages) ─ */
 .layout {
   display: flex;
   height: 100dvh;
   overflow: hidden;
-  /* The 14rem marquee column carries an 11.2rem-wide letter on its right
-     edge, leaving a 2.8rem dead zone on its left. Reserving
-     (col-w − 2.8rem − 12px) lets the content column (z-index 15) sit right
-     up against the letters, overlapping that empty strip. −12px is the
-     hand-tuned gap between body text and marquee. */
-  padding-right: calc(var(--col-w) - 2.8rem - 12px);
 }
 
 /* ── Col 1: titles ──────────────────────────────── */
@@ -66,8 +60,16 @@ html, body {
   padding-top: 1rem;
   padding-bottom: 6rem;
   background: var(--col1-bg);
+  /* Slides in from the left whenever the nav is freshly mounted — i.e. when
+     arriving from the (nav-less) landing page or loading a project directly.
+     On project→project navigation the nav persists, so it does not replay. */
+  animation: nav-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .title-col::-webkit-scrollbar { display: none; }
+@keyframes nav-slide-in {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
 
 /* ── Col 2: content ─────────────────────────────── */
 .content-col {
@@ -84,45 +86,82 @@ html, body {
 }
 .content-col::-webkit-scrollbar { display: none; }
 
-/* ── Landing splash (the content of "/") ────────── */
-.landing {
+/* ── Landing grid (the content of "/") ──────────────────────────────────────
+   A responsive grid of project tiles, rendered by LandingLayout (no nav, no
+   marquee). Each tile is a cover image with the title beneath it. On hover the
+   image pales to the page background and the project overview types over it
+   (the typing is driven by site.ts). Titles use the nav font in body-red. */
+.landing-page {
+  background: var(--bg);
+}
+.landing-grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: clamp(1.5rem, 4vw, 3rem) clamp(1.25rem, 3vw, 2.5rem);
+  padding: clamp(2rem, 6vw, 5rem);
+  max-width: 100rem;
+  margin: 0 auto;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+}
+.tile-media {
   position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--bg);
+  text-decoration: none;
+}
+.tile-img {
+  width: 100%;
   height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.45s ease;
 }
-/* Positions baked from drag-tool readout at 1280×800.
-   left  = cx% of content column width
-   top   = (cy_viewport% × 800 − 16) / 688  (converts viewport% → landing-container%) */
-.landing-girl {
-  position: absolute;
-  left: 36.4%;
-  top: 65.1%;
-  transform: translate(-50%, -50%);
-  width: 14rem;
-  height: auto;
-  image-rendering: pixelated;
+/* Hover: image pales so the off-white background shows through */
+.tile-media:hover .tile-img,
+.tile-media:focus-visible .tile-img {
+  opacity: 0.15;
 }
-.landing-name {
+.tile-overview {
   position: absolute;
-  left: 63.3%;
-  top: 43.7%;
-  transform: translate(-50%, -50%);
-  font-family: 'argent-pixel-cf', sans-serif;
+  inset: 0;
+  margin: 0;
+  padding: clamp(1rem, 2.5vw, 2rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: var(--body-font);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--body-color);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.tile-media:hover .tile-overview,
+.tile-media:focus-visible .tile-overview {
+  opacity: 1;
+}
+.tile-name {
+  margin-top: 0.7rem;
+  width: fit-content;
+  font-family: var(--nav-font);
   font-weight: 700;
-  font-size: 2.25rem;
-  color: var(--fg);
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
   line-height: 1.1;
-  white-space: nowrap;
+  color: var(--body-color);
+  text-decoration: none;
+  text-transform: lowercase;
 }
-.landing-sub {
-  position: absolute;
-  left: 54.1%;
-  top: 53.4%;
-  transform: translate(-50%, -50%);
-  font-family: 'lores-12-narrow', sans-serif;
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: var(--fg);
-  line-height: 1.6;
+.tile-name:hover,
+.tile-name:focus-visible {
+  font-style: italic;
 }
 
 /* ── Title triggers (now <a> links) ─────────────── */

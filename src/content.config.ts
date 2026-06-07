@@ -10,6 +10,9 @@ const projects = defineCollection({
     category: z.string(),
     tags: z.array(z.string()).optional().default([]),
     order: z.number().optional().default(99),
+    // Landing-page tile image. Projects without a cover are hidden from the
+    // landing grid and the nav (e.g. placeholder stubs).
+    cover: z.string().optional(),
   }),
 });
 

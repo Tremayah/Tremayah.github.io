@@ -6,9 +6,11 @@
     paint; site.ts keeps it in sync on subsequent client-side navigations. */
 import { getCollection } from 'astro:content';
 
-const projects = (await getCollection('projects')).sort(
-  (a, b) => (a.data.order ?? 99) - (b.data.order ?? 99)
-);
+// Only list projects that appear on the landing (those with a cover image),
+// so placeholder stubs stay out of the nav.
+const projects = (await getCollection('projects'))
+  .filter((p) => p.data.cover)
+  .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
 
 const normalize = (p: string) => p.replace(/\/+$/, '') || '/';
 const here = normalize(Astro.url.pathname);

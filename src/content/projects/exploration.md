@@ -4,7 +4,8 @@ description: "A batch-production module: ten lamps for the Bovey Tracey craft fa
 year: 2026
 category: "Product Design"
 tags: ["Batch Production", "Lighting", "Acrylic", "Woodwork", "Metalwork", "Corian", "Laser Cutting"]
-order: 3
+order: 5
+cover: "/images/exploration/hero-metal.jpg"
 ---
 <div class="hero-trio">
   <img src="/images/exploration/hero-wooden.jpg" alt="Wooden sandwich lamp glowing, with knurled bolts on a larch top" />

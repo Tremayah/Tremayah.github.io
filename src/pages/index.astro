@@ -1,12 +1,28 @@
 ---
-/*  "/" — the landing splash (pixel girl + name). */
-import SiteLayout from '../layouts/SiteLayout.astro';
+/*  "/" — the visual landing grid.
+
+    A clean grid of project tiles: cover image with the title beneath it.
+    On hover the image pales and a short overview types over it (handled in
+    site.ts). Clicking the image or the title opens that project's page.
+    Only projects that declare a `cover` appear here. */
+import LandingLayout from '../layouts/LandingLayout.astro';
+import { getCollection } from 'astro:content';
+
+const projects = (await getCollection('projects'))
+  .filter((p) => p.data.cover)
+  .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
 ---
 
-<SiteLayout title="Raphael Murray-Browne">
-  <div class="landing">
-    <img class="landing-girl" src="/girl.svg" alt="" aria-hidden="true" />
-    <p class="landing-name">Raphael Murray Browne</p>
-    <p class="landing-sub">3rd Year Product &amp; Furniture<br />Design Student<br />University of Plymouth, UK</p>
-  </div>
-</SiteLayout>
+<LandingLayout title="Raphael Murray-Browne">
+  <ul class="landing-grid">
+    {projects.map((p) => (
+      <li class="tile">
+        <a class="tile-media" href={`/${p.id}/`} aria-label={p.data.title}>
+          <img class="tile-img" src={p.data.cover} alt="" loading="lazy" />
+          <p class="tile-overview">{p.data.description}</p>
+        </a>
+        <a class="tile-name" href={`/${p.id}/`}>{p.data.title}</a>
+      </li>
+    ))}
+  </ul>
+</LandingLayout>

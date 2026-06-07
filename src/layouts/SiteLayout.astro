@@ -8,10 +8,11 @@
     prefetching (astro.config) the target page is already in memory on click. */
 import { ClientRouter } from 'astro:transitions';
 import TitleNav from '../components/TitleNav.astro';
-import Marquee from '../components/Marquee.astro';
 import Lightbox from '../components/Lightbox.astro';
 import DevTools from '../components/DevTools.astro';
 import '../styles/global.css';
+// Marquee removed for now — re-add <Marquee /> below (and re-import) to bring
+// the vertical marquee back. Component + CSS are kept intact in the codebase.
 
 interface Props {
   title: string;
@@ -47,7 +48,6 @@ const {
     </main>
   </div>
 
-  <Marquee />
   <Lightbox />
   <DevTools />
 

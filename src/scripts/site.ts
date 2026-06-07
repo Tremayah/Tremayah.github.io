@@ -362,6 +362,55 @@ function bindDevTools(): void {
   });
 }
 
+/* ── Landing tiles: type the overview on hover (per page) ─────────────────
+   On the landing grid, hovering a tile pales its image (CSS) and types the
+   project overview over it. The text starts empty and is revealed character
+   by character on mouseenter; mouseleave clears it so it re-types next time. */
+function initLandingTiles(): void {
+  document.querySelectorAll<HTMLElement>('.tile').forEach((tile) => {
+    if (tile.dataset.tileInit) return;
+    tile.dataset.tileInit = '1';
+
+    const media    = tile.querySelector<HTMLElement>('.tile-media');
+    const overview = tile.querySelector<HTMLElement>('.tile-overview');
+    if (!media || !overview) return;
+
+    const fullText = (overview.textContent ?? '').trim();
+    overview.textContent = ''; // start empty; CSS fades the container in on hover
+
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const stop = () => { if (timer !== null) { clearInterval(timer); timer = null; } };
+
+    media.addEventListener('mouseenter', () => {
+      stop();
+      overview.textContent = '';
+      const spans: HTMLElement[] = [];
+      const frag = document.createDocumentFragment();
+      for (const ch of fullText) {
+        const s = document.createElement('span');
+        s.textContent = ch;
+        s.style.opacity = '0';
+        spans.push(s);
+        frag.appendChild(s);
+      }
+      overview.appendChild(frag);
+
+      let idx = 0;
+      const CHUNK = 2;  // chars per tick — slower, visible typewriter
+      const TICK = 18;  // ms → ~110 chars/s
+      timer = setInterval(() => {
+        for (let i = 0; i < CHUNK && idx < spans.length; i++, idx++) spans[idx].style.opacity = '1';
+        if (idx >= spans.length) stop();
+      }, TICK);
+    });
+
+    media.addEventListener('mouseleave', () => {
+      stop();
+      overview.textContent = ''; // reset for next hover
+    });
+  });
+}
+
 /* ── Lifecycle ───────────────────────────────────────────────────────── */
 let boundOnce = false;
 
@@ -377,11 +426,12 @@ function onPageLoad(): void {
   updateActiveNav();
   resetScroll();
   // Typing reveal runs on whichever content the page has: a project's full
-  // report (description + body) or the About/Contact prose. The landing page
-  // has neither, so it never types — exactly as before.
+  // report (description + body) or the About/Contact prose. The landing grid
+  // has neither — its tiles type their overview on hover instead.
   const typeTarget = document.querySelector<HTMLElement>('.project-report, .prose-area');
   if (typeTarget) runTyping(typeTarget);
   initCarousels();
+  initLandingTiles();
 }
 
 // Fires on the initial load and after every <ClientRouter /> navigation.
