@@ -228,46 +228,38 @@ function initHover(tile: HTMLElement): void {
   });
 }
 
-/* ── "Flower" layout: writeup text wraps around the persisting tile ───────
-   The writeup becomes a grid that mirrors the landing grid exactly (see
-   .writeup--flower in global.css — same 3×2 template + shared gap/padding
-   tokens). The description and each body paragraph ("petals") are placed,
-   in reading order, into the five cells that surround the opened tile; its
-   own cell is left empty so the tile shows through. Built once per writeup
-   and cached — every writeup always opens from the same cell, so the
-   mapping never changes on reopen. */
-function layoutFlower(writeup: HTMLElement, cellIndex: number): void {
-  if (writeup.dataset.flowerBuilt === '1') return;
-  writeup.dataset.flowerBuilt = '1';
-  writeup.classList.add('writeup--flower');
+/* ── Article layout: text flows around an embedded photo ──────────────────
+   Replaces the old "flower/petals" grid. The writeup becomes a single
+   flowing column (magazine-style): the lead description sits above the
+   body copy, and the project's cover photo is floated inside the body with
+   a caption, so the justified text wraps around it like printed copy. Built
+   once per writeup and cached. */
+function layoutArticle(writeup: HTMLElement): void {
+  if (writeup.dataset.articleBuilt === '1') return;
+  writeup.dataset.articleBuilt = '1';
+  writeup.classList.add('writeup--article');
 
-  const activeRow = Math.floor(cellIndex / 3);
-  const activeCol = cellIndex % 3;
-  const positions: Array<[number, number]> = [];
-  for (let r = 0; r < 2; r++) {
-    for (let c = 0; c < 3; c++) {
-      if (r === activeRow && c === activeCol) continue;
-      positions.push([r, c]);
-    }
-  }
-
-  const desc = writeup.querySelector<HTMLElement>('.project-desc');
+  const cover = writeup.dataset.cover;
   const bodyEl = writeup.querySelector<HTMLElement>('.project-body');
-  const bodyChildren = bodyEl ? (Array.from(bodyEl.children) as HTMLElement[]) : [];
-  const petals = [desc, ...bodyChildren].filter((el): el is HTMLElement => !!el);
+  if (!cover || !bodyEl) return;
 
-  petals.forEach((petal, i) => {
-    petal.classList.add('petal');
-    if (i < positions.length) {
-      const [r, c] = positions[i];
-      petal.style.gridRow = String(r + 1);
-      petal.style.gridColumn = String(c + 1);
-      writeup.appendChild(petal); // direct child of the grid so placement applies
-    } else {
-      petal.style.display = 'none'; // safety net: more copy than free cells
-    }
-  });
-  bodyEl?.remove();
+  const figure = document.createElement('figure');
+  figure.className = 'article-figure';
+  const img = document.createElement('img');
+  img.className = 'article-img';
+  img.src = cover;
+  img.alt = '';
+  img.loading = 'lazy';
+  const caption = document.createElement('figcaption');
+  caption.className = 'article-caption';
+  caption.textContent = writeup.dataset.title ?? '';
+  figure.append(img, caption);
+
+  // Drop the figure into the body so the surrounding paragraphs reflow
+  // around it — first paragraph leads, the photo floats alongside the rest.
+  const firstPara = bodyEl.querySelector('p');
+  if (firstPara) firstPara.after(figure);
+  else bodyEl.prepend(figure);
 }
 
 /* ── Open / close a project in place ─────────────────────────────────────── */
@@ -284,22 +276,23 @@ async function openProject(cell: HTMLElement, id: string): Promise<void> {
   if (openId || !stage) return;
   openId = id;
   stage.classList.add('is-open');
+  // Brief glitch feedback on the clicked tile's title — it dissolves with
+  // everything else a moment later, but the slice/colour flash reads as
+  // the "open" trigger before the article takes over the whole stage.
   cell.classList.add('cell--active');
 
-  // Dissolve every visible tile except the one in the active cell
-  const others = visibleTiles().filter((t) => !cell.contains(t));
-  await Promise.all(others.map(dissolve));
+  // Dissolve every visible tile, including the one that was clicked — the
+  // article now fills the whole stage rather than flowering around a tile.
+  const tiles = visibleTiles();
+  await Promise.all(tiles.map(dissolve));
 
-  // Reveal the writeup, "flowered" around the persisting tile
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
   if (!writeup) return;
-  const gridEl = stage.querySelector<HTMLElement>('.landing-grid')!;
-  const cellIndex = Array.from(gridEl.children).indexOf(cell);
-  layoutFlower(writeup, cellIndex);
+  layoutArticle(writeup);
 
   writeup.hidden = false;
   initCarousels(writeup);
-  // Type each petal in, like the old keycaps page
+  // Type the article in, like the old keycaps page
   typingCancel?.();
   typingCancel = typeInto(writeup, 40, 16);
 }
@@ -313,13 +306,51 @@ async function closeProject(): Promise<void> {
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
   if (writeup) writeup.hidden = true;
 
-  const cell = stage.querySelector<HTMLElement>('.cell--active');
-  cell?.classList.remove('cell--active');
+  stage.querySelector('.cell--active')?.classList.remove('cell--active');
 
-  // Reveal the tiles that were dissolved
-  const others = visibleTiles().filter((t) => !cell?.contains(t));
-  await Promise.all(others.map(reveal));
+  // Reveal every tile that was dissolved on open
+  const tiles = visibleTiles();
+  await Promise.all(tiles.map(reveal));
   stage.classList.remove('is-open');
+}
+
+/* ── Contact form (the old "name" tile is now a message box) ──────────────
+   Submits through FormSubmit's AJAX endpoint so the page never navigates
+   away — we show inline status text instead. Email is optional; FormSubmit
+   relays whatever's filled in straight to Raphael's inbox either way. */
+function initContactForm(form: HTMLFormElement): void {
+  if (form.dataset.contactInit === '1') return;
+  form.dataset.contactInit = '1';
+
+  const status = form.querySelector<HTMLElement>('.contact-status');
+  const submit = form.querySelector<HTMLButtonElement>('.contact-submit');
+  const setStatus = (msg: string) => { if (status) status.textContent = msg; };
+
+  // Keep clicks/keystrokes inside the form from bubbling up to the stage
+  // click handler, which otherwise treats stray clicks as open/close gestures.
+  form.addEventListener('click', (e) => e.stopPropagation());
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (submit?.disabled) return;
+    if (submit) submit.disabled = true;
+    setStatus('sending…');
+    fetch(form.action, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body: new FormData(form),
+    })
+      .then((res) => {
+        if (res.ok) {
+          setStatus('sent — thank you.');
+          form.reset();
+        } else {
+          setStatus("couldn't send that — try again?");
+        }
+      })
+      .catch(() => setStatus("couldn't send that — try again?"))
+      .finally(() => { if (submit) submit.disabled = false; });
+  });
 }
 
 /* ── "More works" pager ──────────────────────────────────────────────────── */
@@ -370,12 +401,17 @@ function init(): void {
   stage = document.querySelector<HTMLElement>('.stage');
   if (!stage) return;
 
-  // Slice animation: split every tile title into word-halves
-  stage.querySelectorAll<HTMLElement>('.tile-name, .tile-label, .tile-namecard-name')
+  // Slice animation: split every tile title into word-halves (each stacked
+  // line of the contact name is its own span, so split them individually —
+  // splitting the whole heading would collapse the line breaks).
+  stage.querySelectorAll<HTMLElement>('.tile-name, .tile-label, .contact-name span')
     .forEach(buildSplitWords);
 
   // Hover typing on photo tiles
   stage.querySelectorAll<HTMLElement>('.tile--photo').forEach(initHover);
+
+  // Contact form — AJAX submit via FormSubmit
+  stage.querySelectorAll<HTMLFormElement>('.contact-form').forEach(initContactForm);
 
   stage.addEventListener('click', onStageClick);
   document.addEventListener('keydown', (e) => {

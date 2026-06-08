@@ -13,8 +13,9 @@ const all = await getCollection('projects');
 const get = (id: string) => all.find((p) => p.id === id);
 
 // Every clickable tile across both pages needs its writeup embedded (hidden).
+// ('about' is no longer opened from a tile — that cell is now the contact card.)
 const writeupIds = [
-  'about', 'exploration', 'keycaps', 'progression', 'essays',
+  'exploration', 'keycaps', 'progression', 'essays',
   'living-lamp', 'trebuchet', 'culture', 'creative-skills',
 ];
 const writeups = (
@@ -45,8 +46,7 @@ const cells = [
   { p1: { kind: 'more' },                          p2: { kind: 'more' } },
 ];
 
-const NAME = 'Raphael Murray Browne';
-const SUB = '3rd Year Product & Furniture Design Student · University of Plymouth, UK';
+const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
 ---
 
 <LandingLayout title="Raphael Murray-Browne">
@@ -57,13 +57,53 @@ const SUB = '3rd Year Product & Furniture Design Student · University of Plymou
           {[cell.p1, cell.p2].map((t, i) => {
             const page = i + 1;
             if (t.kind === 'name') {
+              // Not a <button> — it holds real form controls, which can't
+              // legally nest inside an interactive element.
               return (
-                <button class="tile tile--text tile--persist" data-page={page} data-open="about" type="button">
-                  <span class="tile-namecard">
-                    <span class="tile-namecard-name">{NAME}</span>
-                    <span class="tile-namecard-sub">{SUB}</span>
-                  </span>
-                </button>
+                <div class="tile tile--contact tile--persist" data-page={page}>
+                  <div class="contact-card">
+                    <div class="contact-head">
+                      <h1 class="contact-name">
+                        <span>Raphael</span>
+                        <span>Murray</span>
+                        <span>Browne</span>
+                      </h1>
+                      <div class="contact-blurb">
+                        <p>Third year Product and Furniture Design student.</p>
+                        <p>Come check out my works, and drop me a message below — no details required.</p>
+                      </div>
+                    </div>
+                    <form
+                      class="contact-form"
+                      data-contact-form
+                      action={`https://formsubmit.co/ajax/${CONTACT_EMAIL}`}
+                      method="POST"
+                    >
+                      <input type="hidden" name="_subject" value="New message — raphaelmurraybrowne.com" />
+                      <input type="hidden" name="_template" value="basic" />
+                      <input
+                        class="contact-honey"
+                        type="text"
+                        name="_honey"
+                        tabindex={-1}
+                        autocomplete="off"
+                        aria-hidden="true"
+                      />
+                      <input
+                        class="contact-email"
+                        type="email"
+                        name="email"
+                        placeholder="Email address (optional)"
+                        autocomplete="email"
+                      />
+                      <textarea class="contact-message" name="message" placeholder="Message" rows={3} required />
+                      <div class="contact-foot">
+                        <p class="contact-status" aria-live="polite"></p>
+                        <button class="contact-submit" type="submit">send</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
               );
             }
             if (t.kind === 'more') {
@@ -100,7 +140,13 @@ const SUB = '3rd Year Product & Furniture Design Student · University of Plymou
       {writeups.map((w) => {
         const Body = w.Content;
         return (
-          <article class="writeup" data-for={w.id} hidden>
+          <article
+            class="writeup"
+            data-for={w.id}
+            data-cover={w.entry.data.cover}
+            data-title={w.entry.data.title}
+            hidden
+          >
             <p class="project-desc">{w.entry.data.description}</p>
             <div class="project-body"><Body /></div>
           </article>

@@ -177,27 +177,6 @@ html, body {
   text-align: center;
   padding: clamp(0.75rem, 2vw, 1.5rem);
 }
-.tile-namecard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-.tile-namecard-name {
-  font-family: var(--nav-font);
-  font-weight: 700;
-  font-size: clamp(1.1rem, 2.2vw, 2rem);
-  line-height: 1.05;
-  color: var(--body-color);
-  text-transform: lowercase;
-  transition: color 0.18s ease;
-}
-.tile-namecard-sub {
-  font-family: var(--body-font);
-  font-size: clamp(0.65rem, 1vw, 0.85rem);
-  line-height: 1.5;
-  color: var(--body-color);
-  transition: color 0.18s ease;
-}
 .tile-label {
   font-family: var(--nav-font);
   font-weight: 700;
@@ -208,8 +187,6 @@ html, body {
   transition: color 0.18s ease;
 }
 /* Hover on text tiles → highlight blue */
-.tile--text:hover .tile-namecard-name,
-.tile--text:hover .tile-namecard-sub,
 .tile--text:hover .tile-label,
 .tile--text:focus-visible .tile-label {
   color: var(--highlight);
@@ -227,6 +204,131 @@ html, body {
 }
 .stage[data-page='2'] .tile--more .tile-label {
   color: #fff;
+}
+
+/* ── Contact card (the "name" tile doubles as a message box) ────────────────
+   Mirrors the reference layout: a big stacked pixel-font name on the left,
+   a short blurb on the right, and a bordered email + message form spanning
+   the full width beneath both — all inside the tile's normal grid cell. */
+.tile--contact {
+  cursor: default;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+}
+.contact-card {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.4rem, 1.2vw, 0.85rem);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.contact-head {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(0.5rem, 2vw, 1.25rem);
+}
+.contact-name {
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.95rem, 2.6vw, 1.9rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--title-color);
+  text-transform: uppercase;
+  margin: 0;
+  white-space: nowrap;
+}
+.contact-blurb {
+  flex: 0 1 auto;
+  max-width: 52%;
+  text-align: right;
+  font-family: var(--body-font);
+  font-size: clamp(0.55rem, 0.85vw, 0.72rem);
+  line-height: 1.45;
+  color: var(--body-color);
+}
+.contact-blurb p { margin: 0 0 0.45em; }
+.contact-blurb p:last-child { margin-bottom: 0; }
+.contact-form {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.35rem, 0.9vw, 0.6rem);
+  min-height: 0;
+}
+.contact-honey { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.contact-email,
+.contact-message {
+  flex: 0 0 auto;
+  width: 100%;
+  border: 1.5px solid var(--body-color);
+  background: transparent;
+  font-family: var(--body-font);
+  font-size: clamp(0.65rem, 1.05vw, 0.85rem);
+  color: var(--fg);
+  padding: clamp(0.4rem, 1vw, 0.65rem);
+  border-radius: 0;
+  transition: border-color 0.18s ease;
+}
+.contact-message {
+  flex: 1 1 auto;
+  min-height: 0;
+  resize: none;
+  line-height: 1.45;
+}
+.contact-email::placeholder,
+.contact-message::placeholder {
+  color: var(--body-color);
+  opacity: 0.6;
+}
+.contact-email:focus,
+.contact-message:focus {
+  outline: none;
+  border-color: var(--highlight);
+}
+.contact-foot {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.contact-status {
+  margin: 0;
+  font-family: var(--body-font);
+  font-size: clamp(0.6rem, 0.95vw, 0.75rem);
+  color: var(--highlight);
+  min-height: 1.2em;
+}
+.contact-submit {
+  flex: 0 0 auto;
+  border: 1.5px solid var(--body-color);
+  background: transparent;
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  color: var(--body-color);
+  text-transform: lowercase;
+  padding: 0.4em 1.4em;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.contact-submit:hover,
+.contact-submit:focus-visible {
+  background: var(--highlight);
+  border-color: var(--highlight);
+  color: #fff;
+  outline: none;
+}
+.contact-submit:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* ── Pixel dissolve overlay (built per tile by site.ts) ─────────────────────
@@ -249,13 +351,11 @@ html, body {
   opacity: 0;
 }
 
-/* ── Open state: writeup "flowers" around the persisting tile ───────────────
-   The writeup mirrors the landing grid's exact geometry (same 3×2 template,
-   gap and padding via the shared --grid-gap/--grid-pad tokens) and overlays
-   the stage. site.ts moves the description + each body paragraph into the
-   five grid cells that surround the opened tile — its own cell is left empty
-   so the persisting tile (raised above on z-index) shows through untouched.
-   No scrolling: short filler copy is sized to fit each petal's cell. */
+/* ── Open state: flowing magazine-style article ─────────────────────────────
+   Replaces the old "flower/petals" grid. The writeup now fills the whole
+   stage as a single justified column; the project's cover photo floats
+   inside the body copy with a caption beneath it, so the (red) text wraps
+   around the (captioned) image like printed copy — see .article-figure. */
 .writeups {
   display: contents;
 }
@@ -265,42 +365,19 @@ html, body {
   z-index: 6;
   overflow: hidden;
   background: var(--bg);
-}
-.writeup[hidden],
-.writeup.writeup--flower[hidden] { display: none; }
-.writeup.writeup--flower {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: var(--grid-gap);
   padding: var(--grid-pad);
-  align-items: center;
 }
-.writeup--flower .petal {
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
+.writeup[hidden] { display: none; }
+.writeup.writeup--article {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
-.writeup--flower .project-desc,
-.writeup--flower .project-body p {
-  font-family: var(--body-font);
-  font-size: clamp(0.7rem, 1.05vw, 0.92rem);
-  line-height: 1.5;
-}
-.writeup--flower .project-desc {
-  font-weight: 700;
-  color: var(--fg);
-}
-.writeup--flower .project-body p {
-  font-weight: 400;
-  color: var(--body-color);
-}
-/* The clicked tile rises above the writeup and stays in its cell */
-.cell.cell--active { z-index: 10; }
-.cell.cell--active .tile { cursor: default; }
-/* Title of the opened tile goes highlight-blue */
+/* The clicked tile flashes its slice/colour glitch as it dissolves into
+   the article — a brief "open" cue rather than a persisting element. No
+   z-index raise here: the tile dissolves along with everything else, so
+   keeping it elevated would mask the article flowing beneath it. */
 .cell--active .tile-name,
-.cell--active .tile-namecard-name,
 .cell--active .tile-label {
   color: var(--highlight);
 }
@@ -314,27 +391,53 @@ html, body {
 .cell--active .word-top { transform: translateX(2px); }
 .cell--active .word-bot { transform: translateX(-2px); }
 
-/* ── Project desc ───────────────────────────────── */
+/* ── Project desc: lead-in line above the flowing body copy ───────────── */
 .project-desc {
+  max-width: min(50rem, 82%);
   font-family: var(--body-font);
   font-weight: 700;
-  font-size: 0.9rem;
-  line-height: 1.7;
+  font-size: clamp(0.85rem, 1.5vw, 1.15rem);
+  line-height: 1.55;
   color: var(--fg);
-  margin-bottom: 1rem;
+  margin: 0 0 0.7em;
 }
 
-/* ── Project body ───────────────────────────────── */
+/* ── Project body: justified column, cover photo floats mid-text ─────────
+   .article-figure (built by site.ts) is inserted after the first paragraph
+   and floats so the rest of the copy wraps around it, like a magazine. */
 .project-body {
+  max-width: min(50rem, 82%);
   font-family: var(--body-font);
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 1.5vw, 1.1rem);
   font-weight: 400;
-  line-height: 1.75;
+  line-height: 1.6;
   letter-spacing: -0.01em;
   color: var(--body-color);
+  text-align: justify;
 }
-.project-body p            { margin-bottom: 0.9rem; }
+.project-body p            { margin: 0 0 0.85em; }
 .project-body p:last-child { margin-bottom: 0; }
+.article-figure {
+  float: right;
+  width: clamp(12rem, 34%, 19rem);
+  margin: 0.3em 0 0.8em 1.6em;
+  shape-outside: margin-box;
+}
+.article-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+.article-caption {
+  margin: 0.5em 0 0;
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  color: var(--highlight);
+  text-transform: lowercase;
+  text-align: center;
+}
 .project-body h2 {
   font-family: var(--body-font);
   font-weight: 700;
