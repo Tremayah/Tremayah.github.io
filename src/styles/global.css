@@ -152,6 +152,12 @@ html, body {
 .tile--photo:focus-visible .tile-overview {
   opacity: 1;
 }
+/* While a project is open, the persisting hero tile must stay clean — kill the
+   blue hover wash and the overview text so the image reads as the anchor. */
+.stage.is-open .tile-media::after,
+.stage.is-open .tile-overview {
+  opacity: 0 !important;
+}
 .tile-overview-text {
   font-family: var(--body-font);
   font-size: clamp(0.7rem, 1vw, 0.9rem);
@@ -191,13 +197,26 @@ html, body {
 .tile--text:focus-visible .tile-label {
   color: var(--highlight);
 }
-/* "More works" toggles to a solid blue tile with white centred text while
-   page 2 is showing — click it again (no separate "back" control) to return. */
+/* "More works" is a solid red tile (a slightly lighter red than the body
+   accent, since it's such a large field) with white centred text. While page 2
+   is showing it turns highlight-blue as an "active / click again to go back"
+   cue — there's no separate back control. */
 .tile--more {
+  background: #ff4d4d;
   transition: background-color 0.25s ease;
 }
 .tile--more .tile-label {
+  color: #fff;
   transition: color 0.25s ease;
+}
+.tile--more:hover,
+.tile--more:focus-visible {
+  background: #ff6363;
+}
+/* Override the generic .tile--text blue-label hover — the label stays white. */
+.tile--more:hover .tile-label,
+.tile--more:focus-visible .tile-label {
+  color: #fff;
 }
 .stage[data-page='2'] .tile--more {
   background: var(--highlight);
@@ -234,11 +253,11 @@ html, body {
   flex: 0 1 auto;
   display: flex;
   flex-direction: column;
-  font-family: var(--nav-font);
+  font-family: 'lores-9-plus-narrow', var(--nav-font);
   font-weight: 700;
-  font-size: clamp(0.95rem, 2.6vw, 1.9rem);
+  font-size: clamp(1.05rem, 2.9vw, 2.1rem);
   line-height: 1.05;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.01em;
   color: var(--title-color);
   text-transform: uppercase;
   margin: 0;
@@ -255,6 +274,17 @@ html, body {
 }
 .contact-blurb p { margin: 0 0 0.45em; }
 .contact-blurb p:last-child { margin-bottom: 0; }
+/* Name + blurb are click targets that jump focus into the message box; give
+   them a pointer + a blue hover so the affordance reads. */
+.contact-name[data-focus-message],
+.contact-blurb[data-focus-message] {
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+.contact-name[data-focus-message]:hover,
+.contact-blurb[data-focus-message]:hover {
+  color: var(--highlight);
+}
 .contact-form {
   flex: 1 1 auto;
   display: flex;
@@ -351,11 +381,12 @@ html, body {
   opacity: 0;
 }
 
-/* ── Open state: flowing magazine-style article ─────────────────────────────
-   Replaces the old "flower/petals" grid. The writeup now fills the whole
-   stage as a single justified column; the project's cover photo floats
-   inside the body copy with a caption beneath it, so the (red) text wraps
-   around the (captioned) image like printed copy — see .article-figure. */
+/* ── Open state: writeup fills the freed grid rectangle ─────────────────────
+   The clicked tile stays put (its hero image + sliced title anchor the view);
+   every other tile dissolves to the background, and the writeup fizzles in to
+   fill the grid-aligned rectangle the freed cells leave behind. site.ts sets
+   the writeup's left/top/width/height inline on open (see freeRectFor); the
+   inset:0 here is only a no-JS / pre-open fallback. */
 .writeups {
   display: contents;
 }
@@ -363,24 +394,17 @@ html, body {
   position: absolute;
   inset: 0;
   z-index: 6;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
   background: var(--bg);
   padding: var(--grid-pad);
 }
-/* !important: guards against .writeup--article (and any future writeup
-   modifier) setting its own `display` — [hidden] must always win, or a
-   closed project stays visually stuck covering the stage (same specificity,
-   source order would otherwise decide and silently break on reorder). */
+/* !important so [hidden] always beats the display:flex above — a closed
+   project must never stay visually stuck covering the stage. */
 .writeup[hidden] { display: none !important; }
-.writeup.writeup--article {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-/* The clicked tile flashes its slice/colour glitch as it dissolves into
-   the article — a brief "open" cue rather than a persisting element. No
-   z-index raise here: the tile dissolves along with everything else, so
-   keeping it elevated would mask the article flowing beneath it. */
+/* The persisting tile keeps its sliced title; tint it highlight-blue while
+   open as the "this is the one you're reading" cue. */
 .cell--active .tile-name,
 .cell--active .tile-label {
   color: var(--highlight);
@@ -395,9 +419,9 @@ html, body {
 .cell--active .word-top { transform: translateX(2px); }
 .cell--active .word-bot { transform: translateX(-2px); }
 
-/* ── Project desc: lead-in line above the flowing body copy ───────────── */
+/* ── Project desc: lead-in line above the body copy ───────────────────── */
 .project-desc {
-  max-width: min(50rem, 82%);
+  max-width: 60ch;
   font-family: var(--body-font);
   font-weight: 700;
   font-size: clamp(0.85rem, 1.5vw, 1.15rem);
@@ -406,11 +430,11 @@ html, body {
   margin: 0 0 0.7em;
 }
 
-/* ── Project body: justified column, cover photo floats mid-text ─────────
-   .article-figure (built by site.ts) is inserted after the first paragraph
-   and floats so the rest of the copy wraps around it, like a magazine. */
+/* ── Project body: justified reading column ──────────────────────────────
+   The persisting hero tile is the project's image now, so the writeup is
+   pure text — a single capped column that fills the freed rectangle. */
 .project-body {
-  max-width: min(50rem, 82%);
+  max-width: 62ch;
   font-family: var(--body-font);
   font-size: clamp(0.85rem, 1.5vw, 1.1rem);
   font-weight: 400;
@@ -421,27 +445,6 @@ html, body {
 }
 .project-body p            { margin: 0 0 0.85em; }
 .project-body p:last-child { margin-bottom: 0; }
-.article-figure {
-  float: right;
-  width: clamp(12rem, 34%, 19rem);
-  margin: 0.3em 0 0.8em 1.6em;
-  shape-outside: margin-box;
-}
-.article-img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-}
-.article-caption {
-  margin: 0.5em 0 0;
-  font-family: var(--nav-font);
-  font-weight: 700;
-  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
-  color: var(--highlight);
-  text-transform: lowercase;
-  text-align: center;
-}
 .project-body h2 {
   font-family: var(--body-font);
   font-weight: 700;

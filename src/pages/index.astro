@@ -13,10 +13,10 @@ const all = await getCollection('projects');
 const get = (id: string) => all.find((p) => p.id === id);
 
 // Every clickable tile across both pages needs its writeup embedded (hidden).
-// ('about' is no longer opened from a tile — that cell is now the contact card.)
 const writeupIds = [
   'exploration', 'keycaps', 'progression', 'essays',
   'living-lamp', 'trebuchet', 'culture', 'creative-skills',
+  'table-tennis-bat',
 ];
 const writeups = (
   await Promise.all(
@@ -34,11 +34,12 @@ const data = (id: string) => {
   return { id, title: e?.data.title ?? id, cover: e?.data.cover, desc: e?.data.description ?? '' };
 };
 
-// Six cells, each holding a page-1 and a page-2 variant. Cell 0 (name/about)
-// and cell 5 ("more works") persist unchanged across both pages — only cells
-// 1–4 swap to a second set of projects.
+// Six cells, each holding a page-1 and a page-2 variant. Only cell 5 ("more
+// works") persists unchanged across both pages; cells 0–4 all swap to a second
+// set on page 2 — including cell 0, where the contact card gives way to a
+// ninth project.
 const cells = [
-  { p1: { kind: 'name' },                          p2: { kind: 'name' } },
+  { p1: { kind: 'name' },                          p2: { kind: 'photo', ...data('table-tennis-bat') } },
   { p1: { kind: 'photo', ...data('exploration') }, p2: { kind: 'photo', ...data('living-lamp') } },
   { p1: { kind: 'photo', ...data('keycaps') },     p2: { kind: 'photo', ...data('trebuchet') } },
   { p1: { kind: 'photo', ...data('progression') }, p2: { kind: 'photo', ...data('culture') } },
@@ -58,17 +59,20 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
             const page = i + 1;
             if (t.kind === 'name') {
               // Not a <button> — it holds real form controls, which can't
-              // legally nest inside an interactive element.
+              // legally nest inside an interactive element. (No tile--persist:
+              // on page 2 this cell swaps to the table-tennis-bat project.)
+              // The name + blurb are click targets (data-focus-message) that
+              // jump focus into the message box — see initContactForm.
               return (
-                <div class="tile tile--contact tile--persist" data-page={page}>
+                <div class="tile tile--contact" data-page={page}>
                   <div class="contact-card">
                     <div class="contact-head">
-                      <h1 class="contact-name">
+                      <h1 class="contact-name" data-focus-message>
                         <span>Raphael</span>
                         <span>Murray</span>
                         <span>Browne</span>
                       </h1>
-                      <div class="contact-blurb">
+                      <div class="contact-blurb" data-focus-message>
                         <p>Third year Product and Furniture Design student.</p>
                         <p>Come check out my works, and drop me a message below — no details required.</p>
                       </div>
@@ -133,13 +137,7 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
       {writeups.map((w) => {
         const Body = w.Content;
         return (
-          <article
-            class="writeup"
-            data-for={w.id}
-            data-cover={w.entry.data.cover}
-            data-title={w.entry.data.title}
-            hidden
-          >
+          <article class="writeup" data-for={w.id} hidden>
             <p class="project-desc">{w.entry.data.description}</p>
             <div class="project-body"><Body /></div>
           </article>

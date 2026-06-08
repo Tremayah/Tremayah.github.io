@@ -5,9 +5,10 @@
    project's writeup embedded and hidden. This script drives:
      • the pixel dissolve/reveal animation (corruption look)
      • the load-in (tiles assemble from background pixels)
-     • opening a project in place (other tiles dissolve, writeup fills + types)
-     • closing (click the image or any non-interactive area)
-     • the "more works" pager (swap the other five tiles to a second set)
+     • opening a project in place — the clicked tile stays put while the rest
+       dissolve and the writeup fizzles into the freed grid rectangle
+     • closing (click anywhere that isn't a link/carousel button/zoom image)
+     • the "more works" pager (per-cell crossfade to a second set of projects)
      • the hover overview typing on photo tiles
    ========================================================================== */
 
@@ -106,17 +107,29 @@ const STAGGER = 190; // ms spread of the dissolve — snappier than before
 
 function pixelate(tile: HTMLElement, cover: boolean, instant = false): Promise<void> {
   const cells = ensureOverlay(tile);
+
+  // Instant: snap every cell synchronously (no stagger, no paint gap). Used to
+  // pre-cover a tile/writeup so it can fizzle in without flashing uncovered.
+  if (instant) {
+    cells.forEach((c) => {
+      c.style.transition = 'none';
+      c.style.transitionDelay = '0ms';
+      c.style.opacity = cover ? '1' : '0';
+    });
+    return Promise.resolve();
+  }
+
   return new Promise((resolve) => {
     let maxDelay = 0;
     cells.forEach((c) => {
-      const d = instant ? 0 : Math.random() * STAGGER;
+      const d = Math.random() * STAGGER;
       maxDelay = Math.max(maxDelay, d);
       // No fade — cells snap straight to their end state. Combined with the
       // per-cell stagger this reads as an abrupt, glitchy flicker rather than
       // a smooth dissolve. (transitionDelay still staggers *when* each cell
       // pops, even with an instant transition.)
-      c.style.transition = instant ? 'none' : 'opacity 0s linear';
-      c.style.transitionDelay = instant ? '0ms' : `${d}ms`;
+      c.style.transition = 'opacity 0s linear';
+      c.style.transitionDelay = `${d}ms`;
     });
     // Apply the opacity change on the next macrotask. setTimeout (not rAF) so
     // it still fires when the tab is backgrounded — keeps the open/close
@@ -124,7 +137,7 @@ function pixelate(tile: HTMLElement, cover: boolean, instant = false): Promise<v
     setTimeout(() => {
       cells.forEach((c) => { c.style.opacity = cover ? '1' : '0'; });
     }, 0);
-    setTimeout(resolve, instant ? 0 : maxDelay + 60);
+    setTimeout(resolve, maxDelay + 60);
   });
 }
 const dissolve = (t: HTMLElement) => pixelate(t, true);
@@ -226,89 +239,102 @@ function initHover(tile: HTMLElement): void {
   });
 }
 
-/* ── Article layout: text flows around an embedded photo ──────────────────
-   Replaces the old "flower/petals" grid. The writeup becomes a single
-   flowing column (magazine-style): the lead description sits above the
-   body copy, and the project's cover photo is floated inside the body with
-   a caption, so the justified text wraps around it like printed copy. Built
-   once per writeup and cached. */
-function layoutArticle(writeup: HTMLElement): void {
-  if (writeup.dataset.articleBuilt === '1') return;
-  writeup.dataset.articleBuilt = '1';
-  writeup.classList.add('writeup--article');
-
-  const cover = writeup.dataset.cover;
-  const bodyEl = writeup.querySelector<HTMLElement>('.project-body');
-  if (!cover || !bodyEl) return;
-
-  const figure = document.createElement('figure');
-  figure.className = 'article-figure';
-  const img = document.createElement('img');
-  img.className = 'article-img';
-  img.src = cover;
-  img.alt = '';
-  img.loading = 'lazy';
-  const caption = document.createElement('figcaption');
-  caption.className = 'article-caption';
-  caption.textContent = writeup.dataset.title ?? '';
-  figure.append(img, caption);
-
-  // Drop the figure into the body so the surrounding paragraphs reflow
-  // around it — first paragraph leads, the photo floats alongside the rest.
-  const firstPara = bodyEl.querySelector('p');
-  if (firstPara) firstPara.after(figure);
-  else bodyEl.prepend(figure);
-}
-
-/* ── Open / close a project in place ─────────────────────────────────────── */
+/* ── Open / close a project in place ──────────────────────────────────────
+   The clicked tile stays exactly where it is — its hero image and sliced
+   title anchor the view. Every OTHER visible tile dissolves to background,
+   and the writeup fizzles in to fill the largest grid-aligned rectangle the
+   freed cells leave behind. Both halves of the swap run at once (Promise.all),
+   so the new content resolves from background while the old is still leaving:
+   one motion, not "everything out, then everything in". */
 let stage: HTMLElement | null = null;
 let openId: string | null = null;
-let typingCancel: (() => void) | null = null;
+
+const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+function gridCells(): HTMLElement[] {
+  return Array.from(stage!.querySelectorAll<HTMLElement>('.landing-grid > .cell'));
+}
 
 function visibleTiles(): HTMLElement[] {
   const page = stage!.dataset.page ?? '1';
   return Array.from(stage!.querySelectorAll<HTMLElement>(`.tile[data-page="${page}"]`));
 }
 
-async function openProject(cell: HTMLElement, id: string): Promise<void> {
-  if (openId || !stage) return;
+type Rect = { left: number; top: number; width: number; height: number };
+
+/* The rectangle (relative to the stage) the writeup should fill: the block of
+   cells opposite the clicked one. A side cell (left/right column) frees the
+   two other columns full-height; a middle cell frees the opposite row
+   full-width. Measured from the real cell rects so it stays glued to the
+   grid lines (respecting gap + padding) at any viewport size. */
+function freeRectFor(cell: HTMLElement): Rect | null {
+  const cells = gridCells();
+  const idx = cells.indexOf(cell);
+  if (idx < 0) return null;
+  const col = idx % 3;
+  const row = (idx / 3) | 0;
+  const target =
+    col === 0 ? [1, 2, 4, 5] :
+    col === 2 ? [0, 1, 3, 4] :
+    row === 0 ? [3, 4, 5] : [0, 1, 2];
+  const sr = stage!.getBoundingClientRect();
+  const rects = target.map((i) => cells[i].getBoundingClientRect());
+  const left = Math.min(...rects.map((r) => r.left)) - sr.left;
+  const top = Math.min(...rects.map((r) => r.top)) - sr.top;
+  const right = Math.max(...rects.map((r) => r.right)) - sr.left;
+  const bottom = Math.max(...rects.map((r) => r.bottom)) - sr.top;
+  return { left, top, width: right - left, height: bottom - top };
+}
+
+function positionWriteup(w: HTMLElement, r: Rect): void {
+  w.style.left = `${r.left}px`;
+  w.style.top = `${r.top}px`;
+  w.style.width = `${r.width}px`;
+  w.style.height = `${r.height}px`;
+  w.style.right = 'auto';
+  w.style.bottom = 'auto';
+}
+
+async function openProject(cell: HTMLElement, tile: HTMLElement, id: string): Promise<void> {
+  if (openId || paging || !stage) return;
   openId = id;
   stage.classList.add('is-open');
-  // Brief glitch feedback on the clicked tile's title — it dissolves with
-  // everything else a moment later, but the slice/colour flash reads as
-  // the "open" trigger before the article takes over the whole stage.
-  cell.classList.add('cell--active');
+  cell.classList.add('cell--active'); // slice-glitch the persisting title
 
-  // Dissolve every visible tile, including the one that was clicked — the
-  // article now fills the whole stage rather than flowering around a tile.
-  const tiles = visibleTiles();
-  await Promise.all(tiles.map(dissolve));
-
+  const others = visibleTiles().filter((t) => t !== tile);
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
-  if (!writeup) return;
-  layoutArticle(writeup);
+  const rect = writeup ? freeRectFor(cell) : null;
 
-  writeup.hidden = false;
-  initCarousels(writeup);
-  // Type the article in, like the old keycaps page
-  typingCancel?.();
-  typingCancel = typeInto(writeup, 40, 16);
+  if (writeup && rect) {
+    positionWriteup(writeup, rect);
+    writeup.hidden = false;
+    initCarousels(writeup);
+    pixelate(writeup, true, true); // start fully covered, then fizzle in below
+  }
+
+  await Promise.all([
+    ...others.map(dissolve),
+    writeup && rect ? reveal(writeup) : Promise.resolve(),
+  ]);
 }
 
 async function closeProject(): Promise<void> {
   if (!openId || !stage) return;
   const id = openId;
   openId = null;
-  typingCancel?.();
 
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
+  const active = stage.querySelector<HTMLElement>('.cell--active');
+  const persist = active?.querySelector<HTMLElement>(`.tile[data-page="${stage.dataset.page ?? '1'}"]`) ?? null;
+  const others = visibleTiles().filter((t) => t !== persist);
+
+  await Promise.all([
+    writeup ? dissolve(writeup) : Promise.resolve(), // writeup dissolves to bg…
+    ...others.map(reveal),                           // …as the other tiles return
+  ]);
+
   if (writeup) writeup.hidden = true;
-
-  stage.querySelector('.cell--active')?.classList.remove('cell--active');
-
-  // Reveal every tile that was dissolved on open
-  const tiles = visibleTiles();
-  await Promise.all(tiles.map(reveal));
+  active?.classList.remove('cell--active');
   stage.classList.remove('is-open');
 }
 
@@ -327,6 +353,12 @@ function initContactForm(form: HTMLFormElement): void {
   // Keep clicks/keystrokes inside the form from bubbling up to the stage
   // click handler, which otherwise treats stray clicks as open/close gestures.
   form.addEventListener('click', (e) => e.stopPropagation());
+
+  // The name + blurb are click targets: clicking either jumps focus straight
+  // into the message box (a gentle nudge toward the one thing to do here).
+  const message = form.querySelector<HTMLTextAreaElement>('.contact-message');
+  form.closest('.contact-card')?.querySelectorAll<HTMLElement>('[data-focus-message]')
+    .forEach((el) => el.addEventListener('click', () => message?.focus()));
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -351,20 +383,45 @@ function initContactForm(form: HTMLFormElement): void {
   });
 }
 
-/* ── "More works" pager ──────────────────────────────────────────────────── */
+/* ── "More works" pager ──────────────────────────────────────────────────
+   Each swapping cell flips on its own: the current tile dissolves to
+   background, then the next project resolves from background in the same
+   spot. Staggering the starts sends a wave across the grid, so some cells
+   already show the new set while others are still clearing the old — one
+   continuous motion rather than "all out, then all in". The "more works"
+   tile itself is persistent and never flips. */
 let paging = false;
+
+async function flipTile(leaving: HTMLElement, entering: HTMLElement, startDelay: number): Promise<void> {
+  if (startDelay) await wait(startDelay);
+  await dissolve(leaving);          // cover the outgoing tile
+  entering.style.display = 'flex';  // bring the incoming one in (still hidden)…
+  pixelate(entering, true, true);   // …pre-cover it synchronously so it can't flash…
+  leaving.style.display = 'none';
+  await reveal(entering);           // …then fizzle it in
+}
+
 async function setPage(page: '1' | '2'): Promise<void> {
-  if (!stage || paging || stage.dataset.page === page) return;
+  if (!stage || paging || openId || stage.dataset.page === page) return;
   paging = true;
-  // Dissolve the four swapping tiles only — the name/about and "more works"
-  // tiles persist unchanged across pages and shouldn't flicker.
-  const leaving = visibleTiles().filter((t) => !t.classList.contains('tile--persist'));
-  await Promise.all(leaving.map(dissolve));
+  const prev = stage.dataset.page ?? '1';
+
+  const flips = gridCells()
+    .map((cell) => ({
+      leaving: cell.querySelector<HTMLElement>(`.tile[data-page="${prev}"]`),
+      entering: cell.querySelector<HTMLElement>(`.tile[data-page="${page}"]`),
+    }))
+    .filter((f): f is { leaving: HTMLElement; entering: HTMLElement } =>
+      !!f.leaving && !!f.entering && !f.entering.classList.contains('tile--persist'));
+
+  await Promise.all(flips.map((f, i) => flipTile(f.leaving, f.entering, i * 60)));
+
   stage.dataset.page = page;
-  // New tiles start covered, then reveal
-  const entering = visibleTiles().filter((t) => !t.classList.contains('tile--persist'));
-  await Promise.all(entering.map((t) => pixelate(t, true, true))); // cover instantly
-  await Promise.all(entering.map(reveal));
+  // Hand visibility back to the CSS page-toggle now that data-page matches.
+  flips.forEach((f) => {
+    f.leaving.style.removeProperty('display');
+    f.entering.style.removeProperty('display');
+  });
   paging = false;
 }
 
@@ -390,7 +447,7 @@ function onStageClick(e: MouseEvent): void {
   if (action === 'more') { setPage(stage!.dataset.page === '2' ? '1' : '2'); return; }
   if (tile.dataset.open) {
     const cell = tile.closest<HTMLElement>('.cell');
-    if (cell) openProject(cell, tile.dataset.open);
+    if (cell) openProject(cell, tile, tile.dataset.open);
   }
 }
 
@@ -414,6 +471,20 @@ function init(): void {
   stage.addEventListener('click', onStageClick);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { if (lightboxOpen) closeLightbox(); else if (openId) closeProject(); }
+  });
+
+  // The open writeup is positioned in pixels against the live grid, so keep it
+  // glued to the freed rectangle if the window is resized mid-read.
+  let resizeRAF = 0;
+  window.addEventListener('resize', () => {
+    if (!openId || !stage) return;
+    cancelAnimationFrame(resizeRAF);
+    resizeRAF = requestAnimationFrame(() => {
+      const active = stage!.querySelector<HTMLElement>('.cell--active');
+      const writeup = stage!.querySelector<HTMLElement>(`.writeup[data-for="${openId}"]`);
+      const rect = active ? freeRectFor(active) : null;
+      if (writeup && rect) positionWriteup(writeup, rect);
+    });
   });
 
   // Load-in: cover every visible tile instantly, reveal the page, then clear

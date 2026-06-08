@@ -1,15 +1,19 @@
 # raphael.murraybrowne.com
 
-Portfolio of Raphael Murray-Browne — product designer. Built with [Astro](https://astro.build),
-deployed to GitHub Pages, served from `raphael.murraybrowne.com`.
+Portfolio of Raphael Murray-Browne — product designer. Built with [Astro](https://astro.build)
+and deployed to GitHub Pages. **Live at <https://tremayah.github.io/>**; the custom domain
+`raphael.murraybrowne.com` is configured (`public/CNAME`) but its DNS isn't pointed yet, so
+`tremayah.github.io` is the working URL for now.
 
 ## Architecture
 
 A **single-page** site — the whole experience lives at `/`. A 3×2 grid of tiles fills the
-viewport (no scrolling, no nav, no routing). Clicking a tile keeps it in place, pixel-dissolves
-the other five with a glitchy "corruption" animation, and reveals that project's write-up —
-a flowing magazine-style article whose cover photo floats inside the justified body copy — in
-the freed space. A "more works" tile pages the other five tiles to a second set of projects.
+viewport (no scrolling, no nav, no routing). Clicking a tile keeps it **exactly where it is** —
+its hero image and sliced title stay put as the anchor — while every other tile pixel-dissolves
+to the background with a glitchy "corruption" animation and the project's write-up fizzles into
+the largest grid-aligned rectangle the freed cells leave behind. The dissolve-out and the
+write-up's fizzle-in run at once, so it reads as a single motion. A "more works" tile crossfades
+the other five cells (the contact card included) to a second set of projects, cell by cell.
 Clicking anywhere (or pressing Escape) closes the open project and reverses the animation.
 
 ### How the pieces fit together
@@ -29,10 +33,11 @@ src/
     global.css           All styling, in one place.
   scripts/
     site.ts              All behaviour: the pixel dissolve/reveal animation,
-                         opening/closing a project in place, the "more works"
-                         pager, hover-typing on photo tiles, the flowing
-                         article layout, the contact form's AJAX submit,
-                         carousels and the lightbox.
+                         opening a project in place (clicked tile persists,
+                         write-up fills the freed grid rectangle — see
+                         freeRectFor), the per-cell "more works" crossfade
+                         pager, hover-typing on photo tiles, the contact
+                         form's AJAX submit, carousels and the lightbox.
   content/
     projects/*.md        The project write-ups (the content itself).
   content.config.ts      Validates each project's frontmatter.
@@ -56,17 +61,25 @@ holds a "page 1" and a "page 2" tile — page 2 is what "more works" pages to).
 
 ### Fonts
 
-Loaded from Adobe Fonts (Typekit kit `var1bvf`, linked in `LandingLayout.astro`). Active
-families are set via CSS custom properties in `src/styles/global.css`: `--nav-font` and
-`--body-font`. To use a new font, first add it to the kit at fonts.adobe.com, then point the
-relevant variable at its CSS family name.
+Loaded from Adobe Fonts (Typekit kit `var1bvf`, linked in `LandingLayout.astro`). The two main
+families are set via CSS custom properties in `src/styles/global.css` — `--nav-font` (tile
+titles / labels) and `--body-font` (write-up + form copy); the contact name uses
+`lores-9-plus-narrow` directly. To use a new font, first add it to the kit at fonts.adobe.com,
+then reference its CSS family name. (Run `list_kit_fonts` / check the kit to see what's loaded.)
 
 ### Contact form
 
-The "name" tile doubles as a message box: it posts directly to
-[FormSubmit](https://formsubmit.co)'s AJAX endpoint (`https://formsubmit.co/ajax/<email>`),
-so the page never navigates away — `initContactForm` in `site.ts` shows inline status text
-instead. The destination address is set via `CONTACT_EMAIL` near the top of `index.astro`.
+The first tile (page 1, top-left) is a contact card: a `lores-9-plus-narrow` name, a short
+blurb, and a message box. Clicking the name or blurb jumps focus into the message field. The
+form posts directly to [FormSubmit](https://formsubmit.co)'s AJAX endpoint
+(`https://formsubmit.co/ajax/<email>`), so the page never navigates away — `initContactForm`
+in `site.ts` shows inline status text instead. The destination address is set via
+`CONTACT_EMAIL` near the top of `index.astro`. (On "more works" / page 2 this cell swaps to a
+project like any other.)
+
+> **First send needs activation:** FormSubmit emails a one-time confirmation link to
+> `CONTACT_EMAIL` the very first time the form is submitted. Until someone clicks that link,
+> messages won't be delivered — so send one test message and confirm it once after going live.
 
 ## Commands
 
