@@ -104,10 +104,12 @@ function ensureOverlay(tile: HTMLElement): HTMLElement[] {
 }
 
 const STAGGER = 220; // ms spread of the fizzle
-const BUCKETS = 18;  // stagger granularity — cells pop in this many random waves
+const BUCKETS = 18;  // stagger granularity — cells pop in this many waves
 
-function pixelate(tile: HTMLElement, cover: boolean, instant = false): Promise<void> {
-  const cells = ensureOverlay(tile);
+type Point = { x: number; y: number };
+
+function pixelate(host: HTMLElement, cover: boolean, instant = false, origin: Point | null = null): Promise<void> {
+  const cells = ensureOverlay(host);
   const target = cover ? '1' : '0';
 
   // Instant: snap every cell synchronously (no stagger, no paint gap). Used to
@@ -119,15 +121,39 @@ function pixelate(tile: HTMLElement, cover: boolean, instant = false): Promise<v
 
   // Staggered snap, driven explicitly in JS rather than via CSS transition-delay
   // (which fires reliably covering but flakily when uncovering a reused overlay,
-  // making the fizzle-IN just pop). Each cell joins a random time-bucket and
-  // snaps with no fade, so it reads as a blocky glitch the same in both
-  // directions. setTimeout (not rAF) keeps it running in backgrounded tabs.
+  // making the fizzle-IN just pop). Each cell joins a time-bucket and snaps with
+  // no fade, so it reads as a blocky glitch the same in both directions.
+  // setTimeout (not rAF) keeps it running in backgrounded tabs.
   return new Promise((resolve) => {
     const groups: HTMLElement[][] = Array.from({ length: BUCKETS }, () => []);
-    cells.forEach((c) => {
-      c.style.transition = 'none';
-      groups[(Math.random() * BUCKETS) | 0].push(c);
-    });
+
+    if (origin) {
+      // Radial: order buckets by each cell's distance from the origin (the
+      // clicked tile), so the fizzle ripples outward from it. The cell's centre
+      // comes from its index in the overlay grid (cheap; no per-cell layout). A
+      // little jitter keeps the wavefront ragged rather than a clean ring.
+      const overlay = host.querySelector<HTMLElement>(':scope > .pixel-overlay');
+      const cols = Math.max(1, +(overlay?.dataset.cols ?? 1));
+      const rows = Math.max(1, +(overlay?.dataset.rows ?? 1));
+      const w = host.clientWidth || 1;
+      const h = host.clientHeight || 1;
+      const maxDist = Math.hypot(Math.max(origin.x, w - origin.x), Math.max(origin.y, h - origin.y)) || 1;
+      cells.forEach((c, i) => {
+        const cx = ((i % cols) + 0.5) / cols * w;
+        const cy = (((i / cols) | 0) + 0.5) / rows * h;
+        const norm = Math.hypot(cx - origin.x, cy - origin.y) / maxDist;
+        let b = ((norm * (BUCKETS - 2)) | 0) + ((Math.random() * 2) | 0);
+        b = b < 0 ? 0 : b >= BUCKETS ? BUCKETS - 1 : b;
+        c.style.transition = 'none';
+        groups[b].push(c);
+      });
+    } else {
+      cells.forEach((c) => {
+        c.style.transition = 'none';
+        groups[(Math.random() * BUCKETS) | 0].push(c);
+      });
+    }
+
     const step = STAGGER / BUCKETS;
     groups.forEach((group, i) => {
       setTimeout(() => { for (const c of group) c.style.opacity = target; }, i * step);
@@ -295,21 +321,30 @@ function layoutFullStage(writeup: HTMLElement, tile: HTMLElement): void {
 }
 
 /* Open / close fizzle the WHOLE stage as one pixel field — the same look as the
-   "more works" pager, but page-wide. A stage-level overlay (raised above the
-   writeup, but BELOW the persisting tile's cell) covers everything except the
-   hero image + title: the rest of the page dissolves to static, then resolves
-   into the write-up (open) or back into the grid (close). */
-const dissolveStage = (): Promise<void> => pixelate(stage!, true);
-const revealStage = (): Promise<void> => pixelate(stage!, false);
+   "more works" pager, but page-wide, and rippling outward from the clicked tile.
+   A stage-level overlay (raised above the writeup, but BELOW the persisting
+   tile's cell) covers everything except the hero image + title: the rest of the
+   page dissolves to static, then resolves into the write-up (open) or back into
+   the grid (close). */
+const dissolveStage = (origin: Point | null): Promise<void> => pixelate(stage!, true, false, origin);
+const revealStage = (origin: Point | null): Promise<void> => pixelate(stage!, false, false, origin);
+
+/* Centre of an element in stage-local coordinates — the ripple origin. */
+function originOf(el: HTMLElement): Point {
+  const sr = stage!.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  return { x: r.left + r.width / 2 - sr.left, y: r.top + r.height / 2 - sr.top };
+}
 
 async function openProject(cell: HTMLElement, tile: HTMLElement, id: string): Promise<void> {
   if (openId || paging || !stage) return;
   openId = id;
   stage.classList.add('is-open');
   cell.classList.add('cell--active'); // raise the persisting tile + slice its title
+  const origin = originOf(tile); // ripple out from (and back to) the clicked tile
 
   // Phase 1 — everything but the persisting tile fizzles to static.
-  await dissolveStage();
+  await dissolveStage(origin);
 
   // Show the write-up first (so it has real dimensions to measure), then lay it
   // over the whole stage wrapping the hero image. It's still under the static
@@ -322,7 +357,7 @@ async function openProject(cell: HTMLElement, tile: HTMLElement, id: string): Pr
   }
 
   // Phase 2 — the static clears, resolving into the write-up.
-  await revealStage();
+  await revealStage(origin);
 }
 
 async function closeProject(): Promise<void> {
@@ -330,17 +365,21 @@ async function closeProject(): Promise<void> {
   const id = openId;
   openId = null;
 
+  const active = stage.querySelector<HTMLElement>('.cell--active');
+  const persist = active?.querySelector<HTMLElement>(`.tile[data-page="${stage.dataset.page ?? '1'}"]`);
+  const origin = persist ? originOf(persist) : null; // ripple from the persisting tile
+
   // Phase 1 — the open write-up fizzles back to static.
-  await dissolveStage();
+  await dissolveStage(origin);
 
   // Drop the write-up so the home grid sits beneath the static, then…
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
   if (writeup) writeup.hidden = true;
 
   // Phase 2 — …the static clears, resolving back into the grid.
-  await revealStage();
+  await revealStage(origin);
 
-  stage.querySelector('.cell--active')?.classList.remove('cell--active');
+  active?.classList.remove('cell--active');
   stage.classList.remove('is-open');
 }
 
