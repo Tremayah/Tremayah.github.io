@@ -1,12 +1,9 @@
 ---
-/*  Minimal shell for the landing page only.
+/*  Shell for the single-page site.
 
-    Deliberately has no nav and no marquee — the landing is a clean image grid.
-    When the visitor clicks through to a project, that page uses SiteLayout,
-    whose nav slides in from the left. Shares <ClientRouter /> with SiteLayout
-    so navigation between the two is a seamless, no-reload view transition. */
-import { ClientRouter } from 'astro:transitions';
-import DevTools from '../components/DevTools.astro';
+    The whole experience is one page: a grid of tiles with every project's
+    writeup embedded and revealed in place (see index.astro + site.ts). No nav,
+    no marquee, no router — clicking never navigates away. */
 import '../styles/global.css';
 
 interface Props {
@@ -29,11 +26,9 @@ const {
   <title>{title}</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="https://use.typekit.net/var1bvf.css" />
-  <ClientRouter fallback="swap" />
 </head>
 <body class="landing-page">
   <slot />
-  <DevTools />
   <script>
     import '../scripts/site.ts';
   </script>

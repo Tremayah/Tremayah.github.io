@@ -33,6 +33,10 @@
   --marquee-color:  var(--yellow);
   --marquee-hover:  #0913ff;
   --col4-bg:        #fafafa;
+
+  /* Interaction blue — title click, more-works active, about hover.
+     (If you meant the purple --accent instead, point this at it.) */
+  --highlight:      #0913ff;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -86,34 +90,80 @@ html, body {
 }
 .content-col::-webkit-scrollbar { display: none; }
 
-/* ── Landing grid (the content of "/") ──────────────────────────────────────
-   A responsive grid of project tiles, rendered by LandingLayout (no nav, no
-   marquee). Each tile is a cover image with the title beneath it. On hover the
-   image pales to the page background and the project overview types over it
-   (the typing is driven by site.ts). Titles use the nav font in body-red. */
+/* ════════════════════════════════════════════════════════════════════════════
+   SINGLE-PAGE LANDING
+   A 3×2 grid of tiles that fills the viewport (no scrolling). Clicking a tile
+   keeps it in place, pixel-dissolves the other five, and reveals that project's
+   writeup in the freed space. "More works" pages the other five tiles to a
+   second set. All behaviour is in site.ts.
+   ════════════════════════════════════════════════════════════════════════════ */
+
 .landing-page {
+  height: 100dvh;
+  overflow: hidden;
   background: var(--bg);
 }
+.stage {
+  position: relative;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+}
+/* Hidden until site.ts has covered the tiles with pixels, so they assemble
+   from the background rather than flicking in. (no-JS still shows the grid.) */
+.stage:not(.ready) .landing-grid {
+  visibility: hidden;
+}
+@media (scripting: none) {
+  .landing-grid { visibility: visible !important; }
+}
+
+/* ── Grid ─────────────────────────────────────────── */
 .landing-grid {
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
-  gap: clamp(1.5rem, 4vw, 3rem) clamp(1.25rem, 3vw, 2.5rem);
-  padding: clamp(2rem, 6vw, 5rem);
-  max-width: 100rem;
-  margin: 0 auto;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: clamp(0.5rem, 1.5vw, 1.25rem);
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+  height: 100%;
+  width: 100%;
 }
+.cell {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ── Tiles ────────────────────────────────────────── */
+/* Each cell stacks a page-1 and a page-2 tile; only the active page shows. */
 .tile {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
+  border: none;
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
 }
-.tile-media {
+.stage[data-page='1'] .tile[data-page='2'],
+.stage[data-page='2'] .tile[data-page='1'] {
+  display: none;
+}
+
+/* Photo tile: image fills, title sits beneath */
+.tile--photo .tile-media {
   position: relative;
-  display: block;
-  aspect-ratio: 4 / 3;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   background: var(--bg);
-  text-decoration: none;
 }
 .tile-img {
   width: 100%;
@@ -122,46 +172,137 @@ html, body {
   display: block;
   transition: opacity 0.45s ease;
 }
-/* Hover: image pales so the off-white background shows through */
-.tile-media:hover .tile-img,
-.tile-media:focus-visible .tile-img {
+.tile--photo:hover .tile-img,
+.tile--photo:focus-visible .tile-img {
   opacity: 0.15;
 }
+/* Hover overview: outer flexbox centres an inner block so the typed text wraps
+   as a normal paragraph (the inner block — not its characters — is the flex item). */
 .tile-overview {
   position: absolute;
   inset: 0;
-  margin: 0;
-  padding: clamp(1rem, 2.5vw, 2rem);
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  font-family: var(--body-font);
-  font-size: 0.85rem;
-  line-height: 1.5;
-  color: var(--body-color);
+  padding: clamp(0.75rem, 2vw, 1.75rem);
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
 }
-.tile-media:hover .tile-overview,
-.tile-media:focus-visible .tile-overview {
+.tile--photo:hover .tile-overview,
+.tile--photo:focus-visible .tile-overview {
   opacity: 1;
 }
+.tile-overview-text {
+  font-family: var(--body-font);
+  font-size: clamp(0.7rem, 1vw, 0.9rem);
+  line-height: 1.55;
+  color: var(--body-color);
+  text-align: center;
+}
 .tile-name {
-  margin-top: 0.7rem;
-  width: fit-content;
+  flex: 0 0 auto;
+  margin-top: 0.5rem;
   font-family: var(--nav-font);
   font-weight: 700;
-  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  font-size: clamp(0.85rem, 1.4vw, 1.2rem);
   line-height: 1.1;
   color: var(--body-color);
-  text-decoration: none;
   text-transform: lowercase;
 }
-.tile-name:hover,
-.tile-name:focus-visible {
-  font-style: italic;
+
+/* Text tiles: name / essays / more works / back */
+.tile--text {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+}
+.tile-namecard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.tile-namecard-name {
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(1.1rem, 2.2vw, 2rem);
+  line-height: 1.05;
+  color: var(--body-color);
+  text-transform: lowercase;
+  transition: color 0.18s ease;
+}
+.tile-namecard-sub {
+  font-family: var(--body-font);
+  font-size: clamp(0.65rem, 1vw, 0.85rem);
+  line-height: 1.5;
+  color: var(--body-color);
+  transition: color 0.18s ease;
+}
+.tile-label {
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(1rem, 1.7vw, 1.4rem);
+  line-height: 1.1;
+  color: var(--body-color);
+  text-transform: lowercase;
+  transition: color 0.18s ease;
+}
+/* Hover on text tiles → highlight blue */
+.tile--text:hover .tile-namecard-name,
+.tile--text:hover .tile-namecard-sub,
+.tile--text:hover .tile-label,
+.tile--text:focus-visible .tile-label {
+  color: var(--highlight);
+}
+/* "More works" stays blue while page 2 is showing */
+.stage[data-page='2'] .tile--more .tile-label {
+  color: var(--highlight);
+}
+
+/* ── Pixel dissolve overlay (built per tile by site.ts) ─────────────────────
+   A grid of background-coloured cells laid over a tile. Cells fade in (cover)
+   to dissolve the tile, or fade out (clear) to reveal it. Randomised per-cell
+   delays (set inline by JS) give the blocky "corruption" look. */
+.pixel-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  pointer-events: none;
+}
+.pixel-cell {
+  background: var(--bg);
+  opacity: 0;
+  transition: opacity 0.12s linear;
+}
+
+/* ── Open state: a writeup fills the stage behind the persisting tile ──────── */
+.writeups {
+  display: contents;
+}
+.writeup {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  background: var(--bg);
+  padding: clamp(1rem, 3vw, 2.5rem);
+}
+.writeup::-webkit-scrollbar { display: none; }
+.writeup[hidden] { display: none; }
+/* The clicked tile rises above the writeup and stays in its cell */
+.cell.cell--active { z-index: 10; }
+.cell.cell--active .tile { cursor: default; }
+/* Floated spacer (sized + placed by JS) so writeup text flows around the tile */
+.writeup-spacer { pointer-events: none; }
+/* Title of the opened tile goes highlight-blue */
+.cell--active .tile-name,
+.cell--active .tile-namecard-name,
+.cell--active .tile-label {
+  color: var(--highlight);
 }
 
 /* ── Title triggers (now <a> links) ─────────────── */

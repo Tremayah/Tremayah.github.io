@@ -1,28 +1,117 @@
 ---
-/*  "/" — the visual landing grid.
+/*  "/" — the whole site.
 
-    A clean grid of project tiles: cover image with the title beneath it.
-    On hover the image pales and a short overview types over it (handled in
-    site.ts). Clicking the image or the title opens that project's page.
-    Only projects that declare a `cover` appear here. */
+    A single-page experience: a 3x2 grid of tiles that fills the viewport (no
+    scrolling). Clicking a tile keeps it in place, dissolves the other five with
+    a pixel animation, and reveals that project's writeup in the freed space.
+    The "more works" tile pages the other five tiles to a second set of projects.
+    All behaviour lives in site.ts. */
 import LandingLayout from '../layouts/LandingLayout.astro';
-import { getCollection } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 
-const projects = (await getCollection('projects'))
-  .filter((p) => p.data.cover)
-  .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
+const all = await getCollection('projects');
+const get = (id: string) => all.find((p) => p.id === id);
+
+// Every clickable tile across both pages needs its writeup embedded (hidden).
+const writeupIds = [
+  'about', 'exploration', 'keycaps', 'progression', 'essays',
+  'living-lamp', 'trebuchet', 'culture', 'creative-skills',
+];
+const writeups = (
+  await Promise.all(
+    writeupIds.map(async (id) => {
+      const entry = get(id);
+      if (!entry) return null;
+      const { Content } = await render(entry);
+      return { id, entry, Content };
+    })
+  )
+).filter((w): w is NonNullable<typeof w> => w !== null);
+
+const data = (id: string) => {
+  const e = get(id);
+  return { id, title: e?.data.title ?? id, cover: e?.data.cover, desc: e?.data.description ?? '' };
+};
+
+// Six cells, each holding a page-1 and a page-2 variant. Cell 0 is the name /
+// back tile; cell 5 is the "more works" pager. Cells 1–4 are projects.
+const cells = [
+  { p1: { kind: 'name' },                       p2: { kind: 'back' } },
+  { p1: { kind: 'photo', ...data('exploration') }, p2: { kind: 'photo', ...data('living-lamp') } },
+  { p1: { kind: 'photo', ...data('keycaps') },     p2: { kind: 'photo', ...data('trebuchet') } },
+  { p1: { kind: 'photo', ...data('progression') }, p2: { kind: 'photo', ...data('culture') } },
+  { p1: { kind: 'text',  ...data('essays') },      p2: { kind: 'photo', ...data('creative-skills') } },
+  { p1: { kind: 'more' },                        p2: { kind: 'more' } },
+];
+
+const NAME = 'Raphael Murray Browne';
+const SUB = '3rd Year Product & Furniture Design Student · University of Plymouth, UK';
 ---
 
 <LandingLayout title="Raphael Murray-Browne">
-  <ul class="landing-grid">
-    {projects.map((p) => (
-      <li class="tile">
-        <a class="tile-media" href={`/${p.id}/`} aria-label={p.data.title}>
-          <img class="tile-img" src={p.data.cover} alt="" loading="lazy" />
-          <p class="tile-overview">{p.data.description}</p>
-        </a>
-        <a class="tile-name" href={`/${p.id}/`}>{p.data.title}</a>
-      </li>
-    ))}
-  </ul>
+  <div class="stage" data-page="1">
+    <ul class="landing-grid">
+      {cells.map((cell) => (
+        <li class="cell">
+          {[cell.p1, cell.p2].map((t, i) => {
+            const page = i + 1;
+            if (t.kind === 'name') {
+              return (
+                <button class="tile tile--text" data-page={page} data-open="about" type="button">
+                  <span class="tile-namecard">
+                    <span class="tile-namecard-name">{NAME}</span>
+                    <span class="tile-namecard-sub">{SUB}</span>
+                  </span>
+                </button>
+              );
+            }
+            if (t.kind === 'back') {
+              return (
+                <button class="tile tile--text tile--control" data-page={page} data-action="home" type="button">
+                  <span class="tile-label">← back</span>
+                </button>
+              );
+            }
+            if (t.kind === 'more') {
+              return (
+                <button class="tile tile--text tile--control tile--more" data-page={page} data-action="more" type="button">
+                  <span class="tile-label">more works</span>
+                </button>
+              );
+            }
+            if (t.kind === 'text') {
+              return (
+                <button class="tile tile--text" data-page={page} data-open={t.id} type="button">
+                  <span class="tile-label">{t.title}</span>
+                </button>
+              );
+            }
+            // photo tile
+            return (
+              <button class="tile tile--photo" data-page={page} data-open={t.id} type="button">
+                <span class="tile-media">
+                  <img class="tile-img" src={t.cover} alt="" loading="lazy" />
+                  <span class="tile-overview"><span class="tile-overview-text">{t.desc}</span></span>
+                </span>
+                <span class="tile-name">{t.title}</span>
+              </button>
+            );
+          })}
+        </li>
+      ))}
+    </ul>
+
+    {/* Hidden writeups, revealed in place when a tile is opened */}
+    <div class="writeups">
+      {writeups.map((w) => {
+        const Body = w.Content;
+        return (
+          <article class="writeup report--feature" data-for={w.id} hidden>
+            <p class="project-desc">{w.entry.data.description}</p>
+            <div class="project-body"><Body /></div>
+          </article>
+        );
+      })}
+    </div>
+  </div>
 </LandingLayout>

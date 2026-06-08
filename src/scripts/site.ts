@@ -1,36 +1,22 @@
 /* ============================================================================
-   Client behaviours for the portfolio.
+   Single-page portfolio behaviour.
 
-   Loaded once by SiteLayout.astro. The site uses Astro's <ClientRouter />, so
-   navigation swaps the page without a full reload. Two kinds of setup:
-
-     • bind-once   — global listeners on `document` and on persistent nodes
-                     (lightbox, marquee, dev tools). Registered a single time.
-     • per-page    — work that must repeat on every navigation (typing reveal,
-                     active-nav highlight, scroll reset). Runs on each
-                     `astro:page-load`, which also fires on the initial load.
+   The whole site is one page (index.astro): a 3×2 grid of tiles with every
+   project's writeup embedded and hidden. This script drives:
+     • the pixel dissolve/reveal animation (corruption look)
+     • the load-in (tiles assemble from background pixels)
+     • opening a project in place (other tiles dissolve, writeup fills + types)
+     • closing (click the image or any non-interactive area)
+     • the "more works" pager (swap the other five tiles to a second set)
+     • the hover overview typing on photo tiles
    ========================================================================== */
 
-import { navigate } from 'astro:transitions/client';
+const GAP = 0; // grid gap is read live where needed
 
-/* ── helpers ─────────────────────────────────────────────────────────── */
-const normalizePath = (p: string): string => {
-  const s = p.replace(/\/+$/, '');
-  return s === '' ? '/' : s;
-};
-
-/* ── Typing reveal (per project page) ────────────────────────────────── */
-let typingTimer: ReturnType<typeof setInterval> | null = null;
-
-function cancelTyping(): void {
-  if (typingTimer !== null) { clearInterval(typingTimer); typingTimer = null; }
-}
-
-function runTyping(container: HTMLElement): void {
-  cancelTyping();
-
-  // Replace every character in every text node with a hidden <span>, then
-  // fade them in a chunk at a time.
+/* ── Typing reveal ────────────────────────────────────────────────────────
+   Wrap each character of a container in a hidden span, then fade them in a
+   few per tick. Skips image containers so their layout isn't disturbed. */
+function typeInto(container: HTMLElement, chunk = 40, tick = 16): () => void {
   const chars: HTMLElement[] = [];
   const walk = (node: Node): void => {
     if (node.nodeType === Node.TEXT_NODE) {
@@ -38,43 +24,36 @@ function runTyping(container: HTMLElement): void {
       if (!text) return;
       const frag = document.createDocumentFragment();
       for (const ch of text) {
-        const span = document.createElement('span');
-        span.textContent = ch;
-        span.style.opacity = '0';
-        chars.push(span);
-        frag.appendChild(span);
+        const s = document.createElement('span');
+        s.textContent = ch;
+        s.style.opacity = '0';
+        chars.push(s);
+        frag.appendChild(s);
       }
       node.parentNode?.replaceChild(frag, node);
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-      // Skip image containers — wrapping their whitespace text nodes in spans
-      // would create stray grid/slide items and break the layout.
       const cls = (node as Element).classList;
-      if (
-        cls?.contains('img-grid') ||
-        cls?.contains('hero-pair') ||
-        cls?.contains('hero-trio') ||
-        cls?.contains('carousel')
-      ) return;
+      if (cls?.contains('img-grid') || cls?.contains('hero-pair') ||
+          cls?.contains('hero-trio') || cls?.contains('carousel')) return;
       Array.from(node.childNodes).forEach(walk);
     }
   };
   walk(container);
 
   let idx = 0;
-  const CHUNK = 40; // chars revealed per tick (~2400 chars/s at 60fps)
-  const TICK = 16;  // ms
-  typingTimer = setInterval(() => {
-    for (let i = 0; i < CHUNK && idx < chars.length; i++, idx++) {
-      chars[idx].style.opacity = '1';
-    }
-    if (idx >= chars.length) cancelTyping();
-  }, TICK);
+  const timer = setInterval(() => {
+    for (let i = 0; i < chunk && idx < chars.length; i++, idx++) chars[idx].style.opacity = '1';
+    if (idx >= chars.length) clearInterval(timer);
+  }, tick);
+  return () => clearInterval(timer);
 }
 
-/* ── Word-split nav animation (built once on the persistent nav) ──────── */
-function buildSplitWords(nameEl: HTMLElement): void {
-  const text = nameEl.textContent?.trim() ?? '';
-  nameEl.textContent = '';
+/* ── Word-split (slice animation on titles) ──────────────────────────────── */
+function buildSplitWords(el: HTMLElement): void {
+  if (el.dataset.split) return;
+  el.dataset.split = '1';
+  const text = el.textContent?.trim() ?? '';
+  el.textContent = '';
   const words = text.split(' ');
   words.forEach((word, i) => {
     const wrap = document.createElement('span');
@@ -87,46 +66,76 @@ function buildSplitWords(nameEl: HTMLElement): void {
     bot.textContent = word;
     bot.setAttribute('aria-hidden', 'true');
     wrap.append(top, bot);
-    nameEl.appendChild(wrap);
-    if (i < words.length - 1) nameEl.appendChild(document.createTextNode(' '));
+    el.appendChild(wrap);
+    if (i < words.length - 1) el.appendChild(document.createTextNode(' '));
   });
 }
 
-function buildNav(): void {
-  document.querySelectorAll<HTMLElement>('.item-name').forEach((el) => {
-    if (el.dataset.split) return; // already built (the nav persists)
-    buildSplitWords(el);
-    el.dataset.split = '1';
+/* ── Pixel dissolve / reveal ──────────────────────────────────────────────
+   Each tile gets an overlay grid of background-coloured cells. Fading the
+   cells in covers (dissolves) the tile; fading them out reveals it. Per-cell
+   random delays give the blocky corruption look. */
+const PX = 26; // approx pixel-cell size
+
+function ensureOverlay(tile: HTMLElement): HTMLElement[] {
+  const w = tile.clientWidth;
+  const h = tile.clientHeight;
+  const cols = Math.max(1, Math.round(w / PX));
+  const rows = Math.max(1, Math.round(h / PX));
+  let overlay = tile.querySelector<HTMLElement>(':scope > .pixel-overlay');
+  if (overlay && overlay.dataset.cols === String(cols) && overlay.dataset.rows === String(rows)) {
+    return Array.from(overlay.children) as HTMLElement[];
+  }
+  overlay?.remove();
+  overlay = document.createElement('div');
+  overlay.className = 'pixel-overlay';
+  overlay.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  overlay.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+  overlay.dataset.cols = String(cols);
+  overlay.dataset.rows = String(rows);
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < cols * rows; i++) {
+    const c = document.createElement('div');
+    c.className = 'pixel-cell';
+    frag.appendChild(c);
+  }
+  overlay.appendChild(frag);
+  tile.appendChild(overlay);
+  return Array.from(overlay.children) as HTMLElement[];
+}
+
+const STAGGER = 240; // ms spread of the dissolve
+
+function pixelate(tile: HTMLElement, cover: boolean, instant = false): Promise<void> {
+  const cells = ensureOverlay(tile);
+  return new Promise((resolve) => {
+    let maxDelay = 0;
+    cells.forEach((c) => {
+      const d = instant ? 0 : Math.random() * STAGGER;
+      maxDelay = Math.max(maxDelay, d);
+      // Each call sets its own transition so no restore step is needed.
+      c.style.transition = instant ? 'none' : 'opacity 0.13s linear';
+      c.style.transitionDelay = instant ? '0ms' : `${d}ms`;
+    });
+    // Apply the opacity change on the next macrotask. setTimeout (not rAF) so
+    // it still fires when the tab is backgrounded — keeps the open/close
+    // promise chain from stalling.
+    setTimeout(() => {
+      cells.forEach((c) => { c.style.opacity = cover ? '1' : '0'; });
+    }, 0);
+    setTimeout(resolve, instant ? 0 : maxDelay + 170);
   });
 }
+const dissolve = (t: HTMLElement) => pixelate(t, true);
+const reveal = (t: HTMLElement) => pixelate(t, false);
 
-/* ── Active nav highlight (per page) ─────────────────────────────────── */
-function updateActiveNav(): void {
-  const here = normalizePath(location.pathname);
-  document.querySelectorAll<HTMLAnchorElement>('.item-trigger').forEach((a) => {
-    const href = normalizePath(new URL(a.href).pathname);
-    if (href === here) a.setAttribute('aria-current', 'page');
-    else a.removeAttribute('aria-current');
-  });
-}
-
-/* ── Reset the inner scroll container on each navigation ─────────────── */
-function resetScroll(): void {
-  document.querySelector('.content-col')?.scrollTo({ top: 0 });
-}
-
-/* ── Carousels (per page) ────────────────────────────────────────────────
-   Turns each <div class="carousel"><img/>…</div> into a one-at-a-time
-   scroll-snap slider with prev/next buttons and a counter. Idempotent: a
-   carousel is only enhanced once (guarded by data-car-init). */
-function initCarousels(): void {
-  document.querySelectorAll<HTMLElement>('.carousel').forEach((car) => {
+/* ── Carousels (inside writeups) ─────────────────────────────────────────── */
+function initCarousels(root: ParentNode): void {
+  root.querySelectorAll<HTMLElement>('.carousel').forEach((car) => {
     if (car.dataset.carInit) return;
     const imgs = Array.from(car.querySelectorAll<HTMLImageElement>(':scope > img'));
     if (imgs.length === 0) return;
     car.dataset.carInit = '1';
-
-    // Move the images into a scroll-snap track
     const track = document.createElement('div');
     track.className = 'carousel-track';
     imgs.forEach((img) => {
@@ -136,8 +145,7 @@ function initCarousels(): void {
       track.appendChild(slide);
     });
     car.appendChild(track);
-
-    const mkBtn = (cls: string, label: string, glyph: string): HTMLButtonElement => {
+    const mkBtn = (cls: string, label: string, glyph: string) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = `carousel-btn ${cls}`;
@@ -151,288 +159,206 @@ function initCarousels(): void {
     counter.className = 'carousel-counter';
     counter.textContent = `1 / ${imgs.length}`;
     car.append(prev, next, counter);
-
     let idx = 0;
-    const setCounter = () => { counter.textContent = `${idx + 1} / ${imgs.length}`; };
     const go = (i: number) => {
       idx = (i + imgs.length) % imgs.length;
       track.scrollTo({ left: track.clientWidth * idx, behavior: 'smooth' });
-      setCounter();
+      counter.textContent = `${idx + 1} / ${imgs.length}`;
     };
-    prev.addEventListener('click', () => go(idx - 1));
-    next.addEventListener('click', () => go(idx + 1));
-
-    // Keep the counter in sync when the user swipes/scrolls manually
-    let raf = 0;
-    track.addEventListener('scroll', () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const i = Math.round(track.scrollLeft / track.clientWidth);
-        if (i !== idx) { idx = i; setCounter(); }
-      });
-    });
+    prev.addEventListener('click', (e) => { e.stopPropagation(); go(idx - 1); });
+    next.addEventListener('click', (e) => { e.stopPropagation(); go(idx + 1); });
   });
 }
 
-/* ── Lightbox (bound once) ───────────────────────────────────────────── */
+/* ── Lightbox ─────────────────────────────────────────────────────────────
+   Built lazily once; clicking a writeup image opens it fullscreen. */
+let lightboxOpen = false;
+function buildLightbox(): HTMLElement {
+  let lb = document.getElementById('lightbox');
+  if (lb) return lb;
+  lb = document.createElement('div');
+  lb.id = 'lightbox';
+  lb.className = 'lightbox-overlay';
+  lb.setAttribute('hidden', '');
+  lb.innerHTML = '<img class="lightbox-img" src="" alt="" />';
+  document.body.appendChild(lb);
+  lb.addEventListener('click', (e) => { e.stopPropagation(); closeLightbox(); });
+  return lb;
+}
 function openLightbox(img: HTMLImageElement): void {
-  const lightbox = document.getElementById('lightbox');
-  const lightboxImg = lightbox?.querySelector('.lightbox-img') as HTMLImageElement | null;
-  if (!lightbox || !lightboxImg) return;
-  lightboxImg.src = img.src;
-  lightboxImg.alt = img.alt;
-  lightbox.removeAttribute('hidden');
-  lightbox.classList.remove('lb-out');
-  lightbox.classList.add('lb-open');
-  document.body.style.overflow = 'hidden';
+  const lb = buildLightbox();
+  const lbImg = lb.querySelector('.lightbox-img') as HTMLImageElement;
+  lbImg.src = img.src;
+  lb.removeAttribute('hidden');
+  lb.classList.remove('lb-out');
+  lb.classList.add('lb-open');
+  lightboxOpen = true;
 }
-
 function closeLightbox(): void {
-  const lightbox = document.getElementById('lightbox');
-  if (!lightbox) return;
-  lightbox.classList.remove('lb-open');
-  lightbox.classList.add('lb-out');
-  lightbox.addEventListener('animationend', () => {
-    lightbox.setAttribute('hidden', '');
-    lightbox.classList.remove('lb-out');
-    document.body.style.overflow = '';
+  const lb = document.getElementById('lightbox');
+  if (!lb) return;
+  lb.classList.remove('lb-open');
+  lb.classList.add('lb-out');
+  lb.addEventListener('animationend', () => {
+    lb.setAttribute('hidden', '');
+    lb.classList.remove('lb-out');
   }, { once: true });
+  lightboxOpen = false;
 }
 
-function bindLightbox(): void {
-  document.addEventListener('click', (e) => {
-    const el = e.target as Element;
-    if (el.tagName === 'IMG' && el.closest('.project-body')) {
-      openLightbox(el as HTMLImageElement);
-      return;
-    }
-    const lightbox = document.getElementById('lightbox');
-    if (e.target === lightbox || lightbox?.contains(e.target as Node)) closeLightbox();
+/* ── Hover overview typing on photo tiles ────────────────────────────────── */
+function initHover(tile: HTMLElement): void {
+  const textEl = tile.querySelector<HTMLElement>('.tile-overview-text');
+  if (!textEl) return;
+  const full = (textEl.textContent ?? '').trim();
+  textEl.textContent = '';
+  let cancel: (() => void) | null = null;
+  tile.addEventListener('mouseenter', () => {
+    if (stage?.classList.contains('is-open')) return;
+    cancel?.();
+    textEl.textContent = full;
+    cancel = typeInto(textEl, 2, 18);
   });
-  document.addEventListener('keydown', (e) => {
-    const lightbox = document.getElementById('lightbox');
-    if (e.key === 'Escape' && lightbox && !lightbox.hasAttribute('hidden')) closeLightbox();
-  });
-}
-
-/* ── Marquee (bound once; the node persists across pages) ────────────── */
-function bindMarquee(): void {
-  const marquee = document.querySelector<HTMLElement>('.marquee-vert');
-  const track = document.querySelector<HTMLElement>('.marquee-track');
-  if (!marquee || !track) return;
-
-  marquee.addEventListener('mouseenter', () => {
-    const currentY = new DOMMatrix(getComputedStyle(track).transform).m42;
-    track.style.animation = 'none';
-    track.style.transform = `translateY(${currentY}px)`;
-    void track.offsetHeight;
-    // Snap R to the bottom of the viewport (+3rem corrects for padding below R)
-    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
-    const startY = -(track.scrollHeight * 0.75) + window.innerHeight + 3 * rem;
-    track.style.transition = 'transform 1s cubic-bezier(0.25,0.46,0.45,0.94)';
-    track.style.transform = `translateY(${startY}px)`;
-  });
-
-  marquee.addEventListener('mouseleave', () => {
-    const currentY = new DOMMatrix(getComputedStyle(track).transform).m42;
-    const totalH = track.scrollHeight;
-    const vh = window.innerHeight;
-    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
-    const fromY = -(totalH * 0.75) + vh + 3 * rem;
-    const rangeH = totalH * 0.5;
-    const elapsed = (currentY - fromY) / rangeH * 140;
-    const delay = -((elapsed % 140 + 140) % 140);
-    track.style.transition = 'none';
-    track.style.transform = `translateY(${currentY}px)`;
-    void track.offsetHeight;
-    track.style.animation = `march-down 140s linear ${delay.toFixed(3)}s infinite`;
-    void track.offsetHeight;
-    track.style.transform = '';
-  });
-
-  // Clicking the marquee jumps to the About page (same as the old panel toggle).
-  marquee.addEventListener('click', () => { navigate('/about/'); });
-}
-
-/* ── Click the active nav item again → return to the landing page ────── */
-function bindNavToggleHome(): void {
-  document.addEventListener('click', (e) => {
-    const a = (e.target as Element).closest?.('.item-trigger') as HTMLAnchorElement | null;
-    if (!a) return;
-    if (normalizePath(new URL(a.href).pathname) === normalizePath(location.pathname)) {
-      // Already here → behave like the old "click to close" and go home.
-      e.preventDefault();
-      e.stopPropagation();
-      navigate('/');
-    }
-  }, true); // capture phase, so it runs before the ClientRouter's own handler
-}
-
-/* ── Dev tools: font pickers + landing drag (persisted; bound once) ──── */
-function bindDevTools(): void {
-  const root = document.documentElement;
-
-  const applyFont = (inputId: string, prop: string): void => {
-    const el = document.getElementById(inputId) as HTMLInputElement | null;
-    if (!el) return;
-    const apply = () => {
-      const val = el.value.trim();
-      if (val) root.style.setProperty(prop, `'${val}', sans-serif`);
-    };
-    el.addEventListener('change', apply);
-    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') apply(); });
-  };
-  applyFont('pick-nav-font', '--nav-font');
-  applyFont('pick-body-font', '--body-font');
-  applyFont('pick-dropcap-font', '--dropcap-font');
-  applyFont('pick-marquee-font', '--marquee-font');
-
-  const toggleBtn = document.getElementById('drag-toggle') as HTMLButtonElement | null;
-  const readout = document.getElementById('drag-readout');
-  if (!toggleBtn || !readout) return;
-
-  let enabled = false;
-  const state = new Map<HTMLElement, { ox: number; oy: number }>();
-
-  const currentEls = (): HTMLElement[] =>
-    ['.landing-girl', '.landing-name', '.landing-sub']
-      .map((sel) => document.querySelector<HTMLElement>(sel))
-      .filter((el): el is HTMLElement => el !== null);
-
-  const fmt = (el: HTMLElement, label: string, col: DOMRect): string => {
-    const r = el.getBoundingClientRect();
-    const cx = ((r.left + r.width / 2 - col.left) / col.width * 100).toFixed(1);
-    const cy = ((r.top + r.height / 2) / window.innerHeight * 100).toFixed(1);
-    return `${label}  cx:${cx}%  cy:${cy}%`;
-  };
-
-  const labels = ['girl', 'name', 'sub'];
-  const updateReadout = (): void => {
-    const colEl = document.querySelector('.content-col');
-    const els = currentEls();
-    if (!colEl || els.length === 0) { readout.textContent = 'no landing on this page'; return; }
-    const col = colEl.getBoundingClientRect();
-    readout.textContent = els.map((el, i) => fmt(el, labels[i], col)).join('     ');
-  };
-
-  const attachDrag = (el: HTMLElement): void => {
-    if (el.dataset.dragBound) return; // bind each (possibly new) node only once
-    el.dataset.dragBound = '1';
-    el.addEventListener('mousedown', (e) => {
-      if (!enabled) return;
-      e.preventDefault();
-      const cur = state.get(el) ?? { ox: 0, oy: 0 };
-      const startX = e.clientX - cur.ox;
-      const startY = e.clientY - cur.oy;
-      el.style.cursor = 'grabbing';
-      const onMove = (ev: MouseEvent) => {
-        const ox = ev.clientX - startX;
-        const oy = ev.clientY - startY;
-        state.set(el, { ox, oy });
-        el.style.transform = `translate(calc(-50% + ${ox}px), calc(-50% + ${oy}px))`;
-        updateReadout();
-      };
-      const onUp = () => {
-        el.style.cursor = 'grab';
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-      };
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-    });
-  };
-
-  toggleBtn.addEventListener('click', () => {
-    enabled = !enabled;
-    toggleBtn.classList.toggle('active', enabled);
-    toggleBtn.textContent = enabled ? '⠿ drag ON' : '⠿ drag mode';
-    const els = currentEls();
-    if (enabled) {
-      els.forEach(attachDrag);
-      els.forEach((el) => el.classList.add('drag-active'));
-      updateReadout();
-    } else {
-      els.forEach((el) => {
-        el.classList.remove('drag-active');
-        el.style.transform = 'translate(-50%, -50%)';
-      });
-      state.clear();
-      readout.textContent = 'off';
-    }
+  tile.addEventListener('mouseleave', () => {
+    cancel?.();
+    textEl.textContent = '';
   });
 }
 
-/* ── Landing tiles: type the overview on hover (per page) ─────────────────
-   On the landing grid, hovering a tile pales its image (CSS) and types the
-   project overview over it. The text starts empty and is revealed character
-   by character on mouseenter; mouseleave clears it so it re-types next time. */
-function initLandingTiles(): void {
-  document.querySelectorAll<HTMLElement>('.tile').forEach((tile) => {
-    if (tile.dataset.tileInit) return;
-    tile.dataset.tileInit = '1';
+/* ── Open / close a project in place ─────────────────────────────────────── */
+let stage: HTMLElement | null = null;
+let openId: string | null = null;
+let typingCancel: (() => void) | null = null;
 
-    const media    = tile.querySelector<HTMLElement>('.tile-media');
-    const overview = tile.querySelector<HTMLElement>('.tile-overview');
-    if (!media || !overview) return;
-
-    const fullText = (overview.textContent ?? '').trim();
-    overview.textContent = ''; // start empty; CSS fades the container in on hover
-
-    let timer: ReturnType<typeof setInterval> | null = null;
-    const stop = () => { if (timer !== null) { clearInterval(timer); timer = null; } };
-
-    media.addEventListener('mouseenter', () => {
-      stop();
-      overview.textContent = '';
-      const spans: HTMLElement[] = [];
-      const frag = document.createDocumentFragment();
-      for (const ch of fullText) {
-        const s = document.createElement('span');
-        s.textContent = ch;
-        s.style.opacity = '0';
-        spans.push(s);
-        frag.appendChild(s);
-      }
-      overview.appendChild(frag);
-
-      let idx = 0;
-      const CHUNK = 2;  // chars per tick — slower, visible typewriter
-      const TICK = 18;  // ms → ~110 chars/s
-      timer = setInterval(() => {
-        for (let i = 0; i < CHUNK && idx < spans.length; i++, idx++) spans[idx].style.opacity = '1';
-        if (idx >= spans.length) stop();
-      }, TICK);
-    });
-
-    media.addEventListener('mouseleave', () => {
-      stop();
-      overview.textContent = ''; // reset for next hover
-    });
-  });
+function visibleTiles(): HTMLElement[] {
+  const page = stage!.dataset.page ?? '1';
+  return Array.from(stage!.querySelectorAll<HTMLElement>(`.tile[data-page="${page}"]`));
 }
 
-/* ── Lifecycle ───────────────────────────────────────────────────────── */
-let boundOnce = false;
+async function openProject(cell: HTMLElement, id: string): Promise<void> {
+  if (openId || !stage) return;
+  openId = id;
+  stage.classList.add('is-open');
+  cell.classList.add('cell--active');
 
-function onPageLoad(): void {
-  if (!boundOnce) {
-    bindLightbox();
-    bindMarquee();
-    bindNavToggleHome();
-    bindDevTools();
-    boundOnce = true;
+  const activeTile = cell.querySelector<HTMLElement>(`.tile[data-page="${stage.dataset.page}"]`);
+
+  // Dissolve every visible tile except the one in the active cell
+  const others = visibleTiles().filter((t) => !cell.contains(t));
+  await Promise.all(others.map(dissolve));
+
+  // Reveal the writeup in the freed space
+  const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
+  if (!writeup || !activeTile) return;
+
+  // Reserve the active tile's row so text never sits under it
+  const sRect = stage.getBoundingClientRect();
+  const tRect = activeTile.getBoundingClientRect();
+  writeup.style.paddingTop = '';
+  writeup.style.paddingBottom = '';
+  const gapPx = parseFloat(getComputedStyle(stage.querySelector('.landing-grid')!).rowGap) || 16;
+  if (tRect.top + tRect.height / 2 < sRect.top + sRect.height / 2) {
+    writeup.style.paddingTop = `${tRect.bottom - sRect.top + gapPx}px`;
+  } else {
+    writeup.style.paddingBottom = `${sRect.bottom - tRect.top + gapPx}px`;
   }
-  buildNav();
-  updateActiveNav();
-  resetScroll();
-  // Typing reveal runs on whichever content the page has: a project's full
-  // report (description + body) or the About/Contact prose. The landing grid
-  // has neither — its tiles type their overview on hover instead.
-  const typeTarget = document.querySelector<HTMLElement>('.project-report, .prose-area');
-  if (typeTarget) runTyping(typeTarget);
-  initCarousels();
-  initLandingTiles();
+
+  writeup.hidden = false;
+  writeup.scrollTop = 0;
+  initCarousels(writeup);
+  // Type the report (description + body) like the old keycaps page
+  typingCancel?.();
+  typingCancel = typeInto(writeup, 40, 16);
 }
 
-// Fires on the initial load and after every <ClientRouter /> navigation.
-document.addEventListener('astro:page-load', onPageLoad);
+async function closeProject(): Promise<void> {
+  if (!openId || !stage) return;
+  const id = openId;
+  openId = null;
+  typingCancel?.();
+
+  const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
+  if (writeup) writeup.hidden = true;
+
+  const cell = stage.querySelector<HTMLElement>('.cell--active');
+  cell?.classList.remove('cell--active');
+
+  // Reveal the tiles that were dissolved
+  const others = visibleTiles().filter((t) => !cell?.contains(t));
+  await Promise.all(others.map(reveal));
+  stage.classList.remove('is-open');
+}
+
+/* ── "More works" pager ──────────────────────────────────────────────────── */
+let paging = false;
+async function setPage(page: '1' | '2'): Promise<void> {
+  if (!stage || paging || stage.dataset.page === page) return;
+  paging = true;
+  // Dissolve the five non-"more" tiles, swap the page, reveal the new ones
+  const leaving = visibleTiles().filter((t) => !t.classList.contains('tile--more'));
+  await Promise.all(leaving.map(dissolve));
+  stage.dataset.page = page;
+  // New tiles start covered, then reveal
+  const entering = visibleTiles().filter((t) => !t.classList.contains('tile--more'));
+  await Promise.all(entering.map((t) => pixelate(t, true, true))); // cover instantly
+  await Promise.all(entering.map(reveal));
+  paging = false;
+}
+
+/* ── Click handling ──────────────────────────────────────────────────────── */
+function onStageClick(e: MouseEvent): void {
+  const target = e.target as Element;
+
+  // While a project is open: a click closes it, unless it's a functional
+  // control (a link, a carousel button, or a zoomable writeup image).
+  if (openId) {
+    if (lightboxOpen) return;
+    if (target.closest('a[href], .carousel-btn')) return;
+    const img = target.closest('.project-body img') as HTMLImageElement | null;
+    if (img) { openLightbox(img); return; }
+    closeProject();
+    return;
+  }
+
+  const tile = target.closest<HTMLElement>('.tile');
+  if (!tile) return;
+  const action = tile.dataset.action;
+  if (action === 'more') { setPage('2'); return; }
+  if (action === 'home') { setPage('1'); return; }
+  if (tile.dataset.open) {
+    const cell = tile.closest<HTMLElement>('.cell');
+    if (cell) openProject(cell, tile.dataset.open);
+  }
+}
+
+/* ── Init + load-in animation ────────────────────────────────────────────── */
+function init(): void {
+  stage = document.querySelector<HTMLElement>('.stage');
+  if (!stage) return;
+
+  // Slice animation: split every tile title into word-halves
+  stage.querySelectorAll<HTMLElement>('.tile-name, .tile-label, .tile-namecard-name')
+    .forEach(buildSplitWords);
+
+  // Hover typing on photo tiles
+  stage.querySelectorAll<HTMLElement>('.tile--photo').forEach(initHover);
+
+  stage.addEventListener('click', onStageClick);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { if (lightboxOpen) closeLightbox(); else if (openId) closeProject(); }
+  });
+
+  // Load-in: cover every visible tile instantly, reveal the page, then clear
+  // the pixels (reverse of the dissolve) so tiles assemble rather than flick in.
+  const tiles = visibleTiles();
+  Promise.all(tiles.map((t) => pixelate(t, true, true))).then(() => {
+    stage!.classList.add('ready');
+    setTimeout(() => tiles.forEach(reveal), 60);
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
