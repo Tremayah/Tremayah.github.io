@@ -103,41 +103,36 @@ function ensureOverlay(tile: HTMLElement): HTMLElement[] {
   return Array.from(overlay.children) as HTMLElement[];
 }
 
-const STAGGER = 190; // ms spread of the dissolve — snappier than before
+const STAGGER = 220; // ms spread of the fizzle
+const BUCKETS = 18;  // stagger granularity — cells pop in this many random waves
 
 function pixelate(tile: HTMLElement, cover: boolean, instant = false): Promise<void> {
   const cells = ensureOverlay(tile);
+  const target = cover ? '1' : '0';
 
   // Instant: snap every cell synchronously (no stagger, no paint gap). Used to
   // pre-cover a tile/writeup so it can fizzle in without flashing uncovered.
   if (instant) {
-    cells.forEach((c) => {
-      c.style.transition = 'none';
-      c.style.transitionDelay = '0ms';
-      c.style.opacity = cover ? '1' : '0';
-    });
+    cells.forEach((c) => { c.style.transition = 'none'; c.style.opacity = target; });
     return Promise.resolve();
   }
 
+  // Staggered snap, driven explicitly in JS rather than via CSS transition-delay
+  // (which fires reliably covering but flakily when uncovering a reused overlay,
+  // making the fizzle-IN just pop). Each cell joins a random time-bucket and
+  // snaps with no fade, so it reads as a blocky glitch the same in both
+  // directions. setTimeout (not rAF) keeps it running in backgrounded tabs.
   return new Promise((resolve) => {
-    let maxDelay = 0;
+    const groups: HTMLElement[][] = Array.from({ length: BUCKETS }, () => []);
     cells.forEach((c) => {
-      const d = Math.random() * STAGGER;
-      maxDelay = Math.max(maxDelay, d);
-      // No fade — cells snap straight to their end state. Combined with the
-      // per-cell stagger this reads as an abrupt, glitchy flicker rather than
-      // a smooth dissolve. (transitionDelay still staggers *when* each cell
-      // pops, even with an instant transition.)
-      c.style.transition = 'opacity 0s linear';
-      c.style.transitionDelay = `${d}ms`;
+      c.style.transition = 'none';
+      groups[(Math.random() * BUCKETS) | 0].push(c);
     });
-    // Apply the opacity change on the next macrotask. setTimeout (not rAF) so
-    // it still fires when the tab is backgrounded — keeps the open/close
-    // promise chain from stalling.
-    setTimeout(() => {
-      cells.forEach((c) => { c.style.opacity = cover ? '1' : '0'; });
-    }, 0);
-    setTimeout(resolve, maxDelay + 60);
+    const step = STAGGER / BUCKETS;
+    groups.forEach((group, i) => {
+      setTimeout(() => { for (const c of group) c.style.opacity = target; }, i * step);
+    });
+    setTimeout(resolve, STAGGER + 40);
   });
 }
 const dissolve = (t: HTMLElement) => pixelate(t, true);
