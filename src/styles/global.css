@@ -3,9 +3,9 @@
    Global stylesheet. Imported once by LandingLayout.astro.
 
    The whole site is a single page (see index.astro): a 3×2 grid of tiles,
-   each holding a project (or the "about"/"more works" controls). Clicking a
-   tile pixel-dissolves the others and reveals that project's writeup as a
-   "flower" of short text blocks in the five freed cells around it.
+   each holding a project, the contact card, or the "more works" pager.
+   Clicking a tile pixel-dissolves the others and reveals that project's
+   writeup as a flowing article filling the freed space.
    ========================================================================== */
 
 :root {
@@ -19,11 +19,11 @@
   --body-color:  #f80d0d;
   --title-color: #f80d0d;
 
-  /* Interaction blue — title click, more-works active, about hover, image-hover overlay. */
+  /* Interaction blue — title click/glitch, more-works active state, image-hover overlay. */
   --highlight: #0913ff;
 
-  /* Shared grid geometry — the open-state "flower" writeup mirrors the
-     landing grid exactly, so both reference the same gap/padding tokens. */
+  /* Shared grid geometry — the open-state writeup mirrors the landing grid's
+     padding exactly, so both reference the same tokens. */
   --grid-gap: clamp(0.5rem, 1.5vw, 1.25rem);
   --grid-pad: clamp(0.75rem, 2vw, 1.5rem);
 }
@@ -170,7 +170,7 @@ html, body {
   text-transform: lowercase;
 }
 
-/* Text tiles: name / essays / more works / back */
+/* Text tile: currently only "more works" uses this (centred label, no image) */
 .tile--text {
   align-items: center;
   justify-content: center;
@@ -367,7 +367,11 @@ html, body {
   background: var(--bg);
   padding: var(--grid-pad);
 }
-.writeup[hidden] { display: none; }
+/* !important: guards against .writeup--article (and any future writeup
+   modifier) setting its own `display` — [hidden] must always win, or a
+   closed project stays visually stuck covering the stage (same specificity,
+   source order would otherwise decide and silently break on reorder). */
+.writeup[hidden] { display: none !important; }
 .writeup.writeup--article {
   display: flex;
   flex-direction: column;

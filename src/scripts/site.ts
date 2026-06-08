@@ -11,8 +11,6 @@
      • the hover overview typing on photo tiles
    ========================================================================== */
 
-const GAP = 0; // grid gap is read live where needed
-
 /* ── Typing reveal ────────────────────────────────────────────────────────
    Wrap each character of a container in a hidden span, then fade them in a
    few per tick. Skips image containers so their layout isn't disturbed. */

@@ -113,13 +113,6 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
                 </button>
               );
             }
-            if (t.kind === 'text') {
-              return (
-                <button class="tile tile--text" data-page={page} data-open={t.id} type="button">
-                  <span class="tile-label">{t.title}</span>
-                </button>
-              );
-            }
             // photo tile
             return (
               <button class="tile tile--photo" data-page={page} data-open={t.id} type="button">
