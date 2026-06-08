@@ -55,6 +55,9 @@ html, body {
   height: 100dvh;
   width: 100%;
   overflow: hidden;
+  /* Own stacking context so the open-state layers order predictably:
+     persisting cell (10) > full-stage fizzle (8) > writeup (6) > grid. */
+  isolation: isolate;
 }
 /* Hidden until site.ts has covered the tiles with pixels, so they assemble
    from the background rather than flicking in. (no-JS still shows the grid.) */
@@ -380,13 +383,18 @@ html, body {
   box-shadow: 0 0 0 1px var(--bg);
   opacity: 0;
 }
+/* The full-stage open/close fizzle (built on the stage itself, not a tile)
+   sits above the writeup but below the raised persisting cell, so the whole
+   page dissolves while the hero image + title stay put. */
+.stage > .pixel-overlay {
+  z-index: 8;
+}
 
-/* ── Open state: writeup fills the freed grid rectangle ─────────────────────
-   The clicked tile stays put (its hero image + sliced title anchor the view);
-   every other tile dissolves to the background, and the writeup fizzles in to
-   fill the grid-aligned rectangle the freed cells leave behind. site.ts sets
-   the writeup's left/top/width/height inline on open (see freeRectFor); the
-   inset:0 here is only a no-JS / pre-open fallback. */
+/* ── Open state: writeup fills the WHOLE stage, wrapping the hero image ──────
+   The clicked tile stays put and is raised above the writeup (cell--active,
+   below); the writeup covers the whole stage as normal block flow with an
+   invisible floated .wrap-spacer the size/position of that tile, so the body
+   copy wraps around the image like a magazine. */
 .writeups {
   display: contents;
 }
@@ -394,15 +402,23 @@ html, body {
   position: absolute;
   inset: 0;
   z-index: 6;
-  display: flex;
-  flex-direction: column;
+  display: block;
   overflow-y: auto;
   background: var(--bg);
   padding: var(--grid-pad);
 }
-/* !important so [hidden] always beats the display:flex above — a closed
+/* !important so [hidden] always beats the display:block above — a closed
    project must never stay visually stuck covering the stage. */
 .writeup[hidden] { display: none !important; }
+/* Invisible float the text wraps around; JS sizes/sides it to the hero tile. */
+.wrap-spacer {
+  pointer-events: none;
+}
+/* Raise the persisting tile's cell above the writeup + the full-stage fizzle,
+   so its hero image and title stay visible while everything else dissolves. */
+.cell--active {
+  z-index: 10;
+}
 /* The persisting tile keeps its sliced title; tint it highlight-blue while
    open as the "this is the one you're reading" cue. */
 .cell--active .tile-name,
@@ -421,7 +437,6 @@ html, body {
 
 /* ── Project desc: lead-in line above the body copy ───────────────────── */
 .project-desc {
-  max-width: 60ch;
   font-family: var(--body-font);
   font-weight: 700;
   font-size: clamp(0.85rem, 1.5vw, 1.15rem);
@@ -430,11 +445,10 @@ html, body {
   margin: 0 0 0.7em;
 }
 
-/* ── Project body: justified reading column ──────────────────────────────
-   The persisting hero tile is the project's image now, so the writeup is
-   pure text — a single capped column that fills the freed rectangle. */
+/* ── Project body: justified copy that fills the page around the hero ─────
+   The persisting hero tile is the project's image now, so the writeup is pure
+   text — it fills the whole stage and wraps around the floated .wrap-spacer. */
 .project-body {
-  max-width: 62ch;
   font-family: var(--body-font);
   font-size: clamp(0.85rem, 1.5vw, 1.1rem);
   font-weight: 400;

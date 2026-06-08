@@ -260,62 +260,74 @@ function visibleTiles(): HTMLElement[] {
   return Array.from(stage!.querySelectorAll<HTMLElement>(`.tile[data-page="${page}"]`));
 }
 
-type Rect = { left: number; top: number; width: number; height: number };
+/* Lay the writeup across the WHOLE stage and float an invisible spacer the
+   size + position of the persisting tile, so the body copy wraps around the
+   hero image like a magazine. The real tile sits above the writeup (its cell
+   is raised in CSS), showing through the gap the spacer holds the text out of. */
+function layoutFullStage(writeup: HTMLElement, tile: HTMLElement): void {
+  writeup.style.cssText = ''; // drop any leftover inline rectangle; fill via CSS inset:0
 
-/* The rectangle (relative to the stage) the writeup should fill: the block of
-   cells opposite the clicked one. A side cell (left/right column) frees the
-   two other columns full-height; a middle cell frees the opposite row
-   full-width. Measured from the real cell rects so it stays glued to the
-   grid lines (respecting gap + padding) at any viewport size. */
-function freeRectFor(cell: HTMLElement): Rect | null {
-  const cells = gridCells();
-  const idx = cells.indexOf(cell);
-  if (idx < 0) return null;
-  const col = idx % 3;
-  const row = (idx / 3) | 0;
-  const target =
-    col === 0 ? [1, 2, 4, 5] :
-    col === 2 ? [0, 1, 3, 4] :
-    row === 0 ? [3, 4, 5] : [0, 1, 2];
-  const sr = stage!.getBoundingClientRect();
-  const rects = target.map((i) => cells[i].getBoundingClientRect());
-  const left = Math.min(...rects.map((r) => r.left)) - sr.left;
-  const top = Math.min(...rects.map((r) => r.top)) - sr.top;
-  const right = Math.max(...rects.map((r) => r.right)) - sr.left;
-  const bottom = Math.max(...rects.map((r) => r.bottom)) - sr.top;
-  return { left, top, width: right - left, height: bottom - top };
+  let spacer = writeup.querySelector<HTMLElement>(':scope > .wrap-spacer');
+  if (!spacer) {
+    spacer = document.createElement('div');
+    spacer.className = 'wrap-spacer';
+    spacer.setAttribute('aria-hidden', 'true');
+    writeup.insertBefore(spacer, writeup.firstChild);
+  }
+
+  const cs = getComputedStyle(writeup);
+  const padL = parseFloat(cs.paddingLeft) || 0;
+  const padR = parseFloat(cs.paddingRight) || 0;
+  const padT = parseFloat(cs.paddingTop) || 0;
+  const wr = writeup.getBoundingClientRect();
+  const tr = tile.getBoundingClientRect();
+  const gap = 20;
+  const contentW = writeup.clientWidth - padL - padR;
+  const relLeft = tr.left - wr.left - padL;
+  const relRight = tr.right - wr.left - padL;
+  const relTop = tr.top - wr.top - padT;
+
+  // Float toward whichever side the tile sits on, so the text fills the larger
+  // area beside and below it.
+  if ((relLeft + relRight) / 2 < contentW / 2) {
+    spacer.style.float = 'left';
+    spacer.style.width = `${Math.max(0, relRight + gap)}px`;
+  } else {
+    spacer.style.float = 'right';
+    spacer.style.width = `${Math.max(0, contentW - relLeft + gap)}px`;
+  }
+  spacer.style.height = `${Math.max(0, relTop + tr.height + gap)}px`;
 }
 
-function positionWriteup(w: HTMLElement, r: Rect): void {
-  w.style.left = `${r.left}px`;
-  w.style.top = `${r.top}px`;
-  w.style.width = `${r.width}px`;
-  w.style.height = `${r.height}px`;
-  w.style.right = 'auto';
-  w.style.bottom = 'auto';
-}
+/* Open / close fizzle the WHOLE stage as one pixel field — the same look as the
+   "more works" pager, but page-wide. A stage-level overlay (raised above the
+   writeup, but BELOW the persisting tile's cell) covers everything except the
+   hero image + title: the rest of the page dissolves to static, then resolves
+   into the write-up (open) or back into the grid (close). */
+const dissolveStage = (): Promise<void> => pixelate(stage!, true);
+const revealStage = (): Promise<void> => pixelate(stage!, false);
 
 async function openProject(cell: HTMLElement, tile: HTMLElement, id: string): Promise<void> {
   if (openId || paging || !stage) return;
   openId = id;
   stage.classList.add('is-open');
-  cell.classList.add('cell--active'); // slice-glitch the persisting title
+  cell.classList.add('cell--active'); // raise the persisting tile + slice its title
 
-  const others = visibleTiles().filter((t) => t !== tile);
+  // Phase 1 — everything but the persisting tile fizzles to static.
+  await dissolveStage();
+
+  // Show the write-up first (so it has real dimensions to measure), then lay it
+  // over the whole stage wrapping the hero image. It's still under the static
+  // overlay at this point, so showing it can't flash.
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
-  const rect = writeup ? freeRectFor(cell) : null;
-
-  if (writeup && rect) {
-    positionWriteup(writeup, rect);
+  if (writeup) {
     writeup.hidden = false;
     initCarousels(writeup);
-    pixelate(writeup, true, true); // start fully covered, then fizzle in below
+    layoutFullStage(writeup, tile);
   }
 
-  await Promise.all([
-    ...others.map(dissolve),
-    writeup && rect ? reveal(writeup) : Promise.resolve(),
-  ]);
+  // Phase 2 — the static clears, resolving into the write-up.
+  await revealStage();
 }
 
 async function closeProject(): Promise<void> {
@@ -323,18 +335,17 @@ async function closeProject(): Promise<void> {
   const id = openId;
   openId = null;
 
+  // Phase 1 — the open write-up fizzles back to static.
+  await dissolveStage();
+
+  // Drop the write-up so the home grid sits beneath the static, then…
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
-  const active = stage.querySelector<HTMLElement>('.cell--active');
-  const persist = active?.querySelector<HTMLElement>(`.tile[data-page="${stage.dataset.page ?? '1'}"]`) ?? null;
-  const others = visibleTiles().filter((t) => t !== persist);
-
-  await Promise.all([
-    writeup ? dissolve(writeup) : Promise.resolve(), // writeup dissolves to bg…
-    ...others.map(reveal),                           // …as the other tiles return
-  ]);
-
   if (writeup) writeup.hidden = true;
-  active?.classList.remove('cell--active');
+
+  // Phase 2 — …the static clears, resolving back into the grid.
+  await revealStage();
+
+  stage.querySelector('.cell--active')?.classList.remove('cell--active');
   stage.classList.remove('is-open');
 }
 
@@ -473,17 +484,17 @@ function init(): void {
     if (e.key === 'Escape') { if (lightboxOpen) closeLightbox(); else if (openId) closeProject(); }
   });
 
-  // The open writeup is positioned in pixels against the live grid, so keep it
-  // glued to the freed rectangle if the window is resized mid-read.
+  // The open write-up wraps around the persisting tile, whose position shifts
+  // when the grid reflows — recompute the wrap spacer on resize.
   let resizeRAF = 0;
   window.addEventListener('resize', () => {
     if (!openId || !stage) return;
     cancelAnimationFrame(resizeRAF);
     resizeRAF = requestAnimationFrame(() => {
-      const active = stage!.querySelector<HTMLElement>('.cell--active');
+      const page = stage!.dataset.page ?? '1';
+      const tile = stage!.querySelector<HTMLElement>(`.cell--active .tile[data-page="${page}"]`);
       const writeup = stage!.querySelector<HTMLElement>(`.writeup[data-for="${openId}"]`);
-      const rect = active ? freeRectFor(active) : null;
-      if (writeup && rect) positionWriteup(writeup, rect);
+      if (tile && writeup) layoutFullStage(writeup, tile);
     });
   });
 
@@ -493,6 +504,9 @@ function init(): void {
   Promise.all(tiles.map((t) => pixelate(t, true, true))).then(() => {
     stage!.classList.add('ready');
     setTimeout(() => tiles.forEach(reveal), 60);
+    // Warm the full-stage fizzle overlay while idle so the first project open
+    // doesn't pay the ~thousands-of-cells build cost mid-animation.
+    setTimeout(() => { if (stage) ensureOverlay(stage); }, 400);
   });
 }
 
