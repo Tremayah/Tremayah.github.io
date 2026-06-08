@@ -75,7 +75,7 @@ function buildSplitWords(el: HTMLElement): void {
    Each tile gets an overlay grid of background-coloured cells. Fading the
    cells in covers (dissolves) the tile; fading them out reveals it. Per-cell
    random delays give the blocky corruption look. */
-const PX = 26; // approx pixel-cell size
+const PX = 17; // approx pixel-cell size — smaller = finer-grained corruption
 
 function ensureOverlay(tile: HTMLElement): HTMLElement[] {
   const w = tile.clientWidth;
@@ -104,7 +104,7 @@ function ensureOverlay(tile: HTMLElement): HTMLElement[] {
   return Array.from(overlay.children) as HTMLElement[];
 }
 
-const STAGGER = 240; // ms spread of the dissolve
+const STAGGER = 190; // ms spread of the dissolve — snappier than before
 
 function pixelate(tile: HTMLElement, cover: boolean, instant = false): Promise<void> {
   const cells = ensureOverlay(tile);
@@ -113,8 +113,11 @@ function pixelate(tile: HTMLElement, cover: boolean, instant = false): Promise<v
     cells.forEach((c) => {
       const d = instant ? 0 : Math.random() * STAGGER;
       maxDelay = Math.max(maxDelay, d);
-      // Each call sets its own transition so no restore step is needed.
-      c.style.transition = instant ? 'none' : 'opacity 0.13s linear';
+      // No fade — cells snap straight to their end state. Combined with the
+      // per-cell stagger this reads as an abrupt, glitchy flicker rather than
+      // a smooth dissolve. (transitionDelay still staggers *when* each cell
+      // pops, even with an instant transition.)
+      c.style.transition = instant ? 'none' : 'opacity 0s linear';
       c.style.transitionDelay = instant ? '0ms' : `${d}ms`;
     });
     // Apply the opacity change on the next macrotask. setTimeout (not rAF) so
@@ -123,7 +126,7 @@ function pixelate(tile: HTMLElement, cover: boolean, instant = false): Promise<v
     setTimeout(() => {
       cells.forEach((c) => { c.style.opacity = cover ? '1' : '0'; });
     }, 0);
-    setTimeout(resolve, instant ? 0 : maxDelay + 170);
+    setTimeout(resolve, instant ? 0 : maxDelay + 60);
   });
 }
 const dissolve = (t: HTMLElement) => pixelate(t, true);
@@ -217,12 +220,54 @@ function initHover(tile: HTMLElement): void {
     if (stage?.classList.contains('is-open')) return;
     cancel?.();
     textEl.textContent = full;
-    cancel = typeInto(textEl, 2, 18);
+    cancel = typeInto(textEl, 5, 10);
   });
   tile.addEventListener('mouseleave', () => {
     cancel?.();
     textEl.textContent = '';
   });
+}
+
+/* ── "Flower" layout: writeup text wraps around the persisting tile ───────
+   The writeup becomes a grid that mirrors the landing grid exactly (see
+   .writeup--flower in global.css — same 3×2 template + shared gap/padding
+   tokens). The description and each body paragraph ("petals") are placed,
+   in reading order, into the five cells that surround the opened tile; its
+   own cell is left empty so the tile shows through. Built once per writeup
+   and cached — every writeup always opens from the same cell, so the
+   mapping never changes on reopen. */
+function layoutFlower(writeup: HTMLElement, cellIndex: number): void {
+  if (writeup.dataset.flowerBuilt === '1') return;
+  writeup.dataset.flowerBuilt = '1';
+  writeup.classList.add('writeup--flower');
+
+  const activeRow = Math.floor(cellIndex / 3);
+  const activeCol = cellIndex % 3;
+  const positions: Array<[number, number]> = [];
+  for (let r = 0; r < 2; r++) {
+    for (let c = 0; c < 3; c++) {
+      if (r === activeRow && c === activeCol) continue;
+      positions.push([r, c]);
+    }
+  }
+
+  const desc = writeup.querySelector<HTMLElement>('.project-desc');
+  const bodyEl = writeup.querySelector<HTMLElement>('.project-body');
+  const bodyChildren = bodyEl ? (Array.from(bodyEl.children) as HTMLElement[]) : [];
+  const petals = [desc, ...bodyChildren].filter((el): el is HTMLElement => !!el);
+
+  petals.forEach((petal, i) => {
+    petal.classList.add('petal');
+    if (i < positions.length) {
+      const [r, c] = positions[i];
+      petal.style.gridRow = String(r + 1);
+      petal.style.gridColumn = String(c + 1);
+      writeup.appendChild(petal); // direct child of the grid so placement applies
+    } else {
+      petal.style.display = 'none'; // safety net: more copy than free cells
+    }
+  });
+  bodyEl?.remove();
 }
 
 /* ── Open / close a project in place ─────────────────────────────────────── */
@@ -241,32 +286,20 @@ async function openProject(cell: HTMLElement, id: string): Promise<void> {
   stage.classList.add('is-open');
   cell.classList.add('cell--active');
 
-  const activeTile = cell.querySelector<HTMLElement>(`.tile[data-page="${stage.dataset.page}"]`);
-
   // Dissolve every visible tile except the one in the active cell
   const others = visibleTiles().filter((t) => !cell.contains(t));
   await Promise.all(others.map(dissolve));
 
-  // Reveal the writeup in the freed space
+  // Reveal the writeup, "flowered" around the persisting tile
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
-  if (!writeup || !activeTile) return;
-
-  // Reserve the active tile's row so text never sits under it
-  const sRect = stage.getBoundingClientRect();
-  const tRect = activeTile.getBoundingClientRect();
-  writeup.style.paddingTop = '';
-  writeup.style.paddingBottom = '';
-  const gapPx = parseFloat(getComputedStyle(stage.querySelector('.landing-grid')!).rowGap) || 16;
-  if (tRect.top + tRect.height / 2 < sRect.top + sRect.height / 2) {
-    writeup.style.paddingTop = `${tRect.bottom - sRect.top + gapPx}px`;
-  } else {
-    writeup.style.paddingBottom = `${sRect.bottom - tRect.top + gapPx}px`;
-  }
+  if (!writeup) return;
+  const gridEl = stage.querySelector<HTMLElement>('.landing-grid')!;
+  const cellIndex = Array.from(gridEl.children).indexOf(cell);
+  layoutFlower(writeup, cellIndex);
 
   writeup.hidden = false;
-  writeup.scrollTop = 0;
   initCarousels(writeup);
-  // Type the report (description + body) like the old keycaps page
+  // Type each petal in, like the old keycaps page
   typingCancel?.();
   typingCancel = typeInto(writeup, 40, 16);
 }
@@ -294,12 +327,13 @@ let paging = false;
 async function setPage(page: '1' | '2'): Promise<void> {
   if (!stage || paging || stage.dataset.page === page) return;
   paging = true;
-  // Dissolve the five non-"more" tiles, swap the page, reveal the new ones
-  const leaving = visibleTiles().filter((t) => !t.classList.contains('tile--more'));
+  // Dissolve the four swapping tiles only — the name/about and "more works"
+  // tiles persist unchanged across pages and shouldn't flicker.
+  const leaving = visibleTiles().filter((t) => !t.classList.contains('tile--persist'));
   await Promise.all(leaving.map(dissolve));
   stage.dataset.page = page;
   // New tiles start covered, then reveal
-  const entering = visibleTiles().filter((t) => !t.classList.contains('tile--more'));
+  const entering = visibleTiles().filter((t) => !t.classList.contains('tile--persist'));
   await Promise.all(entering.map((t) => pixelate(t, true, true))); // cover instantly
   await Promise.all(entering.map(reveal));
   paging = false;
@@ -323,8 +357,8 @@ function onStageClick(e: MouseEvent): void {
   const tile = target.closest<HTMLElement>('.tile');
   if (!tile) return;
   const action = tile.dataset.action;
-  if (action === 'more') { setPage('2'); return; }
-  if (action === 'home') { setPage('1'); return; }
+  // "More works" toggles — click again (there's no separate "back" tile) to return.
+  if (action === 'more') { setPage(stage!.dataset.page === '2' ? '1' : '2'); return; }
   if (tile.dataset.open) {
     const cell = tile.closest<HTMLElement>('.cell');
     if (cell) openProject(cell, tile.dataset.open);

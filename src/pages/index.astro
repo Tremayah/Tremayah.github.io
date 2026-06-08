@@ -33,15 +33,16 @@ const data = (id: string) => {
   return { id, title: e?.data.title ?? id, cover: e?.data.cover, desc: e?.data.description ?? '' };
 };
 
-// Six cells, each holding a page-1 and a page-2 variant. Cell 0 is the name /
-// back tile; cell 5 is the "more works" pager. Cells 1–4 are projects.
+// Six cells, each holding a page-1 and a page-2 variant. Cell 0 (name/about)
+// and cell 5 ("more works") persist unchanged across both pages — only cells
+// 1–4 swap to a second set of projects.
 const cells = [
-  { p1: { kind: 'name' },                       p2: { kind: 'back' } },
+  { p1: { kind: 'name' },                          p2: { kind: 'name' } },
   { p1: { kind: 'photo', ...data('exploration') }, p2: { kind: 'photo', ...data('living-lamp') } },
   { p1: { kind: 'photo', ...data('keycaps') },     p2: { kind: 'photo', ...data('trebuchet') } },
   { p1: { kind: 'photo', ...data('progression') }, p2: { kind: 'photo', ...data('culture') } },
-  { p1: { kind: 'text',  ...data('essays') },      p2: { kind: 'photo', ...data('creative-skills') } },
-  { p1: { kind: 'more' },                        p2: { kind: 'more' } },
+  { p1: { kind: 'photo', ...data('essays') },      p2: { kind: 'photo', ...data('creative-skills') } },
+  { p1: { kind: 'more' },                          p2: { kind: 'more' } },
 ];
 
 const NAME = 'Raphael Murray Browne';
@@ -57,7 +58,7 @@ const SUB = '3rd Year Product & Furniture Design Student · University of Plymou
             const page = i + 1;
             if (t.kind === 'name') {
               return (
-                <button class="tile tile--text" data-page={page} data-open="about" type="button">
+                <button class="tile tile--text tile--persist" data-page={page} data-open="about" type="button">
                   <span class="tile-namecard">
                     <span class="tile-namecard-name">{NAME}</span>
                     <span class="tile-namecard-sub">{SUB}</span>
@@ -65,16 +66,9 @@ const SUB = '3rd Year Product & Furniture Design Student · University of Plymou
                 </button>
               );
             }
-            if (t.kind === 'back') {
-              return (
-                <button class="tile tile--text tile--control" data-page={page} data-action="home" type="button">
-                  <span class="tile-label">← back</span>
-                </button>
-              );
-            }
             if (t.kind === 'more') {
               return (
-                <button class="tile tile--text tile--control tile--more" data-page={page} data-action="more" type="button">
+                <button class="tile tile--text tile--persist tile--more" data-page={page} data-action="more" type="button">
                   <span class="tile-label">more works</span>
                 </button>
               );
@@ -106,7 +100,7 @@ const SUB = '3rd Year Product & Furniture Design Student · University of Plymou
       {writeups.map((w) => {
         const Body = w.Content;
         return (
-          <article class="writeup report--feature" data-for={w.id} hidden>
+          <article class="writeup" data-for={w.id} hidden>
             <p class="project-desc">{w.entry.data.description}</p>
             <div class="project-body"><Body /></div>
           </article>

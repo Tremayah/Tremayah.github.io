@@ -1,12 +1,11 @@
 /* ============================================================================
    Raphael Murray-Browne — portfolio
-   Global stylesheet. Imported once by SiteLayout.astro.
+   Global stylesheet. Imported once by LandingLayout.astro.
 
-   Layout is a fixed three-column shell that never scrolls as a whole:
-     col 1  .title-col     yellow nav list (persists across page navigations)
-     col 2  .content-col   the per-page content (the bit that swaps)
-     col 4  .marquee-vert  fixed vertical marquee (persists; overlaps col 2's
-                           reserved right gutter)
+   The whole site is a single page (see index.astro): a 3×2 grid of tiles,
+   each holding a project (or the "about"/"more works" controls). Clicking a
+   tile pixel-dissolves the others and reveals that project's writeup as a
+   "flower" of short text blocks in the five freed cells around it.
    ========================================================================== */
 
 :root {
@@ -14,29 +13,19 @@
   --accent: #5200ff;
   --bg:     #fafafa;
 
-  /* One canonical brand yellow (previously split as #eebe11 / #eebe12) */
-  --yellow: #eebe12;
+  --nav-font:  'cofo-sans-pixel', sans-serif;
+  --body-font: 'argent-pixel-cf', sans-serif;
 
-  --nav-font:     'cofo-sans-pixel', sans-serif;
-  --body-font:    'argent-pixel-cf', sans-serif;
-  --dropcap-font: 'lores-9-plus-narrow', sans-serif;
-  --marquee-font: 'bitcount-mono-single-square', sans-serif;
-  --col-w:  14rem;
+  --body-color:  #f80d0d;
+  --title-color: #f80d0d;
 
-  /* Colour tokens */
-  --col1-bg:        var(--yellow);
-  --col1-color:     #fafafa;
-  --col1-hover:     #0913ff;
-  --col2-bg:        #fafafa;
-  --body-color:     #f80d0d;
-  --title-color:    #f80d0d;
-  --marquee-color:  var(--yellow);
-  --marquee-hover:  #0913ff;
-  --col4-bg:        #fafafa;
+  /* Interaction blue — title click, more-works active, about hover, image-hover overlay. */
+  --highlight: #0913ff;
 
-  /* Interaction blue — title click, more-works active, about hover.
-     (If you meant the purple --accent instead, point this at it.) */
-  --highlight:      #0913ff;
+  /* Shared grid geometry — the open-state "flower" writeup mirrors the
+     landing grid exactly, so both reference the same gap/padding tokens. */
+  --grid-gap: clamp(0.5rem, 1.5vw, 1.25rem);
+  --grid-pad: clamp(0.75rem, 2vw, 1.5rem);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,48 +36,6 @@ html, body {
   color: var(--fg);
   -webkit-font-smoothing: antialiased;
 }
-
-/* ── Layout shell (project / about / contact pages) ─ */
-.layout {
-  display: flex;
-  height: 100dvh;
-  overflow: hidden;
-}
-
-/* ── Col 1: titles ──────────────────────────────── */
-.title-col {
-  flex-shrink: 0;
-  height: 100%;
-  overflow-y: auto;
-  scrollbar-width: none;
-  padding-top: 1rem;
-  padding-bottom: 6rem;
-  background: var(--col1-bg);
-  /* Slides in from the left whenever the nav is freshly mounted — i.e. when
-     arriving from the (nav-less) landing page or loading a project directly.
-     On project→project navigation the nav persists, so it does not replay. */
-  animation: nav-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.title-col::-webkit-scrollbar { display: none; }
-@keyframes nav-slide-in {
-  from { transform: translateX(-100%); }
-  to   { transform: translateX(0); }
-}
-
-/* ── Col 2: content ─────────────────────────────── */
-.content-col {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  overflow-y: auto;
-  scrollbar-width: none;
-  padding-top: 1rem;
-  padding-bottom: 6rem;
-  background: var(--col2-bg);
-  position: relative;
-  z-index: 15;
-}
-.content-col::-webkit-scrollbar { display: none; }
 
 /* ════════════════════════════════════════════════════════════════════════════
    SINGLE-PAGE LANDING
@@ -124,8 +71,8 @@ html, body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(2, 1fr);
-  gap: clamp(0.5rem, 1.5vw, 1.25rem);
-  padding: clamp(0.75rem, 2vw, 1.5rem);
+  gap: var(--grid-gap);
+  padding: var(--grid-pad);
   height: 100%;
   width: 100%;
 }
@@ -170,17 +117,29 @@ html, body {
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: opacity 0.45s ease;
 }
-.tile--photo:hover .tile-img,
-.tile--photo:focus-visible .tile-img {
-  opacity: 0.15;
+/* Hover wash: the image tints highlight-blue (rather than fading to reveal
+   the page background), and the overview text reads white on top of it. */
+.tile-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--highlight);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.tile--photo:hover .tile-media::after,
+.tile--photo:focus-visible .tile-media::after {
+  opacity: 0.88;
 }
 /* Hover overview: outer flexbox centres an inner block so the typed text wraps
    as a normal paragraph (the inner block — not its characters — is the flex item). */
 .tile-overview {
   position: absolute;
   inset: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -197,7 +156,7 @@ html, body {
   font-family: var(--body-font);
   font-size: clamp(0.7rem, 1vw, 0.9rem);
   line-height: 1.55;
-  color: var(--body-color);
+  color: #fff;
   text-align: center;
 }
 .tile-name {
@@ -255,15 +214,28 @@ html, body {
 .tile--text:focus-visible .tile-label {
   color: var(--highlight);
 }
-/* "More works" stays blue while page 2 is showing */
+/* "More works" toggles to a solid blue tile with white centred text while
+   page 2 is showing — click it again (no separate "back" control) to return. */
+.tile--more {
+  transition: background-color 0.25s ease;
+}
+.tile--more .tile-label {
+  transition: color 0.25s ease;
+}
+.stage[data-page='2'] .tile--more {
+  background: var(--highlight);
+}
 .stage[data-page='2'] .tile--more .tile-label {
-  color: var(--highlight);
+  color: #fff;
 }
 
 /* ── Pixel dissolve overlay (built per tile by site.ts) ─────────────────────
-   A grid of background-coloured cells laid over a tile. Cells fade in (cover)
-   to dissolve the tile, or fade out (clear) to reveal it. Randomised per-cell
-   delays (set inline by JS) give the blocky "corruption" look. */
+   A grid of background-coloured cells laid over a tile. Cells snap in (cover)
+   to dissolve the tile, or snap out (clear) to reveal it — no fade, just an
+   abrupt per-cell flicker — for a glitchy "corruption" look. Randomised
+   per-cell delays (set inline by JS) give the blocky stagger. The 1px
+   same-colour ring on each cell overlaps the CSS-grid's subpixel seams so no
+   thin grid-lines show through mid-animation. */
 .pixel-overlay {
   position: absolute;
   inset: 0;
@@ -273,11 +245,17 @@ html, body {
 }
 .pixel-cell {
   background: var(--bg);
+  box-shadow: 0 0 0 1px var(--bg);
   opacity: 0;
-  transition: opacity 0.12s linear;
 }
 
-/* ── Open state: a writeup fills the stage behind the persisting tile ──────── */
+/* ── Open state: writeup "flowers" around the persisting tile ───────────────
+   The writeup mirrors the landing grid's exact geometry (same 3×2 template,
+   gap and padding via the shared --grid-gap/--grid-pad tokens) and overlays
+   the stage. site.ts moves the description + each body paragraph into the
+   five grid cells that surround the opened tile — its own cell is left empty
+   so the persisting tile (raised above on z-index) shows through untouched.
+   No scrolling: short filler copy is sized to fit each petal's cell. */
 .writeups {
   display: contents;
 }
@@ -285,19 +263,41 @@ html, body {
   position: absolute;
   inset: 0;
   z-index: 6;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;
+  overflow: hidden;
   background: var(--bg);
-  padding: clamp(1rem, 3vw, 2.5rem);
 }
-.writeup::-webkit-scrollbar { display: none; }
-.writeup[hidden] { display: none; }
+.writeup[hidden],
+.writeup.writeup--flower[hidden] { display: none; }
+.writeup.writeup--flower {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: var(--grid-gap);
+  padding: var(--grid-pad);
+  align-items: center;
+}
+.writeup--flower .petal {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.writeup--flower .project-desc,
+.writeup--flower .project-body p {
+  font-family: var(--body-font);
+  font-size: clamp(0.7rem, 1.05vw, 0.92rem);
+  line-height: 1.5;
+}
+.writeup--flower .project-desc {
+  font-weight: 700;
+  color: var(--fg);
+}
+.writeup--flower .project-body p {
+  font-weight: 400;
+  color: var(--body-color);
+}
 /* The clicked tile rises above the writeup and stays in its cell */
 .cell.cell--active { z-index: 10; }
 .cell.cell--active .tile { cursor: default; }
-/* Floated spacer (sized + placed by JS) so writeup text flows around the tile */
-.writeup-spacer { pointer-events: none; }
 /* Title of the opened tile goes highlight-blue */
 .cell--active .tile-name,
 .cell--active .tile-namecard-name,
@@ -305,63 +305,14 @@ html, body {
   color: var(--highlight);
 }
 
-/* ── Title triggers (now <a> links) ─────────────── */
-.item-trigger {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.55rem calc(clamp(1rem, 4vw, 2.5rem) + 0.35rem) 0.55rem clamp(1rem, 4vw, 2.5rem);
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  text-decoration: none;
-  font-family: var(--nav-font);
-  color: var(--col1-color);
-}
-.item-name {
-  font-family: var(--nav-font);
-  font-weight: 700;
-  font-style: normal;
-  font-size: clamp(1.1rem, 2.2vw, 1.6rem);
-  line-height: 1.1;
-  color: inherit;
-  text-transform: lowercase;
-  transition: color 0.18s ease;
-}
-.item-trigger:hover .item-name,
-.item-trigger[aria-current="page"] .item-name {
-  color: var(--col1-hover);
-  font-style: italic;
-}
-
 /* ── Word-split hover animation ─────────────────── */
 .word-wrap { display: inline-block; position: relative; vertical-align: top; }
 .word-half { display: block; transition: transform 0.22s cubic-bezier(0.77,0,0.175,1); will-change: transform; }
 .word-top  { clip-path: inset(0 0 42% 0); }
 .word-bot  { position: absolute; top:0; left:0; width:100%; clip-path: inset(58% 0 0 0); }
-.item-trigger[aria-current="page"] .word-top { transform: translateX(2px); }
-.item-trigger[aria-current="page"] .word-bot { transform: translateX(-2px); }
-
-/* ── About / Contact prose ──────────────────────── */
-.prose-area {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem clamp(1rem, 4vw, 2.5rem) 1.5rem;
-  max-width: 56ch;
-}
-.prose-area p { font-family: var(--body-font); font-size: 0.9rem; font-weight: 400; line-height: 1.75; }
-.contact-link {
-  display: block; font-family: var(--body-font); font-size: 0.9rem;
-  color: var(--fg); text-decoration: none; width: fit-content;
-  border-bottom: 1px solid transparent; transition: color 0.15s, border-color 0.15s;
-}
-.contact-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
-
-/* ── Project report container ───────────────────── */
-.project-report {
-  padding: 0.75rem 0.4rem 2rem clamp(1rem, 4vw, 2.5rem);
-}
+/* Slice apart on click — the opened tile's title shears into its two halves */
+.cell--active .word-top { transform: translateX(2px); }
+.cell--active .word-bot { transform: translateX(-2px); }
 
 /* ── Project desc ───────────────────────────────── */
 .project-desc {
@@ -528,54 +479,6 @@ html, body {
   padding: 0.25rem 0.45rem;
 }
 
-/* ── Feature report: enlarged body + drop-cap headers ──────
-   Applied to projects listed in FEATURE in [slug].astro (e.g. keycaps,
-   exploration). Add a project id there to give it this treatment.
-   Drop-cap maths:
-     body line height  2rem × 1.2 = 2.4rem
-     body half-leading (2rem × 0.2) / 2 = 0.2rem above chars
-     h2 line-height: 1 → 0 half-leading; margin-top: 0.2rem aligns char tops
-     float footprint   0.2rem + 4rem = 4.2rem
-     line 2 top 2.4rem < 4.2rem → wraps ✓
-     line 3 top 4.8rem > 4.2rem → full width ✓  */
-.project-report.report--feature {
-  padding: 0.55rem 0.4rem 1.5rem clamp(0.75rem, 3vw, 1.875rem);
-}
-.report--feature .project-desc {
-  font-size: 2rem;        /* normal body size; stays black */
-  line-height: 1.4;
-  margin-bottom: 1.5rem;
-}
-.report--feature .project-body {
-  font-size: 2rem;
-  line-height: 1.2;
-}
-.report--feature .project-body p {
-  text-align: justify;
-  hyphens: auto;
-}
-.report--feature .project-body::after {
-  content: '';
-  display: table;
-  clear: both;
-}
-.report--feature .project-body h2 {
-  float: left;
-  clear: both;            /* each header clears the previous section's float */
-  font-size: 4rem;
-  line-height: 1;         /* no half-leading → h2 text starts at top of box  */
-  font-family: var(--dropcap-font);
-  font-weight: 700;
-  font-style: normal;
-  color: var(--title-color);
-  text-transform: uppercase;
-  /* margin-top = body half-leading = (2rem × (1.2−1)) / 2 = 0.2rem
-     → aligns h2 character tops with body line-1 character tops
-     Float footprint = 0.2 + 4rem = 4.2rem → exactly 2 body lines wrap:
-       line 2 top (2.4rem) < 4.2rem ✓   line 3 top (4.8rem) > 4.2rem ✓  */
-  margin: 0.2rem 0.75rem 0 0;
-}
-
 /* ── Lightbox ───────────────────────────────────── */
 .lightbox-overlay {
   position: fixed; inset: 0;
@@ -595,116 +498,3 @@ html, body {
 @keyframes lb-in  { from { opacity:0; transform:scale(0.97); } to { opacity:1; transform:scale(1); } }
 @keyframes lb-out { from { opacity:1; transform:scale(1); }   to { opacity:0; transform:scale(0.97); } }
 
-/* ── Col 4: marquee ─────────────────────────────── */
-.marquee-vert {
-  position: fixed; top: 0; right: 0;
-  width: var(--col-w); height: 100dvh;
-  overflow: hidden; z-index: 10;
-  background: var(--col4-bg);
-  cursor: pointer;
-}
-.marquee-track {
-  display: flex; flex-direction: column; align-items: flex-end;
-  width: 100%;
-  animation: march-down 140s linear 1s infinite;
-  animation-fill-mode: backwards;
-  will-change: transform;
-}
-.marquee-item {
-  writing-mode: vertical-rl; transform: rotate(180deg);
-  font-family: var(--marquee-font); font-weight: 400;
-  font-size: 11.2rem;
-  line-height: 1; text-transform: uppercase; color: var(--marquee-color);
-  padding-inline: 6rem; white-space: nowrap; user-select: none;
-  transition: color 0.3s ease;
-}
-.marquee-vert:hover .marquee-item { color: var(--marquee-hover); }
-
-/* ── Marquee start position fix ─────────────────────
-   rotate(180deg) puts R at the visual BOTTOM of each copy's bounding box.
-   +100dvh shifts so the copy CSS-bottom aligns with the viewport bottom.
-   +3rem corrects for padding-inline-end (below R in visual space).
-   Loop: -25% = copy1 bottom → same visual frame → seamless.
-   0% keyframe timing: ease-in for first 2% (~2.8s) → soft start. */
-@keyframes march-down {
-  0% {
-    transform: translateY(calc(-75% + 100dvh + 3rem));
-    animation-timing-function: cubic-bezier(0.1, 0, 0.5, 0.5);
-  }
-  2% {
-    /* -75% + (2% × 50% range) = -74%. Explicit value required so the
-       timing-function switch takes effect; without it, ease-in applies
-       to the full 140 s. Bezier chosen so end-speed = 1× linear — no jerk. */
-    transform: translateY(calc(-74% + 100dvh + 3rem));
-    animation-timing-function: linear;
-  }
-  100% { transform: translateY(calc(-25% + 100dvh + 3rem)); }
-}
-
-/* ── Dev-only tools (font pickers + landing drag) ─────────────────────────
-   Markup only rendered under `import.meta.env.DEV`; these styles are inert
-   in production because the elements never exist there. */
-#test-controls {
-  position: fixed;
-  bottom: 1rem;
-  left: 14rem;            /* just past the title column */
-  z-index: 100;
-  display: flex;
-  gap: 0.75rem;
-  padding: 0.4rem 0.6rem;
-  background: rgba(240,240,240,0.95);
-  font-family: monospace;
-  font-size: 0.65rem;
-}
-#test-controls label {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-#test-controls input[type="text"] {
-  width: 11rem;
-  font-family: monospace;
-  font-size: 0.6rem;
-  padding: 0.2rem 0.3rem;
-  border: 1px solid #ccc;
-}
-#drag-tool {
-  position: fixed;
-  top: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.4rem 0.8rem;
-  background: #1c1c1c;
-  color: var(--yellow);
-  font-family: monospace;
-  font-size: 0.7rem;
-  border-radius: 4px;
-  white-space: pre;
-}
-#drag-toggle {
-  background: #5200ff;
-  color: #fff;
-  border: none;
-  padding: 0.25rem 0.6rem;
-  cursor: pointer;
-  font-family: monospace;
-  font-size: 0.7rem;
-  border-radius: 3px;
-}
-#drag-toggle.active { background: #f80d0d; }
-.drag-active { cursor: grab !important; outline: 2px dashed #5200ff; }
-.drag-active:active { cursor: grabbing !important; }
-
-/* ── Instant page transitions ─────────────────────────────────────────────
-   <ClientRouter /> applies a default cross-fade to the whole document on
-   navigation. Disable it so the swap is immediate — the persistent nav and
-   marquee stay put, the content area changes in a single frame, and the
-   typing reveal then plays on the fresh content. */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-}
