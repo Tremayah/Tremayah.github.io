@@ -229,6 +229,9 @@ function initHover(tile: HTMLElement): void {
     cancel = typeInto(textEl, 5, 10);
   });
   tile.addEventListener('mouseleave', () => {
+    // While a project is open, leave the typed description in place — clicking a
+    // tile shouldn't wipe the text the hover just showed (it stays on the hero).
+    if (stage?.classList.contains('is-open')) return;
     cancel?.();
     textEl.textContent = '';
   });
@@ -376,7 +379,9 @@ async function openProject(cell: HTMLElement, tile: HTMLElement, id: string): Pr
   if (openId || paging || !stage) return;
   openId = id;
   stage.classList.add('is-open');
-  cell.classList.add('cell--active'); // raise the persisting tile (above the static) + slice its title
+  // cell--active: z-raise (must persist through close). cell--reading: blue +
+  // sliced title — added/removed on the click itself, never gated by the fizzle.
+  cell.classList.add('cell--active', 'cell--reading');
   const origin = originOf(tile);
   const maxDist = maxDistFrom(origin);
 
@@ -405,6 +410,9 @@ async function closeProject(): Promise<void> {
 
   const active = stage.querySelector<HTMLElement>('.cell--active');
   const persist = active?.querySelector<HTMLElement>(`.tile[data-page="${stage.dataset.page ?? '1'}"]`) ?? null;
+  // Un-slice / un-blue the title immediately on the click — snappy feedback that
+  // doesn't wait for the fizzle. (cell--active/z-raise stays until the wave ends.)
+  active?.classList.remove('cell--reading');
   const origin = persist ? originOf(persist) : { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
   const maxDist = maxDistFrom(origin);
 

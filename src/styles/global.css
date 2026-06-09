@@ -121,32 +121,16 @@ html, body {
   object-fit: cover;
   display: block;
 }
-/* Hover wash: the image tints highlight-blue (rather than fading to reveal
-   the page background), and the overview text reads white on top of it. */
-.tile-media::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: var(--highlight);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-.tile--photo:hover .tile-media::after,
-.tile--photo:focus-visible .tile-media::after {
-  opacity: 0.88;
-}
-/* Hover overview: outer flexbox centres an inner block so the typed text wraps
-   as a normal paragraph (the inner block — not its characters — is the flex item). */
+/* Hover overview: the project's description types in as blue text anchored to
+   the bottom-left of the image — no wash over the photo. */
 .tile-overview {
   position: absolute;
   inset: 0;
   z-index: 2;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(0.75rem, 2vw, 1.75rem);
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: clamp(0.55rem, 1.6vw, 1.1rem);
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
@@ -155,18 +139,19 @@ html, body {
 .tile--photo:focus-visible .tile-overview {
   opacity: 1;
 }
-/* While a project is open, the persisting hero tile must stay clean — kill the
-   blue hover wash and the overview text so the image reads as the anchor. */
-.stage.is-open .tile-media::after,
-.stage.is-open .tile-overview {
-  opacity: 0 !important;
+/* The description the hover typed in stays put once the project is opened — keep
+   the persisting hero tile's overview visible wherever the cursor then goes. */
+.stage.is-open .cell--active .tile-overview {
+  opacity: 1;
 }
 .tile-overview-text {
   font-family: var(--body-font);
   font-size: clamp(0.7rem, 1vw, 0.9rem);
-  line-height: 1.55;
-  color: #fff;
-  text-align: center;
+  line-height: 1.5;
+  color: var(--highlight);
+  text-align: left;
+  /* light halo so the blue stays legible over darker photos */
+  text-shadow: 0 0 6px var(--bg), 0 1px 2px var(--bg);
 }
 .tile-name {
   flex: 0 0 auto;
@@ -421,21 +406,24 @@ html, body {
 .cell--active {
   z-index: 10;
 }
-/* The persisting tile keeps its sliced title; tint it highlight-blue while
-   open as the "this is the one you're reading" cue. */
-.cell--active .tile-name,
-.cell--active .tile-label {
+/* The "you're reading this one" cue — blue + sliced title. Driven by
+   .cell--reading (added on open-click, removed on close-click), NOT .cell--active,
+   so the title responds to the click immediately rather than waiting for the
+   fizzle to finish. (.cell--active only handles the z-raise, which has to persist
+   through the whole close animation.) */
+.cell--reading .tile-name,
+.cell--reading .tile-label {
   color: var(--highlight);
 }
 
-/* ── Word-split hover animation ─────────────────── */
+/* ── Word-split slice animation ─────────────────── */
 .word-wrap { display: inline-block; position: relative; vertical-align: top; }
 .word-half { display: block; transition: transform 0.22s cubic-bezier(0.77,0,0.175,1); will-change: transform; }
 .word-top  { clip-path: inset(0 0 42% 0); }
 .word-bot  { position: absolute; top:0; left:0; width:100%; clip-path: inset(58% 0 0 0); }
-/* Slice apart on click — the opened tile's title shears into its two halves */
-.cell--active .word-top { transform: translateX(2px); }
-.cell--active .word-bot { transform: translateX(-2px); }
+/* Slice apart while reading — the opened tile's title shears into its two halves */
+.cell--reading .word-top { transform: translateX(2px); }
+.cell--reading .word-bot { transform: translateX(-2px); }
 
 /* ── Project desc: lead-in line above the body copy ───────────────────── */
 .project-desc {
