@@ -103,57 +103,31 @@ function ensureOverlay(tile: HTMLElement): HTMLElement[] {
   return Array.from(overlay.children) as HTMLElement[];
 }
 
-const STAGGER = 220; // ms spread of the fizzle
+const STAGGER = 220; // ms spread of the pager / load-in fizzle
 const BUCKETS = 18;  // stagger granularity — cells pop in this many waves
 
 type Point = { x: number; y: number };
 
-function pixelate(host: HTMLElement, cover: boolean, instant = false, origin: Point | null = null): Promise<void> {
+// Random-bucket fizzle, used by the "more works" pager and the load-in: cells
+// snap (no fade) in BUCKETS random waves over STAGGER ms — a blocky glitch the
+// same in both directions. (The project open/close uses runStageWave instead,
+// for a slower radial ripple.) setTimeout (not rAF) keeps it running in
+// backgrounded tabs.
+function pixelate(host: HTMLElement, cover: boolean, instant = false): Promise<void> {
   const cells = ensureOverlay(host);
   const target = cover ? '1' : '0';
 
-  // Instant: snap every cell synchronously (no stagger, no paint gap). Used to
-  // pre-cover a tile/writeup so it can fizzle in without flashing uncovered.
   if (instant) {
     cells.forEach((c) => { c.style.transition = 'none'; c.style.opacity = target; });
     return Promise.resolve();
   }
 
-  // Staggered snap, driven explicitly in JS rather than via CSS transition-delay
-  // (which fires reliably covering but flakily when uncovering a reused overlay,
-  // making the fizzle-IN just pop). Each cell joins a time-bucket and snaps with
-  // no fade, so it reads as a blocky glitch the same in both directions.
-  // setTimeout (not rAF) keeps it running in backgrounded tabs.
   return new Promise((resolve) => {
     const groups: HTMLElement[][] = Array.from({ length: BUCKETS }, () => []);
-
-    if (origin) {
-      // Radial: order buckets by each cell's distance from the origin (the
-      // clicked tile), so the fizzle ripples outward from it. The cell's centre
-      // comes from its index in the overlay grid (cheap; no per-cell layout). A
-      // little jitter keeps the wavefront ragged rather than a clean ring.
-      const overlay = host.querySelector<HTMLElement>(':scope > .pixel-overlay');
-      const cols = Math.max(1, +(overlay?.dataset.cols ?? 1));
-      const rows = Math.max(1, +(overlay?.dataset.rows ?? 1));
-      const w = host.clientWidth || 1;
-      const h = host.clientHeight || 1;
-      const maxDist = Math.hypot(Math.max(origin.x, w - origin.x), Math.max(origin.y, h - origin.y)) || 1;
-      cells.forEach((c, i) => {
-        const cx = ((i % cols) + 0.5) / cols * w;
-        const cy = (((i / cols) | 0) + 0.5) / rows * h;
-        const norm = Math.hypot(cx - origin.x, cy - origin.y) / maxDist;
-        let b = ((norm * (BUCKETS - 2)) | 0) + ((Math.random() * 2) | 0);
-        b = b < 0 ? 0 : b >= BUCKETS ? BUCKETS - 1 : b;
-        c.style.transition = 'none';
-        groups[b].push(c);
-      });
-    } else {
-      cells.forEach((c) => {
-        c.style.transition = 'none';
-        groups[(Math.random() * BUCKETS) | 0].push(c);
-      });
-    }
-
+    cells.forEach((c) => {
+      c.style.transition = 'none';
+      groups[(Math.random() * BUCKETS) | 0].push(c);
+    });
     const step = STAGGER / BUCKETS;
     groups.forEach((group, i) => {
       setTimeout(() => { for (const c of group) c.style.opacity = target; }, i * step);
@@ -320,14 +294,22 @@ function layoutFullStage(writeup: HTMLElement, tile: HTMLElement): void {
   spacer.style.height = `${Math.max(0, relTop + tr.height + gap)}px`;
 }
 
-/* Open / close fizzle the WHOLE stage as one pixel field — the same look as the
-   "more works" pager, but page-wide, and rippling outward from the clicked tile.
-   A stage-level overlay (raised above the writeup, but BELOW the persisting
-   tile's cell) covers everything except the hero image + title: the rest of the
-   page dissolves to static, then resolves into the write-up (open) or back into
-   the grid (close). */
-const dissolveStage = (origin: Point | null): Promise<void> => pixelate(stage!, true, false, origin);
-const revealStage = (origin: Point | null): Promise<void> => pixelate(stage!, false, false, origin);
+/* Open / close fizzle the WHOLE stage as one continuous radial wave rippling out
+   from the clicked tile. Every overlay cell covers (→ background "static") then,
+   HOLD ms later, uncovers (→ whatever's beneath). Because the uncover trails the
+   cover by less than the full travel time, the two waves OVERLAP: the inner
+   region already shows the destination page while the outer region still shows
+   the source one, with a moving static ring between them.
+
+   The trick that lets old + new coexist on screen: the source tiles sit ABOVE
+   the writeup ('.stage.is-open .cell' is raised) so the grid shows until — as the
+   static ring fully covers each tile — we flip that tile's visibility: hidden on
+   open (revealing the writeup beneath), shown on close (revealing the grid). The
+   persisting tile's cell is raised higher still, above the static, so the hero
+   image + title never fizzle. */
+const SPREAD = 440; // ms for the wavefront to travel origin → far corner (~2× the previous speed)
+const HOLD = 260;   // ms a cell stays static; how far the uncover trails the cover (< SPREAD ⇒ overlap)
+const JITTER = 25;  // ± ms per-cell timing jitter, so the wavefront stays ragged
 
 /* Centre of an element in stage-local coordinates — the ripple origin. */
 function originOf(el: HTMLElement): Point {
@@ -336,28 +318,70 @@ function originOf(el: HTMLElement): Point {
   return { x: r.left + r.width / 2 - sr.left, y: r.top + r.height / 2 - sr.top };
 }
 
+function maxDistFrom(origin: Point): number {
+  const w = stage!.clientWidth || 1;
+  const h = stage!.clientHeight || 1;
+  return Math.hypot(Math.max(origin.x, w - origin.x), Math.max(origin.y, h - origin.y)) || 1;
+}
+
+/* When the static ring has fully covered an element (its farthest corner) — the
+   safe moment to flip its visibility, hidden under the static. */
+function coverDoneTime(el: HTMLElement, origin: Point, maxDist: number): number {
+  const sr = stage!.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  let far = 0;
+  for (const x of [r.left, r.right]) {
+    for (const y of [r.top, r.bottom]) {
+      far = Math.max(far, Math.hypot(x - sr.left - origin.x, y - sr.top - origin.y));
+    }
+  }
+  return (far / maxDist) * SPREAD + JITTER;
+}
+
+/* One radial cover→uncover pass over the stage overlay. Resolves when settled. */
+function runStageWave(origin: Point): Promise<void> {
+  const cells = ensureOverlay(stage!);
+  const overlay = stage!.querySelector<HTMLElement>(':scope > .pixel-overlay');
+  const cols = Math.max(1, +(overlay?.dataset.cols ?? 1));
+  const rows = Math.max(1, +(overlay?.dataset.rows ?? 1));
+  const w = stage!.clientWidth || 1;
+  const h = stage!.clientHeight || 1;
+  const maxDist = maxDistFrom(origin);
+  cells.forEach((c, i) => {
+    c.style.transition = 'none';
+    const cx = ((i % cols) + 0.5) / cols * w;
+    const cy = (((i / cols) | 0) + 0.5) / rows * h;
+    const n = Math.hypot(cx - origin.x, cy - origin.y) / maxDist;
+    const tc = Math.max(0, n * SPREAD + (Math.random() * 2 - 1) * JITTER);
+    setTimeout(() => { c.style.opacity = '1'; }, tc);        // cover → static
+    setTimeout(() => { c.style.opacity = '0'; }, tc + HOLD); // uncover → content beneath
+  });
+  return new Promise((res) => setTimeout(res, SPREAD + HOLD + JITTER + 80));
+}
+
 async function openProject(cell: HTMLElement, tile: HTMLElement, id: string): Promise<void> {
   if (openId || paging || !stage) return;
   openId = id;
   stage.classList.add('is-open');
-  cell.classList.add('cell--active'); // raise the persisting tile + slice its title
-  const origin = originOf(tile); // ripple out from (and back to) the clicked tile
+  cell.classList.add('cell--active'); // raise the persisting tile (above the static) + slice its title
+  const origin = originOf(tile);
 
-  // Phase 1 — everything but the persisting tile fizzles to static.
-  await dissolveStage(origin);
-
-  // Show the write-up first (so it has real dimensions to measure), then lay it
-  // over the whole stage wrapping the hero image. It's still under the static
-  // overlay at this point, so showing it can't flash.
+  // Write-up goes UNDER the (raised) grid tiles, so the page still reads as the
+  // grid; as the static ring passes each OTHER tile we hide it, revealing the
+  // write-up beneath — the new page resolving from the centre out while the
+  // edges still show the old grid.
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
   if (writeup) {
     writeup.hidden = false;
     initCarousels(writeup);
     layoutFullStage(writeup, tile);
   }
+  const maxDist = maxDistFrom(origin);
+  const others = visibleTiles().filter((t) => t !== tile);
+  others.forEach((t) => setTimeout(() => { t.style.visibility = 'hidden'; }, coverDoneTime(t, origin, maxDist)));
 
-  // Phase 2 — the static clears, resolving into the write-up.
-  await revealStage(origin);
+  await runStageWave(origin);
+  others.forEach((t) => { t.style.visibility = 'hidden'; }); // settle
 }
 
 async function closeProject(): Promise<void> {
@@ -366,19 +390,21 @@ async function closeProject(): Promise<void> {
   openId = null;
 
   const active = stage.querySelector<HTMLElement>('.cell--active');
-  const persist = active?.querySelector<HTMLElement>(`.tile[data-page="${stage.dataset.page ?? '1'}"]`);
-  const origin = persist ? originOf(persist) : null; // ripple from the persisting tile
+  const persist = active?.querySelector<HTMLElement>(`.tile[data-page="${stage.dataset.page ?? '1'}"]`) ?? null;
+  const origin = persist ? originOf(persist) : { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
 
-  // Phase 1 — the open write-up fizzles back to static.
-  await dissolveStage(origin);
+  // Mirror of open: the write-up is the old page; as the static ring passes each
+  // hidden grid tile we show it again, so the grid resolves back from the centre
+  // out while the edges still show the write-up.
+  const maxDist = maxDistFrom(origin);
+  const others = visibleTiles().filter((t) => t !== persist);
+  others.forEach((t) => setTimeout(() => { t.style.visibility = ''; }, coverDoneTime(t, origin, maxDist)));
 
-  // Drop the write-up so the home grid sits beneath the static, then…
+  await runStageWave(origin);
+
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
   if (writeup) writeup.hidden = true;
-
-  // Phase 2 — …the static clears, resolving back into the grid.
-  await revealStage(origin);
-
+  others.forEach((t) => { t.style.visibility = ''; }); // settle
   active?.classList.remove('cell--active');
   stage.classList.remove('is-open');
 }

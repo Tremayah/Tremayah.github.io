@@ -414,8 +414,16 @@ html, body {
 .wrap-spacer {
   pointer-events: none;
 }
-/* Raise the persisting tile's cell above the writeup + the full-stage fizzle,
-   so its hero image and title stay visible while everything else dissolves. */
+/* While open, the OTHER tiles sit just above the writeup (z 6) — so the source
+   grid stays visible until the static ring passes and JS flips each tile's
+   visibility, revealing the writeup beneath. They're still below the static
+   overlay (z 8), so the ring covers them. */
+.stage.is-open .cell:not(.cell--active) {
+  z-index: 7;
+}
+/* Raise the persisting tile's cell above the writeup AND the full-stage fizzle
+   (z 8), so its hero image and title stay visible while everything else
+   dissolves. */
 .cell--active {
   z-index: 10;
 }
