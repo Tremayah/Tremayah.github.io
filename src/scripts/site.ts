@@ -262,10 +262,14 @@ function visibleTiles(): HTMLElement[] {
    size + position of the persisting tile, so the body copy wraps around the
    hero image like a magazine. The real tile sits above the writeup (its cell
    is raised in CSS), showing through the gap the spacer holds the text out of. */
-function layoutFullStage(writeup: HTMLElement, tile: HTMLElement): void {
+function layoutFullStage(writeup: HTMLElement, tile: HTMLElement | null): void {
   writeup.style.cssText = ''; // drop any leftover inline rectangle; fill via CSS inset:0
 
-  let spacer = writeup.querySelector<HTMLElement>(':scope > .wrap-spacer');
+  const existing = writeup.querySelector<HTMLElement>(':scope > .wrap-spacer');
+  // No hero tile (e.g. the CV page) → no wrap; the text just fills the stage.
+  if (!tile) { existing?.remove(); return; }
+
+  let spacer = existing;
   if (!spacer) {
     spacer = document.createElement('div');
     spacer.className = 'wrap-spacer';
@@ -361,13 +365,24 @@ function setMask(el: HTMLElement, origin: Point, r: number, clearInside: boolean
 function animateMask(el: HTMLElement, origin: Point, maxDist: number, clearInside: boolean): Promise<void> {
   return new Promise((resolve) => {
     const start = performance.now();
+    let done = false;
+    const finish = (): void => {
+      if (done) return;
+      done = true;
+      setMask(el, origin, maxDist, clearInside); // snap to final state
+      resolve();
+    };
     const tick = (now: number): void => {
+      if (done) return;
       const t = now - start;
-      setMask(el, origin, Math.min(maxDist, (t / SPREAD) * maxDist), clearInside);
-      if (t < SPREAD) requestAnimationFrame(tick);
-      else resolve();
+      if (t >= SPREAD) { finish(); return; }
+      setMask(el, origin, (t / SPREAD) * maxDist, clearInside);
+      requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
+    // Fallback: rAF is paused when the tab isn't focused, so guarantee the
+    // promise still settles (and the mask reaches its end state) via a timer.
+    setTimeout(finish, SPREAD + 150);
   });
 }
 function clearMask(el: HTMLElement): void {
@@ -403,6 +418,29 @@ async function openProject(cell: HTMLElement, tile: HTMLElement, id: string): Pr
   if (writeup) clearMask(writeup); // fully visible from here
 }
 
+/* The CV button fizzles the whole stage onto a full-page CV view — same reveal
+   as openProject but with no persisting hero tile (nothing is raised, so the
+   page is taken over completely). Closing works through closeProject like any
+   open view. */
+async function openCV(origin: Point): Promise<void> {
+  if (openId || paging || !stage) return;
+  openId = 'cv';
+  stage.classList.add('is-open');
+  const maxDist = maxDistFrom(origin);
+  const writeup = stage.querySelector<HTMLElement>('.writeup[data-for="cv"]');
+  if (writeup) {
+    writeup.hidden = false;
+    initCarousels(writeup);
+    layoutFullStage(writeup, null); // no hero tile to wrap around
+    setMask(writeup, origin, 0, false);
+  }
+  await Promise.all([
+    runStageWave(origin),
+    writeup ? animateMask(writeup, origin, maxDist, false) : Promise.resolve(),
+  ]);
+  if (writeup) clearMask(writeup);
+}
+
 async function closeProject(): Promise<void> {
   if (!openId || !stage) return;
   const id = openId;
@@ -431,17 +469,21 @@ async function closeProject(): Promise<void> {
   stage.classList.remove('is-open');
 }
 
-/* ── Contact form (the old "name" tile is now a message box) ──────────────
-   Submits through FormSubmit's AJAX endpoint so the page never navigates
-   away — we show inline status text instead. Email is optional; FormSubmit
-   relays whatever's filled in straight to Raphael's inbox either way. */
+/* ── Contact form ─────────────────────────────────────────────────────────
+   Posts to FormSubmit's AJAX endpoint so the page never navigates away. The
+   send button (inside the message box) IS the status display, via data-state:
+   red "send" → blue working dots → blue "sent"/"error" → fades back to red
+   "send"/"retry". (No separate status line.) */
 function initContactForm(form: HTMLFormElement): void {
   if (form.dataset.contactInit === '1') return;
   form.dataset.contactInit = '1';
 
-  const status = form.querySelector<HTMLElement>('.contact-status');
   const submit = form.querySelector<HTMLButtonElement>('.contact-submit');
-  const setStatus = (msg: string) => { if (status) status.textContent = msg; };
+  const label = form.querySelector<HTMLElement>('.contact-submit-label');
+  const setState = (state: string, text?: string): void => {
+    if (submit) submit.dataset.state = state;
+    if (label && text != null) label.textContent = text;
+  };
 
   // Keep clicks/keystrokes inside the form from bubbling up to the stage
   // click handler, which otherwise treats stray clicks as open/close gestures.
@@ -453,26 +495,26 @@ function initContactForm(form: HTMLFormElement): void {
   form.closest('.contact-card')?.querySelectorAll<HTMLElement>('[data-focus-message]')
     .forEach((el) => el.addEventListener('click', () => message?.focus()));
 
+  // Show the blue result for a beat, then fade back to the red idle state.
+  const finish = (resultText: string, idleText: string): void => {
+    setState('result', resultText);
+    setTimeout(() => setState('idle', idleText), 1500);
+  };
+
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    if (submit?.disabled) return;
-    if (submit) submit.disabled = true;
-    setStatus('sending…');
+    if (submit?.dataset.state === 'working') return;
+    setState('working'); // blue + 3-dot animation (label hidden via CSS)
     fetch(form.action, {
       method: 'POST',
       headers: { Accept: 'application/json' },
       body: new FormData(form),
     })
       .then((res) => {
-        if (res.ok) {
-          setStatus('sent — thank you.');
-          form.reset();
-        } else {
-          setStatus("couldn't send that — try again?");
-        }
+        if (res.ok) { form.reset(); finish('sent', 'send'); }
+        else { finish('error', 'retry'); }
       })
-      .catch(() => setStatus("couldn't send that — try again?"))
-      .finally(() => { if (submit) submit.disabled = false; });
+      .catch(() => finish('error', 'retry'));
   });
 }
 
@@ -533,11 +575,18 @@ function onStageClick(e: MouseEvent): void {
     return;
   }
 
+  // Nav-box section buttons (the 2×2 cell): switch the project/essay view,
+  // open the CV, or "more works" (wired but inert until its own prompt).
+  const actionEl = target.closest<HTMLElement>('[data-action]');
+  if (actionEl) {
+    const action = actionEl.dataset.action;
+    if (action === 'view') { setPage((actionEl.dataset.view as '1' | '2') ?? '1'); return; }
+    if (action === 'cv') { openCV(originOf(actionEl)); return; }
+    if (action === 'more') return; // deferred — behaviour is a later prompt
+  }
+
   const tile = target.closest<HTMLElement>('.tile');
   if (!tile) return;
-  const action = tile.dataset.action;
-  // "More works" toggles — click again (there's no separate "back" tile) to return.
-  if (action === 'more') { setPage(stage!.dataset.page === '2' ? '1' : '2'); return; }
   if (tile.dataset.open) {
     const cell = tile.closest<HTMLElement>('.cell');
     if (cell) openProject(cell, tile, tile.dataset.open);
@@ -564,6 +613,15 @@ function init(): void {
   stage.addEventListener('click', onStageClick);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { if (lightboxOpen) closeLightbox(); else if (openId) closeProject(); }
+  });
+
+  // Dev-only: live nudge for the bio's top paragraph (the slider markup only
+  // exists under `npm run dev`, so this is a no-op in production builds).
+  const bioSlider = document.getElementById('bio-p1-y') as HTMLInputElement | null;
+  const bioOut = document.getElementById('bio-p1-y-out');
+  bioSlider?.addEventListener('input', () => {
+    document.documentElement.style.setProperty('--bio-p1-y', `${bioSlider.value}px`);
+    if (bioOut) bioOut.textContent = `${bioSlider.value}px`;
   });
 
   // The open write-up wraps around the persisting tile, whose position shifts

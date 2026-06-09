@@ -1,5 +1,5 @@
 ---
-title: "Exploration"
+title: "Acrylic Sandwich Lamps"
 description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt."
 year: 2026
 category: "Product Design"

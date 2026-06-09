@@ -1,5 +1,5 @@
 ---
-title: "Progression"
+title: "Smart Jewellery"
 description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod."
 year: 2025
 category: "Product Design"

@@ -12,11 +12,13 @@ import { getCollection, render } from 'astro:content';
 const all = await getCollection('projects');
 const get = (id: string) => all.find((p) => p.id === id);
 
-// Every clickable tile across both pages needs its writeup embedded (hidden).
+// Every clickable tile / opened view needs its writeup embedded (hidden).
 const writeupIds = [
-  'exploration', 'keycaps', 'progression', 'essays',
+  'exploration', 'keycaps', 'progression', 'table-tennis-bat', // "personal projects" view
+  'essay-1', 'essay-2',                                        // "essays" view
+  'cv',                                                        // CV button opens this full-page
+  // parked for the future "more works" view:
   'living-lamp', 'trebuchet', 'culture', 'creative-skills',
-  'table-tennis-bat',
 ];
 const writeups = (
   await Promise.all(
@@ -34,17 +36,17 @@ const data = (id: string) => {
   return { id, title: e?.data.title ?? id, cover: e?.data.cover, desc: e?.data.description ?? '' };
 };
 
-// Six cells, each holding a page-1 and a page-2 variant. Only cell 5 ("more
-// works") persists unchanged across both pages; cells 0–4 all swap to a second
-// set on page 2 — including cell 0, where the contact card gives way to a
-// ninth project.
+// Cells 0 (contact) and 5 (the nav box) persist across views. Cells 1–4 swap
+// between page 1 = "personal projects" and page 2 = "essays", driven by the
+// nav-box buttons (see site.ts). Page-2 cells 3/4 are blank until there are
+// more essays.
 const cells = [
-  { p1: { kind: 'name' },                          p2: { kind: 'photo', ...data('table-tennis-bat') } },
-  { p1: { kind: 'photo', ...data('exploration') }, p2: { kind: 'photo', ...data('living-lamp') } },
-  { p1: { kind: 'photo', ...data('keycaps') },     p2: { kind: 'photo', ...data('trebuchet') } },
-  { p1: { kind: 'photo', ...data('progression') }, p2: { kind: 'photo', ...data('culture') } },
-  { p1: { kind: 'photo', ...data('essays') },      p2: { kind: 'photo', ...data('creative-skills') } },
-  { p1: { kind: 'more' },                          p2: { kind: 'more' } },
+  { p1: { kind: 'name' },                               p2: { kind: 'name' } },
+  { p1: { kind: 'photo', ...data('exploration') },      p2: { kind: 'photo', ...data('essay-1') } },
+  { p1: { kind: 'photo', ...data('keycaps') },          p2: { kind: 'photo', ...data('essay-2') } },
+  { p1: { kind: 'photo', ...data('progression') },      p2: { kind: 'blank' } },
+  { p1: { kind: 'photo', ...data('table-tennis-bat') }, p2: { kind: 'blank' } },
+  { p1: { kind: 'nav' },                                p2: { kind: 'nav' } },
 ];
 
 const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
@@ -58,13 +60,13 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
           {[cell.p1, cell.p2].map((t, i) => {
             const page = i + 1;
             if (t.kind === 'name') {
-              // Not a <button> — it holds real form controls, which can't
-              // legally nest inside an interactive element. (No tile--persist:
-              // on page 2 this cell swaps to the table-tennis-bat project.)
-              // The name + blurb are click targets (data-focus-message) that
-              // jump focus into the message box — see initContactForm.
+              // Not a <button> — it holds real form controls, which can't legally
+              // nest inside an interactive element. Persists across views. The
+              // name + blurb are click targets (data-focus-message) that jump
+              // focus into the message box — see initContactForm. The send button
+              // lives INSIDE the message box and doubles as the status display.
               return (
-                <div class="tile tile--contact" data-page={page}>
+                <div class="tile tile--contact tile--persist" data-page={page}>
                   <div class="contact-card">
                     <div class="contact-head">
                       <h1 class="contact-name" data-focus-message>
@@ -73,8 +75,8 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
                         <span>Browne</span>
                       </h1>
                       <div class="contact-blurb" data-focus-message>
-                        <p>Third year Product and Furniture Design student.</p>
-                        <p>Come check out my works, and drop me a message below — no details required.</p>
+                        <p>Third year Product and Furniture Design student at University of Plymouth, UK.</p>
+                        <p>Come check out my works, and drop me a message below (no details required).</p>
                       </div>
                     </div>
                     <form
@@ -100,22 +102,33 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
                         placeholder="Email address (optional)"
                         autocomplete="email"
                       />
-                      <textarea class="contact-message" name="message" placeholder="Message" rows={3} required />
-                      <div class="contact-foot">
-                        <p class="contact-status" aria-live="polite"></p>
-                        <button class="contact-submit" type="submit">send</button>
+                      <div class="contact-message-wrap">
+                        <textarea class="contact-message" name="message" placeholder="Message" rows={3} required></textarea>
+                        <button class="contact-submit" type="submit" data-state="idle">
+                          <span class="contact-submit-label">send</span>
+                          <span class="contact-submit-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                        </button>
                       </div>
                     </form>
                   </div>
                 </div>
               );
             }
-            if (t.kind === 'more') {
+            if (t.kind === 'nav') {
+              // The bottom-right cell: a 2×2 of section buttons (persists). Essays
+              // / Personal Projects swap the project tiles (page 2 / page 1); CV
+              // opens a full-page view; "more works" is wired but inert for now.
               return (
-                <button class="tile tile--text tile--persist tile--more" data-page={page} data-action="more" type="button">
-                  <span class="tile-label">more works</span>
-                </button>
+                <div class="tile tile--nav tile--persist" data-page={page}>
+                  <button class="nav-box" type="button" data-action="view" data-view="2"><span class="nav-label">essays</span></button>
+                  <button class="nav-box" type="button" data-action="view" data-view="1"><span class="nav-label">personal projects</span></button>
+                  <button class="nav-box" type="button" data-action="cv"><span class="nav-label">cv</span></button>
+                  <button class="nav-box nav-box--more" type="button" data-action="more"><span class="nav-label">more works</span></button>
+                </div>
               );
+            }
+            if (t.kind === 'blank') {
+              return <div class="tile tile--blank" data-page={page} aria-hidden="true"></div>;
             }
             // photo tile
             return (
@@ -145,4 +158,14 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
       })}
     </div>
   </div>
+
+  {/* Dev-only tuner — present under `npm run dev`, stripped from production builds. */}
+  {import.meta.env.DEV && (
+    <div class="dev-tuner" data-dev-tuner>
+      <label>bio ¶1 nudge
+        <input type="range" id="bio-p1-y" min="-40" max="160" step="1" value="5" />
+      </label>
+      <output id="bio-p1-y-out">5px</output>
+    </div>
+  )}
 </LandingLayout>

@@ -26,6 +26,11 @@
      padding exactly, so both reference the same tokens. */
   --grid-gap: clamp(0.5rem, 1.5vw, 1.25rem);
   --grid-pad: clamp(0.75rem, 2vw, 1.5rem);
+
+  /* Caption band: the fixed strip under each photo where the title sits. Shared
+     so the nav boxes and the send button align to the same image-bottom line as
+     the project captions. */
+  --cap: clamp(1.5rem, 2.3vw, 2rem);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -153,9 +158,12 @@ html, body {
   /* light halo so the blue stays legible over darker photos */
   text-shadow: 0 0 6px var(--bg), 0 1px 2px var(--bg);
 }
+/* Fixed caption band so the image bottom sits on the shared --cap line that the
+   nav boxes and send button also align to. (Not display:flex — that would drop
+   the whitespace between the split-word spans and run the title together.) */
 .tile-name {
-  flex: 0 0 auto;
-  margin-top: 0.5rem;
+  flex: 0 0 var(--cap);
+  padding-top: 0.4rem;
   font-family: var(--nav-font);
   font-weight: 700;
   font-size: clamp(0.85rem, 1.4vw, 1.2rem);
@@ -164,76 +172,80 @@ html, body {
   text-transform: lowercase;
 }
 
-/* Text tile: currently only "more works" uses this (centred label, no image) */
-.tile--text {
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: clamp(0.75rem, 2vw, 1.5rem);
+/* ── Nav box: the bottom-right cell is a 2×2 of red section buttons ──────────
+   Essays / Personal Projects swap the project tiles; CV opens a full page;
+   "more works" is wired but inert for now. The cell reserves the caption band
+   at its bottom (--cap) so the box grid aligns with the adjacent tile's image
+   (above its caption), rather than running the full cell height. */
+.tile--nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: var(--grid-gap);
+  padding: 0 0 var(--cap);
+  background: transparent;
 }
-.tile-label {
+.nav-box {
+  border: none;
+  margin: 0;
+  background: #ff4d4d;
+  color: #fff;
   font-family: var(--nav-font);
   font-weight: 700;
-  font-size: clamp(1rem, 1.7vw, 1.4rem);
+  font-size: clamp(0.6rem, 1vw, 0.95rem);
   line-height: 1.1;
-  color: var(--body-color);
   text-transform: lowercase;
-  transition: color 0.18s ease;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4em;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
-/* Hover on text tiles → highlight blue */
-.tile--text:hover .tile-label,
-.tile--text:focus-visible .tile-label {
-  color: var(--highlight);
-}
-/* "More works" is a solid red tile (a slightly lighter red than the body
-   accent, since it's such a large field) with white centred text. While page 2
-   is showing it turns highlight-blue as an "active / click again to go back"
-   cue — there's no separate back control. */
-.tile--more {
-  background: #ff4d4d;
-  transition: background-color 0.25s ease;
-}
-.tile--more .tile-label {
-  color: #fff;
-  transition: color 0.25s ease;
-}
-.tile--more:hover,
-.tile--more:focus-visible {
-  background: #ff6363;
-}
-/* Override the generic .tile--text blue-label hover — the label stays white. */
-.tile--more:hover .tile-label,
-.tile--more:focus-visible .tile-label {
-  color: #fff;
-}
-.stage[data-page='2'] .tile--more {
+.nav-box:hover,
+.nav-box:focus-visible {
   background: var(--highlight);
+  outline: none;
 }
-.stage[data-page='2'] .tile--more .tile-label {
-  color: #fff;
+.nav-label { display: block; }
+
+/* Blank tile: an empty slot (e.g. the essays view's not-yet-filled cells). */
+.tile--blank {
+  background: var(--bg);
+  cursor: default;
 }
 
 /* ── Contact card (the "name" tile doubles as a message box) ────────────────
-   Mirrors the reference layout: a big stacked pixel-font name on the left,
-   a short blurb on the right, and a bordered email + message form spanning
-   the full width beneath both — all inside the tile's normal grid cell. */
+   Name + blurb share a top edge across the top; below them an optional email
+   field, then a message box that fills down to the cell bottom. The send button
+   lives INSIDE the message box at the bottom-left, sitting in the caption band
+   (--cap) so it lines up with the project titles across the row, and doubles as
+   the status display. No tile padding, so the card's edges line up with the
+   photo tile below it. */
 .tile--contact {
   cursor: default;
-  padding: clamp(0.75rem, 2vw, 1.5rem);
+  padding: 0;
 }
+/* Split in two like the nav box: name + blurb fill the top half, the form fills
+   the bottom half, with a gap (the "horizontal margin in the middle") between. */
 .contact-card {
   display: flex;
   flex-direction: column;
-  gap: clamp(0.4rem, 1.2vw, 0.85rem);
+  gap: clamp(1.3rem, 2.5vw, 2.25rem); /* one margin between name/bio and the boxes */
   width: 100%;
   height: 100%;
   min-height: 0;
 }
+/* Fixed top half (a stable height the name fills, so a wider name can't squeeze
+   the bio into a taller column). Both name and bio fill this height, so their
+   bottoms land on the same line. */
 .contact-head {
-  flex: 0 0 auto;
+  flex: 1 1 0;
+  min-height: 0;
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: space-between;
   gap: clamp(0.5rem, 2vw, 1.25rem);
 }
@@ -241,27 +253,38 @@ html, body {
   flex: 0 1 auto;
   display: flex;
   flex-direction: column;
+  /* pull the pixel-font glyphs up + left to the card edge (the font's own top
+     and left bearing otherwise leaves the name sitting low and inset). */
+  margin: -0.08em 0 0 -0.06em;
   font-family: 'lores-9-plus-narrow', var(--nav-font);
   font-weight: 700;
-  font-size: clamp(1.05rem, 2.9vw, 2.1rem);
-  line-height: 1.05;
-  letter-spacing: 0.01em;
+  /* sized so the three lines fill the top half (bottom meets the bio bottom) */
+  font-size: clamp(1.6rem, 4.3vw, 3.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
   color: var(--title-color);
   text-transform: uppercase;
-  margin: 0;
   white-space: nowrap;
 }
 .contact-blurb {
   flex: 0 1 auto;
-  max-width: 52%;
+  max-width: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* first line → name top, last line → name bottom */
   text-align: right;
   font-family: var(--body-font);
-  font-size: clamp(0.55rem, 0.85vw, 0.72rem);
-  line-height: 1.45;
+  /* small enough that the copy fits the top half in its narrow column without
+     overflowing (the wide name leaves the bio only ~⅓ of the width) */
+  font-size: clamp(0.6rem, 0.92vw, 0.82rem);
+  line-height: 1.4;
   color: var(--body-color);
 }
 .contact-blurb p { margin: 0 0 0.45em; }
 .contact-blurb p:last-child { margin-bottom: 0; }
+/* Top paragraph vertical nudge — baked at 5px; the dev tuner can override it
+   live (it sets --bio-p1-y), but production uses this default. */
+.contact-blurb p:first-child { transform: translateY(var(--bio-p1-y, 5px)); }
 /* Name + blurb are click targets that jump focus into the message box; give
    them a pointer + a blue hover so the affordance reads. */
 .contact-name[data-focus-message],
@@ -273,16 +296,16 @@ html, body {
 .contact-blurb[data-focus-message]:hover {
   color: var(--highlight);
 }
+/* Bottom half: email + message box. */
 .contact-form {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
-  gap: clamp(0.35rem, 0.9vw, 0.6rem);
+  gap: clamp(0.35rem, 0.9vw, 0.55rem);
   min-height: 0;
 }
 .contact-honey { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
-.contact-email,
-.contact-message {
+.contact-email {
   flex: 0 0 auto;
   width: 100%;
   border: 1.5px solid var(--body-color);
@@ -290,64 +313,84 @@ html, body {
   font-family: var(--body-font);
   font-size: clamp(0.65rem, 1.05vw, 0.85rem);
   color: var(--fg);
-  padding: clamp(0.4rem, 1vw, 0.65rem);
+  padding: clamp(0.4rem, 1vw, 0.6rem);
   border-radius: 0;
   transition: border-color 0.18s ease;
 }
-.contact-message {
+/* Message box fills the rest of the card down to the cell bottom; the send
+   button is overlaid inside it. */
+.contact-message-wrap {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
-  resize: none;
-  line-height: 1.45;
-}
-.contact-email::placeholder,
-.contact-message::placeholder {
-  color: var(--body-color);
-  opacity: 0.6;
-}
-.contact-email:focus,
-.contact-message:focus {
-  outline: none;
-  border-color: var(--highlight);
-}
-.contact-foot {
-  flex: 0 0 auto;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
 }
-.contact-status {
-  margin: 0;
-  font-family: var(--body-font);
-  font-size: clamp(0.6rem, 0.95vw, 0.75rem);
-  color: var(--highlight);
-  min-height: 1.2em;
-}
-.contact-submit {
-  flex: 0 0 auto;
+.contact-message {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  resize: none;
   border: 1.5px solid var(--body-color);
   background: transparent;
+  font-family: var(--body-font);
+  font-size: clamp(0.65rem, 1.05vw, 0.85rem);
+  color: var(--fg);
+  padding: clamp(0.4rem, 1vw, 0.6rem);
+  padding-bottom: calc(var(--cap) + 0.4rem); /* clear the overlaid send button */
+  border-radius: 0;
+  line-height: 1.45;
+  transition: border-color 0.18s ease;
+}
+.contact-email::placeholder,
+.contact-message::placeholder { color: var(--body-color); opacity: 0.6; }
+.contact-email:focus,
+.contact-message:focus { outline: none; border-color: var(--highlight); }
+
+/* Send button — inside the message box, bottom-RIGHT, in the caption band. IS
+   the status display (data-state, set by site.ts): red 'send' → blue working
+   dots → blue 'sent'/'error' → fades back to red 'send'/'retry'. */
+.contact-submit {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  height: var(--cap);
+  min-width: 0; /* bigger word in a smaller box — the box hugs the text */
+  border: none;
+  background: var(--body-color);
+  color: #fff;
   font-family: var(--nav-font);
   font-weight: 700;
-  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
-  color: var(--body-color);
+  font-size: clamp(0.85rem, 1.45vw, 1.2rem);
   text-transform: lowercase;
-  padding: 0.4em 1.4em;
   cursor: pointer;
-  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.9em;
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 .contact-submit:hover,
-.contact-submit:focus-visible {
+.contact-submit:focus-visible,
+.contact-submit[data-state='working'],
+.contact-submit[data-state='result'] {
   background: var(--highlight);
-  border-color: var(--highlight);
-  color: #fff;
   outline: none;
 }
-.contact-submit:disabled {
-  opacity: 0.5;
-  cursor: default;
+/* Working: hide the label, show three dots fading in sequence. */
+.contact-submit-dots { display: none; align-items: center; gap: 0.32em; }
+.contact-submit[data-state='working'] .contact-submit-label { display: none; }
+.contact-submit[data-state='working'] .contact-submit-dots { display: inline-flex; }
+.contact-submit-dots i {
+  width: 0.34em;
+  height: 0.34em;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.2;
+  animation: send-dot 1.05s infinite ease-in-out;
 }
+.contact-submit-dots i:nth-child(2) { animation-delay: 0.18s; }
+.contact-submit-dots i:nth-child(3) { animation-delay: 0.36s; }
+@keyframes send-dot { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
 
 /* ── Pixel dissolve overlay (built per tile by site.ts) ─────────────────────
    A grid of background-coloured cells laid over a tile. Cells snap in (cover)
@@ -611,4 +654,25 @@ html, body {
 }
 @keyframes lb-in  { from { opacity:0; transform:scale(0.97); } to { opacity:1; transform:scale(1); } }
 @keyframes lb-out { from { opacity:1; transform:scale(1); }   to { opacity:0; transform:scale(0.97); } }
+
+/* ── Dev tuner ──────────────────────────────────────────────────────────────
+   Floating live-tuning control. Its markup is gated behind import.meta.env.DEV
+   in index.astro, so it only exists under `npm run dev` and never ships. */
+.dev-tuner {
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  font: 12px/1 monospace;
+  padding: 8px 10px;
+  border-radius: 4px;
+}
+.dev-tuner label { display: flex; align-items: center; gap: 6px; }
+.dev-tuner input[type='range'] { width: 160px; }
+.dev-tuner output { min-width: 3.5em; text-align: right; }
 
