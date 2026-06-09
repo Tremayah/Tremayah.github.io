@@ -1,20 +1,38 @@
 ---
 title: "Smart Jewellery"
-description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod."
+description: "Designing 'something between a smartphone and a dumbphone' — a set of jewellery that each take on a single phone function, to make it easier to put the phone down."
 year: 2025
 category: "Product Design"
-tags: []
+tags: ["Research", "Wearables", "CAD", "Blender", "3D Printing", "Concept Design"]
 order: 6
-cover: "https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/untitled.png?w=1024"
+cover: "https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/ring.png"
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+The brief was to design "something between a smartphone and a dumbphone", with a trans-generational audience in mind. Where my earlier work had been hands-on from day one, this project was led by research — and that was the point. If I want to be a good product designer, I have to be able to find and understand the people I'm designing for.
 
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt, neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.
-Curabitur pretium tincidunt lacus, gravida malesuada nisl posuere eu. Vivamus elementum semper nisi, sed mattis sapien ultricies vel. Aliquam erat volutpat. Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. Aliquam dictum, sapien nec tristique placerat, lorem turpis venenatis ipsum, in tempor sapien augue eget nibh. Integer lacinia sollicitudin massa, sit amet luctus nibh facilisis nec.
+I interviewed people across a spread of generations — children, young adults, adults and older adults — about their screen time and, crucially, the things they felt they couldn't live without. I couldn't reach quite the range I'd hoped (it's hard to get time with the very young and the very old), but the conversations were invaluable, and paired with desk research they gave me a clear picture of what the market actually wants.
 
-Phasellus ultrices nulla quis nibh commodo, vitae rutrum quam vestibulum. Sed bibendum, nunc non posuere consectetur, justo erat semper enim, non hendrerit dui odio id enim. Donec rhoncus, urna in egestas porttitor, nibh leo placerat nibh, at imperdiet libero risus eget tortor. Curabitur auctor, mi nec congue dignissim, risus mi luctus arcu, a fermentum lorem mauris vel velit. Nam at vestibulum magna, nec rhoncus enim.
+The research kept circling one idea: **nomophobia** — the anxiety of being without a working phone, a term first coined by a UK Post Office study. Rather than fight that attachment head-on, the concept leans into it: a set of jewellery where each piece quietly takes over one specific phone function, so it's easier to leave the phone itself behind.
 
-Nullam quis risus eget urna mollis ornare vel eu leo. Maecenas faucibus mollis interdum. Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Cras mattis consectetur purus sit amet fermentum. Donec ullamcorper nulla non metus auctor fringilla. Vestibulum id ligula porta felis euismod semper. Etiam porta sem malesuada magna mollis euismod, et commodo luctus.
+Three products came out of it:
 
-Sed posuere consectetur est at lobortis. Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit sit amet non magna. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Nulla vitae elit libero, a pharetra augue.
+- **A communication ring** — a subtle LED band running through the middle that glows when you send or receive a call. The dimensions are based on a ring I wear every day.
+- **An AI wristband** — the "brains" of the set: audio in and out, a minimal 16×16 display for things like a direction arrow and a distance, and a connection to the other pieces. Imagine leaving your phone behind but still scanning a restaurant's QR menu with a camera pendant and talking your order through with the band.
+- **A camera pendant** — no screen, operated by a single button on the chain, sending photos straight to a phone over Bluetooth once in range — for people whose essential is always having a camera on them.
+
+<div class="carousel">
+  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/ring.png" alt="Communication ring concept" />
+  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/bracelet.png" alt="AI wristband concept" />
+  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/camera-pendant-2.png" alt="Camera pendant concept" />
+</div>
+
+I rendered the pieces in Blender — its material and lighting workflow is far ahead of anything else I have access to — and built two posters: a system map showing who each piece is for, and a hero shot to present the set at its best.
+
+<div class="carousel">
+  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/nomophobia-poster-finished-1.png" alt="Project poster" />
+  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/smart-jewellery-thing.jpg" alt="Smart jewellery render" />
+</div>
+
+Finally I made final sketch models of each product. With the university workshops closed for Christmas I ordered the prints from a third party; they came back surprisingly clean off a 0.2 mm nozzle, and a coat of silver spray plus a few details finished them off.
+
+Overall I'm happy with it. If I'm honest I tunnelled onto the dumbphone idea and let the trans-generational side of the brief slip — something I'd hold onto more tightly next time — but the research-led approach taught me far more than the making did.

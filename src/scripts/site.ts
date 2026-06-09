@@ -12,41 +12,6 @@
      • the hover overview typing on photo tiles
    ========================================================================== */
 
-/* ── Typing reveal ────────────────────────────────────────────────────────
-   Wrap each character of a container in a hidden span, then fade them in a
-   few per tick. Skips image containers so their layout isn't disturbed. */
-function typeInto(container: HTMLElement, chunk = 40, tick = 16): () => void {
-  const chars: HTMLElement[] = [];
-  const walk = (node: Node): void => {
-    if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent ?? '';
-      if (!text) return;
-      const frag = document.createDocumentFragment();
-      for (const ch of text) {
-        const s = document.createElement('span');
-        s.textContent = ch;
-        s.style.opacity = '0';
-        chars.push(s);
-        frag.appendChild(s);
-      }
-      node.parentNode?.replaceChild(frag, node);
-    } else if (node.nodeType === Node.ELEMENT_NODE) {
-      const cls = (node as Element).classList;
-      if (cls?.contains('img-grid') || cls?.contains('hero-pair') ||
-          cls?.contains('hero-trio') || cls?.contains('carousel')) return;
-      Array.from(node.childNodes).forEach(walk);
-    }
-  };
-  walk(container);
-
-  let idx = 0;
-  const timer = setInterval(() => {
-    for (let i = 0; i < chunk && idx < chars.length; i++, idx++) chars[idx].style.opacity = '1';
-    if (idx >= chars.length) clearInterval(timer);
-  }, tick);
-  return () => clearInterval(timer);
-}
-
 /* ── Word-split (slice animation on titles) ──────────────────────────────── */
 function buildSplitWords(el: HTMLElement): void {
   if (el.dataset.split) return;
@@ -135,7 +100,6 @@ function pixelate(host: HTMLElement, cover: boolean, instant = false): Promise<v
     setTimeout(resolve, STAGGER + 40);
   });
 }
-const dissolve = (t: HTMLElement) => pixelate(t, true);
 const reveal = (t: HTMLElement) => pixelate(t, false);
 
 /* ── Carousels (inside writeups) ─────────────────────────────────────────── */
@@ -215,26 +179,36 @@ function closeLightbox(): void {
   lightboxOpen = false;
 }
 
-/* ── Hover overview typing on photo tiles ────────────────────────────────── */
-function initHover(tile: HTMLElement): void {
-  const textEl = tile.querySelector<HTMLElement>('.tile-overview-text');
-  if (!textEl) return;
-  const full = (textEl.textContent ?? '').trim();
-  textEl.textContent = '';
-  let cancel: (() => void) | null = null;
-  tile.addEventListener('mouseenter', () => {
-    if (stage?.classList.contains('is-open')) return;
-    cancel?.();
-    textEl.textContent = full;
-    cancel = typeInto(textEl, 5, 10);
+/* ── Description panel (nav box, top-left) ────────────────────────────────
+   Hovering any tile with a data-desc shows that blurb in the shared panel —
+   no animation, the text just swaps. Leaving restores the default hint. */
+function initDescPanel(): void {
+  // The nav box renders on both pages, so there can be more than one panel —
+  // update them all, and only the visible one shows.
+  const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-desc-panel] .nav-desc-text'));
+  if (panels.length === 0) return;
+  const hint = (panels[0].textContent ?? '').trim();
+  const set = (text: string): void => panels.forEach((p) => { p.textContent = text; });
+  document.querySelectorAll<HTMLElement>('[data-desc]').forEach((el) => {
+    el.addEventListener('mouseenter', () => set(el.dataset.desc ?? hint));
+    el.addEventListener('mouseleave', () => set(hint));
   });
-  tile.addEventListener('mouseleave', () => {
-    // While a project is open, leave the typed description in place — clicking a
-    // tile shouldn't wipe the text the hover just showed (it stays on the hero).
-    if (stage?.classList.contains('is-open')) return;
-    cancel?.();
-    textEl.textContent = '';
-  });
+}
+
+/* ── Animations on/off toggle (accessibility) ─────────────────────────────
+   Defaults to honouring prefers-reduced-motion. Both nav pages carry a switch;
+   they're kept in sync and drive html.reduce-motion, which the fizzle functions
+   and CSS both respect. */
+function initAnimToggle(): void {
+  const switches = Array.from(document.querySelectorAll<HTMLInputElement>('[data-anim-switch]'));
+  if (switches.length === 0) return;
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const apply = (on: boolean): void => {
+    document.documentElement.classList.toggle('reduce-motion', !on);
+    switches.forEach((s) => { s.checked = on; });
+  };
+  apply(!prefersReduced);
+  switches.forEach((s) => s.addEventListener('change', () => apply(s.checked)));
 }
 
 /* ── Open / close a project in place ──────────────────────────────────────
@@ -246,8 +220,6 @@ function initHover(tile: HTMLElement): void {
    one motion, not "everything out, then everything in". */
 let stage: HTMLElement | null = null;
 let openId: string | null = null;
-
-const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 function gridCells(): HTMLElement[] {
   return Array.from(stage!.querySelectorAll<HTMLElement>('.landing-grid > .cell'));
@@ -316,6 +288,15 @@ function layoutFullStage(writeup: HTMLElement, tile: HTMLElement | null): void {
 const SPREAD = 440; // ms for the wavefront to travel origin → far corner
 const HOLD = 80;    // ms a cell stays static (width of the static ring); < SPREAD ⇒ overlap
 const JITTER = 25;  // ± ms per-cell timing jitter, so the wavefront stays ragged
+
+/* Animations off (accessibility toggle / prefers-reduced-motion): the fizzle
+   functions short-circuit to their end state instead of running the wave. */
+const reduced = (): boolean => document.documentElement.classList.contains('reduce-motion');
+
+/* Narrow / mobile: the grid is a stacked scroller, not a fixed 3×2 stage, so an
+   opened project shows as a full-screen overlay (no radial fizzle, no hero
+   wrap). html.view-open locks the page behind it. */
+const compact = (): boolean => window.matchMedia('(max-width: 680px)').matches;
 
 /* Centre of an element in stage-local coordinates — the ripple origin. */
 function originOf(el: HTMLElement): Point {
@@ -407,9 +388,14 @@ async function openProject(cell: HTMLElement, tile: HTMLElement, id: string): Pr
   if (writeup) {
     writeup.hidden = false;
     initCarousels(writeup);
-    layoutFullStage(writeup, tile); // note: clears inline styles, so mask comes after
-    setMask(writeup, origin, 0, false);
+    layoutFullStage(writeup, compact() ? null : tile); // mobile: no hero wrap
   }
+  if (reduced() || compact()) { // instant, no wave
+    if (compact()) document.documentElement.classList.add('view-open');
+    if (writeup) clearMask(writeup);
+    return;
+  }
+  if (writeup) setMask(writeup, origin, 0, false);
 
   await Promise.all([
     runStageWave(origin),
@@ -418,22 +404,31 @@ async function openProject(cell: HTMLElement, tile: HTMLElement, id: string): Pr
   if (writeup) clearMask(writeup); // fully visible from here
 }
 
-/* The CV button fizzles the whole stage onto a full-page CV view — same reveal
-   as openProject but with no persisting hero tile (nothing is raised, so the
-   page is taken over completely). Closing works through closeProject like any
-   open view. */
+/* The CV button fizzles the whole stage onto a full-page CV view. Unlike a
+   project open, the persisting tile is the NAV BOX (raised via cell--active), so
+   its buttons stay above the CV — that's how you get back out. The CV text wraps
+   around the nav box like a hero image. Closing works through closeProject. */
 async function openCV(origin: Point): Promise<void> {
   if (openId || paging || !stage) return;
   openId = 'cv';
   stage.classList.add('is-open');
+  const navCell = stage.querySelector<HTMLElement>('.tile--nav')?.closest<HTMLElement>('.cell') ?? null;
+  navCell?.classList.add('cell--active');
+  const page = stage.dataset.page ?? '1';
+  const navTile = navCell?.querySelector<HTMLElement>(`.tile[data-page="${page}"]`) ?? null;
   const maxDist = maxDistFrom(origin);
   const writeup = stage.querySelector<HTMLElement>('.writeup[data-for="cv"]');
   if (writeup) {
     writeup.hidden = false;
     initCarousels(writeup);
-    layoutFullStage(writeup, null); // no hero tile to wrap around
-    setMask(writeup, origin, 0, false);
+    layoutFullStage(writeup, compact() ? null : navTile); // desktop: wrap around nav box
   }
+  if (reduced() || compact()) {
+    if (compact()) document.documentElement.classList.add('view-open');
+    if (writeup) clearMask(writeup);
+    return;
+  }
+  if (writeup) setMask(writeup, origin, 0, false);
   await Promise.all([
     runStageWave(origin),
     writeup ? animateMask(writeup, origin, maxDist, false) : Promise.resolve(),
@@ -457,16 +452,18 @@ async function closeProject(): Promise<void> {
   // Mirror of open: the write-up (old page) is masked AWAY from the click point
   // out, revealing the grid beneath right under the static ring.
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
-  if (writeup) setMask(writeup, origin, 0, true);
-
-  await Promise.all([
-    runStageWave(origin),
-    writeup ? animateMask(writeup, origin, maxDist, true) : Promise.resolve(),
-  ]);
+  if (!reduced() && !compact()) {
+    if (writeup) setMask(writeup, origin, 0, true);
+    await Promise.all([
+      runStageWave(origin),
+      writeup ? animateMask(writeup, origin, maxDist, true) : Promise.resolve(),
+    ]);
+  }
 
   if (writeup) { writeup.hidden = true; clearMask(writeup); }
   active?.classList.remove('cell--active');
   stage.classList.remove('is-open');
+  document.documentElement.classList.remove('view-open'); // unlock mobile overlay
 }
 
 /* ── Contact form ─────────────────────────────────────────────────────────
@@ -518,46 +515,71 @@ function initContactForm(form: HTMLFormElement): void {
   });
 }
 
-/* ── "More works" pager ──────────────────────────────────────────────────
-   Each swapping cell flips on its own: the current tile dissolves to
-   background, then the next project resolves from background in the same
-   spot. Staggering the starts sends a wave across the grid, so some cells
-   already show the new set while others are still clearing the old — one
-   continuous motion rather than "all out, then all in". The "more works"
-   tile itself is persistent and never flips. */
+/* ── View swap (radial) ────────────────────────────────────────────────────
+   "Personal projects" swaps cells 0–4 between page 1 (the landing) and page 2
+   (placeholder project tiles), as a radial wave from the clicked button: the
+   stage static ring expands outward, and each cell switches its tile to the new
+   page just as the ring covers it, so the new set is revealed from the click
+   point out — same look as opening a project, but swapping the whole grid. The
+   nav box (tile--persist) doesn't swap. */
 let paging = false;
 
-async function flipTile(leaving: HTMLElement, entering: HTMLElement, startDelay: number): Promise<void> {
-  if (startDelay) await wait(startDelay);
-  await dissolve(leaving);          // cover the outgoing tile
-  entering.style.display = 'flex';  // bring the incoming one in (still hidden)…
-  pixelate(entering, true, true);   // …pre-cover it synchronously so it can't flash…
-  leaving.style.display = 'none';
-  await reveal(entering);           // …then fizzle it in
-}
-
-async function setPage(page: '1' | '2'): Promise<void> {
+async function setView(page: '1' | '2', origin: Point): Promise<void> {
   if (!stage || paging || openId || stage.dataset.page === page) return;
   paging = true;
   const prev = stage.dataset.page ?? '1';
+  if (reduced() || compact()) { stage.dataset.page = page; paging = false; return; } // instant swap via CSS
+  const sr = stage.getBoundingClientRect();
+  const maxDist = maxDistFrom(origin);
 
-  const flips = gridCells()
+  const swaps = gridCells()
     .map((cell) => ({
+      cell,
       leaving: cell.querySelector<HTMLElement>(`.tile[data-page="${prev}"]`),
       entering: cell.querySelector<HTMLElement>(`.tile[data-page="${page}"]`),
     }))
-    .filter((f): f is { leaving: HTMLElement; entering: HTMLElement } =>
-      !!f.leaving && !!f.entering && !f.entering.classList.contains('tile--persist'));
+    .filter((s): s is { cell: HTMLElement; leaving: HTMLElement; entering: HTMLElement } =>
+      !!s.leaving && !!s.entering && !s.entering.classList.contains('tile--persist'));
 
-  await Promise.all(flips.map((f, i) => flipTile(f.leaving, f.entering, i * 60)));
+  // Switch each cell's visible tile when the wavefront reaches its centre + half
+  // the ring's hold, i.e. while it's fully covered by static, so nothing flashes.
+  swaps.forEach((s) => {
+    const r = s.cell.getBoundingClientRect();
+    const cx = r.left + r.width / 2 - sr.left;
+    const cy = r.top + r.height / 2 - sr.top;
+    const tc = Math.max(0, (Math.hypot(cx - origin.x, cy - origin.y) / maxDist) * SPREAD);
+    setTimeout(() => {
+      s.leaving.style.display = 'none';
+      s.entering.style.display = 'flex';
+    }, tc + HOLD / 2);
+  });
+
+  await runStageWave(origin);
 
   stage.dataset.page = page;
   // Hand visibility back to the CSS page-toggle now that data-page matches.
-  flips.forEach((f) => {
-    f.leaving.style.removeProperty('display');
-    f.entering.style.removeProperty('display');
+  swaps.forEach((s) => {
+    s.leaving.style.removeProperty('display');
+    s.entering.style.removeProperty('display');
   });
   paging = false;
+}
+
+/* ── "More works" scroll toggle ────────────────────────────────────────────
+   The page is normally clipped to one screen. Toggling .more-open on <html>
+   makes it scrollable so the extra .more-grid tiles below come into view; the
+   "more works" button stays blue while expanded. Toggling off scrolls back to
+   the top and re-locks. The grid handles any number of extra tiles. */
+function toggleMore(): void {
+  const open = document.documentElement.classList.toggle('more-open');
+  const moreGrid = document.querySelector<HTMLElement>('[data-more-grid]');
+  moreGrid?.setAttribute('aria-hidden', open ? 'false' : 'true');
+  const behavior: ScrollBehavior = reduced() ? 'auto' : 'smooth';
+  // Reveal → scroll down to the extra tiles; collapse → return to the top. (rAF
+  // so the overflow:auto from .more-open is applied before we scroll.)
+  const rect = moreGrid?.getBoundingClientRect();
+  const target = open ? window.scrollY + (rect?.top ?? window.innerHeight) : 0;
+  requestAnimationFrame(() => window.scrollTo({ top: target, behavior }));
 }
 
 /* ── Click handling ──────────────────────────────────────────────────────── */
@@ -575,14 +597,19 @@ function onStageClick(e: MouseEvent): void {
     return;
   }
 
-  // Nav-box section buttons (the 2×2 cell): switch the project/essay view,
-  // open the CV, or "more works" (wired but inert until its own prompt).
+  // Nav-box section buttons (the 2×2 cell): toggle the personal-projects view,
+  // open the CV, or expand "more works".
   const actionEl = target.closest<HTMLElement>('[data-action]');
   if (actionEl) {
     const action = actionEl.dataset.action;
-    if (action === 'view') { setPage((actionEl.dataset.view as '1' | '2') ?? '1'); return; }
+    if (action === 'view') {
+      // The one view button doubles as a toggle: into the view, then back home.
+      const view = (actionEl.dataset.view as '1' | '2') ?? '2';
+      setView(stage!.dataset.page === view ? '1' : view, originOf(actionEl));
+      return;
+    }
     if (action === 'cv') { openCV(originOf(actionEl)); return; }
-    if (action === 'more') return; // deferred — behaviour is a later prompt
+    if (action === 'more') { toggleMore(); return; }
   }
 
   const tile = target.closest<HTMLElement>('.tile');
@@ -604,8 +631,11 @@ function init(): void {
   stage.querySelectorAll<HTMLElement>('.tile-name, .tile-label, .contact-name span')
     .forEach(buildSplitWords);
 
-  // Hover typing on photo tiles
-  stage.querySelectorAll<HTMLElement>('.tile--photo').forEach(initHover);
+  // Hovering a tile fills the nav box's description panel
+  initDescPanel();
+
+  // Animations on/off (accessibility) — sets html.reduce-motion
+  initAnimToggle();
 
   // Contact form — AJAX submit via FormSubmit
   stage.querySelectorAll<HTMLFormElement>('.contact-form').forEach(initContactForm);
@@ -613,15 +643,6 @@ function init(): void {
   stage.addEventListener('click', onStageClick);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { if (lightboxOpen) closeLightbox(); else if (openId) closeProject(); }
-  });
-
-  // Dev-only: live nudge for the bio's top paragraph (the slider markup only
-  // exists under `npm run dev`, so this is a no-op in production builds).
-  const bioSlider = document.getElementById('bio-p1-y') as HTMLInputElement | null;
-  const bioOut = document.getElementById('bio-p1-y-out');
-  bioSlider?.addEventListener('input', () => {
-    document.documentElement.style.setProperty('--bio-p1-y', `${bioSlider.value}px`);
-    if (bioOut) bioOut.textContent = `${bioSlider.value}px`;
   });
 
   // The open write-up wraps around the persisting tile, whose position shifts
@@ -640,7 +661,13 @@ function init(): void {
 
   // Load-in: cover every visible tile instantly, reveal the page, then clear
   // the pixels (reverse of the dissolve) so tiles assemble rather than flick in.
+  // (Reduced motion: just show the grid; warm the overlay for later.)
   const tiles = visibleTiles();
+  if (reduced()) {
+    stage.classList.add('ready');
+    ensureOverlay(stage);
+    return;
+  }
   Promise.all(tiles.map((t) => pixelate(t, true, true))).then(() => {
     stage!.classList.add('ready');
     setTimeout(() => tiles.forEach(reveal), 60);

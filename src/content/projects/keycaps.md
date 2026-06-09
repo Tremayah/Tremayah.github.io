@@ -1,20 +1,33 @@
 ---
 title: "Porcelain Keycaps"
-description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt."
+description: "Using the keycap as a medium to put materiality first — and casting a set in clear-glazed porcelain."
 year: 2024
 category: "Product Design"
-tags: ["Ceramics", "CAD", "Prototyping", "Rhino"]
+tags: ["Ceramics", "CAD", "Prototyping", "Rhino", "Mould Making"]
 order: 4
 cover: "https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/idg_20251209_132030_658.jpeg?w=1024"
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+Moving into second year, I wanted to raise the standard of my work considerably — to stop coasting and find the real limits of what I could make. Keycaps became the vehicle for that: small, exacting objects with an enthusiast community that obsesses over feel, sound, ergonomics and look. Part of the motivation was selfish — I wanted beautiful keycaps myself, without paying the premium that the few makers in this space charge.
 
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt, neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.
-Curabitur pretium tincidunt lacus, gravida malesuada nisl posuere eu. Vivamus elementum semper nisi, sed mattis sapien ultricies vel. Aliquam erat volutpat. Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. Aliquam dictum, sapien nec tristique placerat, lorem turpis venenatis ipsum, in tempor sapien augue eget nibh. Integer lacinia sollicitudin massa, sit amet luctus nibh facilisis nec.
+By using the keycap as a medium, I could put materiality in the foreground, treating the investigation of different materials as the whole point of the product rather than an afterthought. I drew up a set of material ambitions to chase: metal — brass, coated copper, steel, even gold; ceramic — glossy or matte, with a huge tactile range; Jesmonite — an inexpensive, eco-friendly entry point; wood — rarely seen, because of the intricate cutting a keycap demands; and glass — ambitious, but a keyboard like rows of tiny glass blocks could be one of a kind.
 
-Phasellus ultrices nulla quis nibh commodo, vitae rutrum quam vestibulum. Sed bibendum, nunc non posuere consectetur, justo erat semper enim, non hendrerit dui odio id enim. Donec rhoncus, urna in egestas porttitor, nibh leo placerat nibh, at imperdiet libero risus eget tortor. Curabitur auctor, mi nec congue dignissim, risus mi luctus arcu, a fermentum lorem mauris vel velit. Nam at vestibulum magna, nec rhoncus enim.
+I gathered the research into a material taxonomy laid out as a magazine in InDesign — far less technical than my first attempt, much nicer to look at, and far more time-consuming to make.
 
-Nullam quis risus eget urna mollis ornare vel eu leo. Maecenas faucibus mollis interdum. Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Cras mattis consectetur purus sit amet fermentum. Donec ullamcorper nulla non metus auctor fringilla. Vestibulum id ligula porta felis euismod semper. Etiam porta sem malesuada magna mollis euismod, et commodo luctus.
+The main build focused on ceramic, and specifically on the problems of casting porcelain, clear-glazed keycaps. I cut a two-part mould and worked through the casting process, drying the pieces in a hot cupboard before firing them in a kiln.
 
-Sed posuere consectetur est at lobortis. Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit sit amet non magna. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Nulla vitae elit libero, a pharetra augue.
+<div class="carousel">
+  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2025/10/img_3576.jpeg?w=1024" alt="Two-part mould" />
+  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2025/10/img_3578.jpeg?w=1024" alt="Casting process" />
+  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2025/10/img_3580.jpeg?w=1024" alt="Cast keycaps before firing" />
+</div>
+
+Wall thickness varied with how long the slip sat in the mould before pouring out — the longer it sat, the thicker the wall. That variation was deliberate: a search for the balance between interior space for the switch stem and the strength of the wall. In the end I favoured the thinnest walls that survived firing, since the thicker ones simply didn't leave enough room inside.
+
+<div class="carousel">
+  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/idg_20251209_131410_990.jpeg?w=1024" alt="Finished porcelain keycaps" />
+  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/idg_20251209_131502_423.jpeg?w=1024" alt="Finished keycaps detail" />
+  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/idg_20251209_131520_977.jpeg?w=1024" alt="Keycaps on a switch" />
+</div>
+
+They came out very pretty and feel wonderful to touch. The one surprise was scale: the shrinkage in the second firing — or maybe an illusion of the glaze — left them feeling suddenly smaller than I'd expected.

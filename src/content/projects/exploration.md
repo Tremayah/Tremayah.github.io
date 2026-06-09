@@ -1,6 +1,6 @@
 ---
 title: "Acrylic Sandwich Lamps"
-description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt."
+description: "A batch-production lighting study — translucent acrylic layered and lit from within, then re-made in Corian, wood and metal to see how each material wears the same idea."
 year: 2026
 category: "Product Design"
 tags: ["Batch Production", "Lighting", "Acrylic", "Woodwork", "Metalwork", "Corian", "Laser Cutting"]
@@ -8,13 +8,41 @@ order: 5
 cover: "/images/exploration/hero-metal.jpg"
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+This project began as a study in light and layers: a lamp built from a "sandwich" of laser-cut sheets, stacked so the light has to travel through the material before it reaches the room. The brief was batch production — a form that could be cut, stacked and assembled repeatably — so the work was as much about a system as a single object.
 
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt, neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.
-Curabitur pretium tincidunt lacus, gravida malesuada nisl posuere eu. Vivamus elementum semper nisi, sed mattis sapien ultricies vel. Aliquam erat volutpat. Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. Aliquam dictum, sapien nec tristique placerat, lorem turpis venenatis ipsum, in tempor sapien augue eget nibh. Integer lacinia sollicitudin massa, sit amet luctus nibh facilisis nec.
+Early sketches worked through silhouettes and stacking orders, looking for a profile that read well both lit and unlit.
 
-Phasellus ultrices nulla quis nibh commodo, vitae rutrum quam vestibulum. Sed bibendum, nunc non posuere consectetur, justo erat semper enim, non hendrerit dui odio id enim. Donec rhoncus, urna in egestas porttitor, nibh leo placerat nibh, at imperdiet libero risus eget tortor. Curabitur auctor, mi nec congue dignissim, risus mi luctus arcu, a fermentum lorem mauris vel velit. Nam at vestibulum magna, nec rhoncus enim.
+<div class="carousel">
+  <img loading="lazy" decoding="async" src="/images/exploration/sketch-a.jpg" alt="Early lamp silhouette sketches" />
+  <img loading="lazy" decoding="async" src="/images/exploration/sketch-b.jpg" alt="Stacking and section sketches" />
+  <img loading="lazy" decoding="async" src="/images/exploration/sketch-c.jpg" alt="Form development sketches" />
+  <img loading="lazy" decoding="async" src="/images/exploration/forms.jpg" alt="Form studies laid out" />
+</div>
 
-Nullam quis risus eget urna mollis ornare vel eu leo. Maecenas faucibus mollis interdum. Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Cras mattis consectetur purus sit amet fermentum. Donec ullamcorper nulla non metus auctor fringilla. Vestibulum id ligula porta felis euismod semper. Etiam porta sem malesuada magna mollis euismod, et commodo luctus.
+From there I cut and stacked physical prototypes, testing how the layered edges caught the light and how cleanly the sandwich could be registered and assembled.
 
-Sed posuere consectetur est at lobortis. Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit sit amet non magna. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Nulla vitae elit libero, a pharetra augue.
+<div class="carousel">
+  <img loading="lazy" decoding="async" src="/images/exploration/proto-square-a.jpg" alt="Square layered prototype" />
+  <img loading="lazy" decoding="async" src="/images/exploration/proto-toblerone.jpg" alt="Triangular-section prototype" />
+  <img loading="lazy" decoding="async" src="/images/exploration/proto-square-b.jpg" alt="Square prototype, alternate build" />
+</div>
+
+The most interesting part was re-making the same lamp in different materials. Corian, wood and metal each take the layered construction in a different direction — one glows softly, one warms the light, one frames it hard — so the project became a small family of objects sharing one method.
+
+<div class="carousel">
+  <img loading="lazy" decoding="async" src="/images/exploration/hero-corian.jpg" alt="Corian version, lit" />
+  <img loading="lazy" decoding="async" src="/images/exploration/corian-3.jpg" alt="Corian lamp detail" />
+  <img loading="lazy" decoding="async" src="/images/exploration/corian-5.jpg" alt="Corian lamp detail" />
+  <img loading="lazy" decoding="async" src="/images/exploration/hero-wooden.jpg" alt="Wooden version, lit" />
+  <img loading="lazy" decoding="async" src="/images/exploration/wooden-2.jpg" alt="Wooden lamp detail" />
+  <img loading="lazy" decoding="async" src="/images/exploration/wooden-plant.jpg" alt="Wooden lamp in setting" />
+  <img loading="lazy" decoding="async" src="/images/exploration/metal-construction.jpg" alt="Metal version under construction" />
+</div>
+
+To close the project out I produced a set of posters, presenting each material variant in its best light.
+
+<div class="carousel">
+  <img loading="lazy" decoding="async" src="/images/exploration/poster-metal.jpg" alt="Metal variant poster" />
+  <img loading="lazy" decoding="async" src="/images/exploration/poster-wooden.jpg" alt="Wooden variant poster" />
+  <img loading="lazy" decoding="async" src="/images/exploration/poster-y2k.jpg" alt="Y2K-styled poster" />
+</div>

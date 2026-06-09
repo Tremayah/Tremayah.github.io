@@ -73,6 +73,36 @@ html, body {
   .landing-grid { visibility: visible !important; }
 }
 
+/* "More works" expanded state: the page is normally clipped to one screen
+   (.landing-page overflow:hidden). Toggling .more-open on <html> lets it grow
+   and scroll, bringing the .more-grid (below the fold) into view. */
+html.more-open,
+html.more-open body.landing-page {
+  height: auto;
+}
+html.more-open body.landing-page {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* The extra tiles, laid out like the landing grid (3 columns, rows the same
+   height as a landing row) so they read as "more of the same" once scrolled to.
+   Sits directly below the stage; clipped out of view until .more-open. */
+.more-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--grid-gap);
+  padding: 0 var(--grid-pad) var(--grid-pad);
+  grid-auto-rows: calc((100dvh - 2 * var(--grid-pad) - var(--grid-gap)) / 2);
+}
+.more-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f1f1;
+  overflow: hidden;
+}
+
 /* ── Grid ─────────────────────────────────────────── */
 .landing-grid {
   list-style: none;
@@ -126,37 +156,20 @@ html, body {
   object-fit: cover;
   display: block;
 }
-/* Hover overview: the project's description types in as blue text anchored to
-   the bottom-left of the image — no wash over the photo. */
-.tile-overview {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-start;
-  padding: clamp(0.55rem, 1.6vw, 1.1rem);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
+/* Placeholder project tile (personal-projects view): a plain block with a
+   centred label, standing in until real projects fill these slots. */
+.tile--placeholder {
+  align-items: center;
+  justify-content: center;
+  background: #f1f1f1;
+  cursor: default;
 }
-.tile--photo:hover .tile-overview,
-.tile--photo:focus-visible .tile-overview {
-  opacity: 1;
-}
-/* The description the hover typed in stays put once the project is opened — keep
-   the persisting hero tile's overview visible wherever the cursor then goes. */
-.stage.is-open .cell--active .tile-overview {
-  opacity: 1;
-}
-.tile-overview-text {
-  font-family: var(--body-font);
-  font-size: clamp(0.7rem, 1vw, 0.9rem);
-  line-height: 1.5;
-  color: var(--highlight);
-  text-align: left;
-  /* light halo so the blue stays legible over darker photos */
-  text-shadow: 0 0 6px var(--bg), 0 1px 2px var(--bg);
+.placeholder-label {
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.75rem, 1.3vw, 1.1rem);
+  text-transform: lowercase;
+  color: var(--body-color);
 }
 /* Fixed caption band so the image bottom sits on the shared --cap line that the
    nav boxes and send button also align to. (Not display:flex — that would drop
@@ -172,11 +185,12 @@ html, body {
   text-transform: lowercase;
 }
 
-/* ── Nav box: the bottom-right cell is a 2×2 of red section buttons ──────────
-   Essays / Personal Projects swap the project tiles; CV opens a full page;
-   "more works" is wired but inert for now. The cell reserves the caption band
-   at its bottom (--cap) so the box grid aligns with the adjacent tile's image
-   (above its caption), rather than running the full cell height. */
+/* ── Nav box: the bottom-right cell is a 2×2 ────────────────────────────────
+   Top-left is a description panel (filled on project hover); the other three
+   are red section buttons — Personal Projects (swaps the project tiles), CV
+   (full page), More Works (makes the page scroll). The cell reserves the
+   caption band at its bottom (--cap) so the box grid aligns with the adjacent
+   tile's image (above its caption), rather than running the full cell height. */
 .tile--nav {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -209,11 +223,96 @@ html, body {
   outline: none;
 }
 .nav-label { display: block; }
+/* "More works" is a toggle — it goes (and stays) blue while the page is in its
+   scrollable, expanded state. */
+html.more-open .nav-box--more {
+  background: var(--highlight);
+}
 
-/* Blank tile: an empty slot (e.g. the essays view's not-yet-filled cells). */
-.tile--blank {
-  background: var(--bg);
+/* The nav box's top-left cell: an accessibility toggle on top, then the
+   description panel filling the rest. */
+.nav-corner {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.3rem, 0.8vw, 0.5rem);
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Animations on/off switch (accessibility). Defaults on; honours
+   prefers-reduced-motion at load (see site.ts). Toggling off adds
+   html.reduce-motion, which neutralises transitions, keyframes and the
+   pixel-fizzle timing. */
+.anim-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  cursor: pointer;
+  user-select: none;
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.52rem, 0.8vw, 0.7rem);
+  text-transform: lowercase;
+  color: var(--body-color);
+}
+.anim-switch { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.anim-toggle-track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 1.8em;
+  height: 0.95em;
+  border-radius: 1em;
+  background: #ccc;
+  transition: background-color 0.2s ease;
+}
+.anim-toggle-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0.13em;
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  background: #fff;
+  transform: translateY(-50%);
+  transition: left 0.2s ease;
+}
+.anim-switch:checked + .anim-toggle-track { background: var(--highlight); }
+.anim-switch:checked + .anim-toggle-track .anim-toggle-thumb { left: calc(100% - 0.83em); }
+.anim-switch:focus-visible + .anim-toggle-track { outline: 2px solid var(--highlight); outline-offset: 2px; }
+.anim-toggle-label { white-space: nowrap; }
+
+/* Description panel — a white box with a red border (matching the message box).
+   Shows the hovered project's / nav item's blurb in blue; no animation, the
+   text just swaps. */
+.nav-desc {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  background: #fff;
+  border: 1.5px solid var(--body-color);
+  padding: clamp(0.4rem, 1vw, 0.6rem);
+  overflow: hidden;
   cursor: default;
+  min-height: 0;
+}
+.nav-desc-text {
+  font-family: var(--body-font);
+  font-size: clamp(0.6rem, 0.95vw, 0.82rem);
+  line-height: 1.4;
+  color: var(--highlight);
+}
+
+/* Reduced motion: neutralise transitions + keyframes site-wide (the pixel
+   fizzle is short-circuited in JS). */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  transition-duration: 0.001ms !important;
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
 }
 
 /* ── Contact card (the "name" tile doubles as a message box) ────────────────
@@ -282,9 +381,8 @@ html, body {
 }
 .contact-blurb p { margin: 0 0 0.45em; }
 .contact-blurb p:last-child { margin-bottom: 0; }
-/* Top paragraph vertical nudge — baked at 5px; the dev tuner can override it
-   live (it sets --bio-p1-y), but production uses this default. */
-.contact-blurb p:first-child { transform: translateY(var(--bio-p1-y, 5px)); }
+/* Top paragraph vertical nudge — baked at 5px (tuned by hand). */
+.contact-blurb p:first-child { transform: translateY(5px); }
 /* Name + blurb are click targets that jump focus into the message box; give
    them a pointer + a blue hover so the affordance reads. */
 .contact-name[data-focus-message],
@@ -655,24 +753,55 @@ html, body {
 @keyframes lb-in  { from { opacity:0; transform:scale(0.97); } to { opacity:1; transform:scale(1); } }
 @keyframes lb-out { from { opacity:1; transform:scale(1); }   to { opacity:0; transform:scale(0.97); } }
 
-/* ── Dev tuner ──────────────────────────────────────────────────────────────
-   Floating live-tuning control. Its markup is gated behind import.meta.env.DEV
-   in index.astro, so it only exists under `npm run dev` and never ships. */
-.dev-tuner {
-  position: fixed;
-  left: 10px;
-  bottom: 10px;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.85);
-  color: #fff;
-  font: 12px/1 monospace;
-  padding: 8px 10px;
-  border-radius: 4px;
+/* ════════════════════════════════════════════════════════════════════════════
+   MOBILE / NARROW (≤ 680px)
+   The fixed 3×2 stage becomes a single-column, vertically-scrolling stack.
+   Tiles flow in the document (only the active page shows per cell, so relative
+   positioning gives each cell its own height). An opened project / CV shows as
+   a full-screen fixed overlay — opens are instant here (no radial fizzle, no
+   hero wrap; see compact() in site.ts).
+   ════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 680px) {
+  .landing-page { height: auto; overflow-y: auto; overflow-x: hidden; }
+  .stage { height: auto; min-height: 100svh; }
+
+  .landing-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    height: auto;
+  }
+  .tile { position: relative; inset: auto; }
+
+  .tile--photo { height: 68vw; }
+  .tile--placeholder { height: 52vw; }
+  .tile--contact { height: auto; min-height: 0; }
+  .tile--nav { height: 88vw; padding-bottom: 0; }
+  .more-tile { height: 52vw; }
+
+  /* Contact card stacks naturally: name → bio → email → message (the desktop
+     side-by-side / fixed-half layout has no room on a phone). */
+  .contact-card { height: auto; gap: 1.1rem; padding: 0.2rem 0 0.6rem; }
+  .contact-head { flex: 0 0 auto; flex-direction: column; gap: 0.8rem; }
+  .contact-name { font-size: clamp(2.2rem, 13vw, 3.4rem); margin: 0; }
+  .contact-blurb { max-width: 100%; text-align: left; justify-content: flex-start; gap: 0.6rem; }
+  .contact-blurb p:first-child { transform: none; }
+  .contact-form { flex: 0 0 auto; }
+  .contact-message { height: 130px; flex: 0 0 auto; }
+
+  /* Bump small type for legibility on a phone */
+  .contact-blurb { font-size: 0.82rem; }
+  .nav-box { font-size: 0.8rem; }
+  .anim-toggle { font-size: 0.66rem; }
+  .nav-desc-text { font-size: 0.78rem; }
+
+  /* "More works" — a single column of full-width tiles below the stack. */
+  .more-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: 52vw;
+  }
+
+  /* Opened project / CV: full-screen overlay above the stacked page. */
+  .writeup { position: fixed; z-index: 100; }
+  html.view-open .landing-page { overflow: hidden; }
 }
-.dev-tuner label { display: flex; align-items: center; gap: 6px; }
-.dev-tuner input[type='range'] { width: 160px; }
-.dev-tuner output { min-width: 3.5em; text-align: right; }
 

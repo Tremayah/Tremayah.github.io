@@ -1,10 +1,15 @@
 ---
 /*  "/" — the whole site.
 
-    A single-page experience: a 3x2 grid of tiles that fills the viewport (no
-    scrolling). Clicking a tile keeps it in place, dissolves the other five with
-    a pixel animation, and reveals that project's writeup in the freed space.
-    The "more works" tile pages the other five tiles to a second set of projects.
+    A single-page experience: a 3x2 grid of tiles that fills the viewport.
+    Clicking a project tile keeps it in place, dissolves the other five with a
+    pixel animation, and reveals that project's writeup in the freed space.
+
+    The bottom-right cell is a 2x2 nav box that persists across views:
+      • a description panel (top-left) — shows the hovered project's blurb
+      • personal projects (top-right) — radial-fizzles to a set of project tiles
+      • cv (bottom-left)              — fizzles to a full-page CV (nav box stays)
+      • more works (bottom-right)     — makes the page scroll to reveal more tiles
     All behaviour lives in site.ts. */
 import LandingLayout from '../layouts/LandingLayout.astro';
 import { getCollection, render } from 'astro:content';
@@ -12,13 +17,11 @@ import { getCollection, render } from 'astro:content';
 const all = await getCollection('projects');
 const get = (id: string) => all.find((p) => p.id === id);
 
-// Every clickable tile / opened view needs its writeup embedded (hidden).
+// Only the openable tiles + the CV page need their writeup embedded (hidden).
+// (Essays etc. stay on disk for later — see src/content/projects.)
 const writeupIds = [
-  'exploration', 'keycaps', 'progression', 'table-tennis-bat', // "personal projects" view
-  'essay-1', 'essay-2',                                        // "essays" view
-  'cv',                                                        // CV button opens this full-page
-  // parked for the future "more works" view:
-  'living-lamp', 'trebuchet', 'culture', 'creative-skills',
+  'exploration', 'keycaps', 'progression', 'table-tennis-bat', // landing projects
+  'cv',                                                        // CV button → full page
 ];
 const writeups = (
   await Promise.all(
@@ -36,18 +39,33 @@ const data = (id: string) => {
   return { id, title: e?.data.title ?? id, cover: e?.data.cover, desc: e?.data.description ?? '' };
 };
 
-// Cells 0 (contact) and 5 (the nav box) persist across views. Cells 1–4 swap
-// between page 1 = "personal projects" and page 2 = "essays", driven by the
-// nav-box buttons (see site.ts). Page-2 cells 3/4 are blank until there are
-// more essays.
+// A placeholder project tile (used by the "personal projects" view, real ones
+// to come). `n` just numbers them.
+const ph = (n: number) => ({
+  kind: 'placeholder' as const,
+  title: `project ${n}`,
+  desc: 'Placeholder — a personal project will live here.',
+});
+
+// Cell 5 (the nav box) persists across views. The "personal projects" button
+// swaps cells 0–4 between page 1 = the landing (contact + four projects) and
+// page 2 = a set of placeholder project tiles (see site.ts setView). The
+// contact card lives in cell 0 only on the landing.
 const cells = [
-  { p1: { kind: 'name' },                               p2: { kind: 'name' } },
-  { p1: { kind: 'photo', ...data('exploration') },      p2: { kind: 'photo', ...data('essay-1') } },
-  { p1: { kind: 'photo', ...data('keycaps') },          p2: { kind: 'photo', ...data('essay-2') } },
-  { p1: { kind: 'photo', ...data('progression') },      p2: { kind: 'blank' } },
-  { p1: { kind: 'photo', ...data('table-tennis-bat') }, p2: { kind: 'blank' } },
+  { p1: { kind: 'name' },                               p2: ph(1) },
+  { p1: { kind: 'photo', ...data('exploration') },      p2: ph(2) },
+  { p1: { kind: 'photo', ...data('keycaps') },          p2: ph(3) },
+  { p1: { kind: 'photo', ...data('progression') },      p2: ph(4) },
+  { p1: { kind: 'photo', ...data('table-tennis-bat') }, p2: ph(5) },
   { p1: { kind: 'nav' },                                p2: { kind: 'nav' } },
 ];
+
+// "More works" tiles — revealed below the fold when the page is made scrollable.
+// Add as many as you like; the grid flows into new rows automatically.
+const moreWorks = Array.from({ length: 6 }, (_, i) => ({
+  title: `project ${i + 6}`,
+  desc: 'Placeholder — more work to come.',
+}));
 
 const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
 ---
@@ -61,12 +79,12 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
             const page = i + 1;
             if (t.kind === 'name') {
               // Not a <button> — it holds real form controls, which can't legally
-              // nest inside an interactive element. Persists across views. The
-              // name + blurb are click targets (data-focus-message) that jump
-              // focus into the message box — see initContactForm. The send button
-              // lives INSIDE the message box and doubles as the status display.
+              // nest inside an interactive element. The name + blurb are click
+              // targets (data-focus-message) that jump focus into the message
+              // box. The send button lives INSIDE the message box and doubles as
+              // the status display. (Lives in cell 0 on the landing only.)
               return (
-                <div class="tile tile--contact tile--persist" data-page={page}>
+                <div class="tile tile--contact" data-page={page}>
                   <div class="contact-card">
                     <div class="contact-head">
                       <h1 class="contact-name" data-focus-message>
@@ -115,27 +133,39 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
               );
             }
             if (t.kind === 'nav') {
-              // The bottom-right cell: a 2×2 of section buttons (persists). Essays
-              // / Personal Projects swap the project tiles (page 2 / page 1); CV
-              // opens a full-page view; "more works" is wired but inert for now.
+              // The bottom-right cell: a 2×2 that persists. Top-left is a
+              // description panel (filled on project hover — see site.ts);
+              // the other three are section buttons.
               return (
                 <div class="tile tile--nav tile--persist" data-page={page}>
-                  <button class="nav-box" type="button" data-action="view" data-view="2"><span class="nav-label">essays</span></button>
-                  <button class="nav-box" type="button" data-action="view" data-view="1"><span class="nav-label">personal projects</span></button>
-                  <button class="nav-box" type="button" data-action="cv"><span class="nav-label">cv</span></button>
-                  <button class="nav-box nav-box--more" type="button" data-action="more"><span class="nav-label">more works</span></button>
+                  <div class="nav-corner">
+                    <label class="anim-toggle" title="Toggle animations">
+                      <input type="checkbox" class="anim-switch" data-anim-switch checked />
+                      <span class="anim-toggle-track"><span class="anim-toggle-thumb"></span></span>
+                      <span class="anim-toggle-label">animations</span>
+                    </label>
+                    <div class="nav-desc" data-desc-panel><span class="nav-desc-text"></span></div>
+                  </div>
+                  <button class="nav-box" type="button" data-action="view" data-view="2" data-desc="A collection of my personal design projects."><span class="nav-label">personal projects</span></button>
+                  <button class="nav-box" type="button" data-action="cv" data-desc="My CV — education, skills, and experience."><span class="nav-label">cv</span></button>
+                  <button class="nav-box nav-box--more" type="button" data-action="more" data-desc="Scroll down to see more of my work."><span class="nav-label">more works</span></button>
                 </div>
               );
             }
-            if (t.kind === 'blank') {
-              return <div class="tile tile--blank" data-page={page} aria-hidden="true"></div>;
+            if (t.kind === 'placeholder') {
+              // Placeholder project tile (personal-projects view). Inert for now;
+              // hovering still feeds its blurb to the description panel.
+              return (
+                <div class="tile tile--placeholder" data-page={page} data-desc={t.desc}>
+                  <span class="placeholder-label">{t.title}</span>
+                </div>
+              );
             }
             // photo tile
             return (
-              <button class="tile tile--photo" data-page={page} data-open={t.id} type="button">
+              <button class="tile tile--photo" data-page={page} data-open={t.id} data-desc={t.desc} type="button">
                 <span class="tile-media">
                   <img class="tile-img" src={t.cover} alt="" loading="lazy" />
-                  <span class="tile-overview"><span class="tile-overview-text">{t.desc}</span></span>
                 </span>
                 <span class="tile-name">{t.title}</span>
               </button>
@@ -159,13 +189,14 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
     </div>
   </div>
 
-  {/* Dev-only tuner — present under `npm run dev`, stripped from production builds. */}
-  {import.meta.env.DEV && (
-    <div class="dev-tuner" data-dev-tuner>
-      <label>bio ¶1 nudge
-        <input type="range" id="bio-p1-y" min="-40" max="160" step="1" value="5" />
-      </label>
-      <output id="bio-p1-y-out">5px</output>
-    </div>
-  )}
+  {/* "More works" — extra tiles below the fold. The page is normally clipped to
+      one screen; the nav box's "more works" toggle makes it scrollable so these
+      come into view. Add more entries above and they flow into new rows. */}
+  <section class="more-grid" data-more-grid aria-hidden="true">
+    {moreWorks.map((t) => (
+      <div class="more-tile" data-desc={t.desc}>
+        <span class="placeholder-label">{t.title}</span>
+      </div>
+    ))}
+  </section>
 </LandingLayout>
