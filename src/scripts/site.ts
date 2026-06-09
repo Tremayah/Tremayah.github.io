@@ -295,20 +295,19 @@ function layoutFullStage(writeup: HTMLElement, tile: HTMLElement): void {
 }
 
 /* Open / close fizzle the WHOLE stage as one continuous radial wave rippling out
-   from the clicked tile. Every overlay cell covers (→ background "static") then,
-   HOLD ms later, uncovers (→ whatever's beneath). Because the uncover trails the
-   cover by less than the full travel time, the two waves OVERLAP: the inner
-   region already shows the destination page while the outer region still shows
-   the source one, with a moving static ring between them.
+   from the clicked tile, with two cooperating parts:
 
-   The trick that lets old + new coexist on screen: the source tiles sit ABOVE
-   the writeup ('.stage.is-open .cell' is raised) so the grid shows until — as the
-   static ring fully covers each tile — we flip that tile's visibility: hidden on
-   open (revealing the writeup beneath), shown on close (revealing the grid). The
-   persisting tile's cell is raised higher still, above the static, so the hero
-   image + title never fizzle. */
-const SPREAD = 440; // ms for the wavefront to travel origin → far corner (~2× the previous speed)
-const HOLD = 180;   // ms a cell stays static; how far the uncover trails the cover (< SPREAD ⇒ overlap)
+   1. A stage-level static overlay (z 8). Every cell covers (→ background
+      "static") at a time set by its distance from the origin, then uncovers HOLD
+      ms later — a glitchy static RING that expands outward.
+   2. A radial MASK on the write-up (z 6). The write-up is revealed (open) /
+      hidden (close) pixel-by-pixel exactly at the wave's leading edge, so the
+      old grid (left in place beneath, z auto) is swapped for the new page right
+      under the static ring — no per-tile flicker, and the old + new pages coexist
+      either side of the ring. The persisting tile (z 10) stays above everything,
+      so the hero image + title never fizzle. */
+const SPREAD = 440; // ms for the wavefront to travel origin → far corner
+const HOLD = 80;    // ms a cell stays static (width of the static ring); < SPREAD ⇒ overlap
 const JITTER = 25;  // ± ms per-cell timing jitter, so the wavefront stays ragged
 
 /* Centre of an element in stage-local coordinates — the ripple origin. */
@@ -324,21 +323,7 @@ function maxDistFrom(origin: Point): number {
   return Math.hypot(Math.max(origin.x, w - origin.x), Math.max(origin.y, h - origin.y)) || 1;
 }
 
-/* When the static ring has fully covered an element (its farthest corner) — the
-   safe moment to flip its visibility, hidden under the static. */
-function coverDoneTime(el: HTMLElement, origin: Point, maxDist: number): number {
-  const sr = stage!.getBoundingClientRect();
-  const r = el.getBoundingClientRect();
-  let far = 0;
-  for (const x of [r.left, r.right]) {
-    for (const y of [r.top, r.bottom]) {
-      far = Math.max(far, Math.hypot(x - sr.left - origin.x, y - sr.top - origin.y));
-    }
-  }
-  return (far / maxDist) * SPREAD + JITTER;
-}
-
-/* One radial cover→uncover pass over the stage overlay. Resolves when settled. */
+/* One radial cover→uncover pass over the stage overlay (the static ring). */
 function runStageWave(origin: Point): Promise<void> {
   const cells = ensureOverlay(stage!);
   const overlay = stage!.querySelector<HTMLElement>(':scope > .pixel-overlay');
@@ -359,29 +344,58 @@ function runStageWave(origin: Point): Promise<void> {
   return new Promise((res) => setTimeout(res, SPREAD + HOLD + JITTER + 80));
 }
 
+/* Radial reveal/hide of an element via a hard-edged circular mask whose radius
+   tracks the wave's leading edge (so the edge hides under the static ring).
+   clearInside=false → element opaque inside the circle (reveals it from the
+   origin out); clearInside=true → transparent inside (hides it from the origin
+   out). Driven by rAF for a smooth edge. */
+function setMask(el: HTMLElement, origin: Point, r: number, clearInside: boolean): void {
+  const stops = clearInside ? `transparent ${r}px, #000 ${r}px` : `#000 ${r}px, transparent ${r}px`;
+  const g = `radial-gradient(circle at ${origin.x}px ${origin.y}px, ${stops})`;
+  el.style.webkitMaskImage = g;
+  el.style.maskImage = g;
+}
+function animateMask(el: HTMLElement, origin: Point, maxDist: number, clearInside: boolean): Promise<void> {
+  return new Promise((resolve) => {
+    const start = performance.now();
+    const tick = (now: number): void => {
+      const t = now - start;
+      setMask(el, origin, Math.min(maxDist, (t / SPREAD) * maxDist), clearInside);
+      if (t < SPREAD) requestAnimationFrame(tick);
+      else resolve();
+    };
+    requestAnimationFrame(tick);
+  });
+}
+function clearMask(el: HTMLElement): void {
+  el.style.webkitMaskImage = '';
+  el.style.maskImage = '';
+}
+
 async function openProject(cell: HTMLElement, tile: HTMLElement, id: string): Promise<void> {
   if (openId || paging || !stage) return;
   openId = id;
   stage.classList.add('is-open');
   cell.classList.add('cell--active'); // raise the persisting tile (above the static) + slice its title
   const origin = originOf(tile);
+  const maxDist = maxDistFrom(origin);
 
-  // Write-up goes UNDER the (raised) grid tiles, so the page still reads as the
-  // grid; as the static ring passes each OTHER tile we hide it, revealing the
-  // write-up beneath — the new page resolving from the centre out while the
-  // edges still show the old grid.
+  // The write-up sits over the grid (z 6 > tiles); masked to nothing at first so
+  // the grid still shows, then revealed outward from the click point as the
+  // static ring passes — the grid beneath is left untouched and simply covered.
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
   if (writeup) {
     writeup.hidden = false;
     initCarousels(writeup);
-    layoutFullStage(writeup, tile);
+    layoutFullStage(writeup, tile); // note: clears inline styles, so mask comes after
+    setMask(writeup, origin, 0, false);
   }
-  const maxDist = maxDistFrom(origin);
-  const others = visibleTiles().filter((t) => t !== tile);
-  others.forEach((t) => setTimeout(() => { t.style.visibility = 'hidden'; }, coverDoneTime(t, origin, maxDist)));
 
-  await runStageWave(origin);
-  others.forEach((t) => { t.style.visibility = 'hidden'; }); // settle
+  await Promise.all([
+    runStageWave(origin),
+    writeup ? animateMask(writeup, origin, maxDist, false) : Promise.resolve(),
+  ]);
+  if (writeup) clearMask(writeup); // fully visible from here
 }
 
 async function closeProject(): Promise<void> {
@@ -392,19 +406,19 @@ async function closeProject(): Promise<void> {
   const active = stage.querySelector<HTMLElement>('.cell--active');
   const persist = active?.querySelector<HTMLElement>(`.tile[data-page="${stage.dataset.page ?? '1'}"]`) ?? null;
   const origin = persist ? originOf(persist) : { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
-
-  // Mirror of open: the write-up is the old page; as the static ring passes each
-  // hidden grid tile we show it again, so the grid resolves back from the centre
-  // out while the edges still show the write-up.
   const maxDist = maxDistFrom(origin);
-  const others = visibleTiles().filter((t) => t !== persist);
-  others.forEach((t) => setTimeout(() => { t.style.visibility = ''; }, coverDoneTime(t, origin, maxDist)));
 
-  await runStageWave(origin);
-
+  // Mirror of open: the write-up (old page) is masked AWAY from the click point
+  // out, revealing the grid beneath right under the static ring.
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
-  if (writeup) writeup.hidden = true;
-  others.forEach((t) => { t.style.visibility = ''; }); // settle
+  if (writeup) setMask(writeup, origin, 0, true);
+
+  await Promise.all([
+    runStageWave(origin),
+    writeup ? animateMask(writeup, origin, maxDist, true) : Promise.resolve(),
+  ]);
+
+  if (writeup) { writeup.hidden = true; clearMask(writeup); }
   active?.classList.remove('cell--active');
   stage.classList.remove('is-open');
 }

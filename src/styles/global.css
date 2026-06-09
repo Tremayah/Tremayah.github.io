@@ -414,23 +414,10 @@ html, body {
 .wrap-spacer {
   pointer-events: none;
 }
-/* While open, the OTHER tiles sit just above the writeup (z 6) — so the source
-   grid stays visible until the static ring passes and JS flips each tile's
-   visibility, revealing the writeup beneath. They're still below the static
-   overlay (z 8), so the ring covers them. */
-.stage.is-open .cell:not(.cell--active) {
-  z-index: 7;
-}
-/* Each tile carries an opaque background halo a gap-width wide, so the grid
-   GAPS are filled (above the writeup) and the write-up text can't show through
-   them during the transition. The halo belongs to the tile, so it vanishes with
-   it when JS flips the tile's visibility, revealing the write-up underneath. */
-.stage.is-open .tile {
-  box-shadow: 0 0 0 var(--grid-gap) var(--bg);
-}
-/* Raise the persisting tile's cell above the writeup AND the full-stage fizzle
-   (z 8), so its hero image and title stay visible while everything else
-   dissolves. */
+/* Raise the persisting tile's cell above the writeup (z 6) AND the full-stage
+   fizzle (z 8), so its hero image and title stay visible while everything else
+   dissolves. The other tiles stay at their default z (below the writeup): the
+   writeup's radial mask reveals over them, so they need no flipping. */
 .cell--active {
   z-index: 10;
 }
