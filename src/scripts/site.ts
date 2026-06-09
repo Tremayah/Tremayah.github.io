@@ -308,7 +308,7 @@ function layoutFullStage(writeup: HTMLElement, tile: HTMLElement): void {
    persisting tile's cell is raised higher still, above the static, so the hero
    image + title never fizzle. */
 const SPREAD = 440; // ms for the wavefront to travel origin → far corner (~2× the previous speed)
-const HOLD = 260;   // ms a cell stays static; how far the uncover trails the cover (< SPREAD ⇒ overlap)
+const HOLD = 180;   // ms a cell stays static; how far the uncover trails the cover (< SPREAD ⇒ overlap)
 const JITTER = 25;  // ± ms per-cell timing jitter, so the wavefront stays ragged
 
 /* Centre of an element in stage-local coordinates — the ripple origin. */
