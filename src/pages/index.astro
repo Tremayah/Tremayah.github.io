@@ -189,6 +189,17 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
     </div>
   </div>
 
+  {/* Sticky home marquee — hidden on the homepage, shown when a project/CV is
+      open or on a non-home view. Scrolls the name; click anywhere on it to go
+      back home (see site.ts goHome). */}
+  <button class="home-marquee" type="button" data-home aria-label="Back to home">
+    <span class="home-marquee-track" aria-hidden="true">
+      {Array.from({ length: 14 }).map(() => (
+        <span class="home-marquee-item">Raphael Murray-Browne</span>
+      ))}
+    </span>
+  </button>
+
   {/* "More works" — extra tiles below the fold. The page is normally clipped to
       one screen; the nav box's "more works" toggle makes it scrollable so these
       come into view. Add more entries above and they flow into new rows. */}

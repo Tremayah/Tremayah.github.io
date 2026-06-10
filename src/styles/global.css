@@ -31,6 +31,9 @@
      so the nav boxes and the send button align to the same image-bottom line as
      the project captions. */
   --cap: clamp(1.5rem, 2.3vw, 2rem);
+
+  /* Sticky home marquee height (shown when not on the homepage). */
+  --marquee-h: clamp(2rem, 4.4vw, 3rem);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -536,9 +539,25 @@ html.reduce-motion *::after {
 /* !important so [hidden] always beats the display:block above — a closed
    project must never stay visually stuck covering the stage. */
 .writeup[hidden] { display: none !important; }
-/* Invisible float the text wraps around; JS sizes/sides it to the hero tile. */
+/* Invisible float the text wraps around (CV: wraps around the nav box). JS
+   sizes/sides it. */
 .wrap-spacer {
   pointer-events: none;
+}
+/* Project hero: the cover image floated into the top-left tile, text wrapping
+   around it. Lives inside the write-up so the radial mask fizzles it in. JS
+   sizes it to the top-left grid cell. */
+.wrap-hero {
+  float: left;
+  margin: 0 var(--grid-gap) var(--grid-gap) 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+.wrap-hero-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 /* Raise the persisting tile's cell above the writeup (z 6) AND the full-stage
    fizzle (z 8), so its hero image and title stay visible while everything else
@@ -547,6 +566,49 @@ html.reduce-motion *::after {
 .cell--active {
   z-index: 10;
 }
+
+/* ── Sticky home marquee ────────────────────────────────────────────────────
+   Hidden on the homepage; shown (html.not-home) when a project/CV is open or on
+   a non-home view. A horizontally-scrolling band of the name, slightly smaller
+   than the homepage name, fixed to the top — click anywhere on it to go home. */
+.home-marquee {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--marquee-h);
+  z-index: 150;
+  display: none;
+  align-items: center;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-bottom: 1.5px solid var(--body-color);
+  background: var(--bg);
+  cursor: pointer;
+}
+html.not-home .home-marquee { display: flex; }
+.home-marquee-track {
+  display: flex;
+  flex: none;
+  white-space: nowrap;
+  animation: marquee-scroll 26s linear infinite;
+}
+.home-marquee-item {
+  font-family: 'lores-9-plus-narrow', var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(1.1rem, 2.8vw, 2rem); /* slightly smaller than the homepage name */
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--title-color);
+  padding: 0 0.55em;
+}
+.home-marquee:hover .home-marquee-item { color: var(--highlight); }
+@keyframes marquee-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* Push content clear of the marquee when it's shown. */
+html.not-home .writeup { padding-top: calc(var(--grid-pad) + var(--marquee-h)); }
+html.not-home .landing-grid { padding-top: calc(var(--grid-pad) + var(--marquee-h)); }
 /* The "you're reading this one" cue — blue + sliced title. Driven by
    .cell--reading (added on open-click, removed on close-click), NOT .cell--active,
    so the title responds to the click immediately rather than waiting for the
@@ -803,5 +865,9 @@ html.reduce-motion *::after {
   /* Opened project / CV: full-screen overlay above the stacked page. */
   .writeup { position: fixed; z-index: 100; }
   html.view-open .landing-page { overflow: hidden; }
+
+  /* Hero becomes a full-width lead image (no float) on a phone. */
+  .wrap-hero { float: none; width: 100% !important; height: auto !important; margin: 0 0 1rem 0; }
+  .wrap-hero-img { height: auto; aspect-ratio: 3 / 2; }
 }
 

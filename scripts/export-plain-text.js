@@ -517,28 +517,47 @@ async function exportAll(cache) {
   const files = (await readdir(SRC)).filter(f => f.endsWith('.md'));
   for (const file of files) {
     const slug    = basename(file, '.md');
-    const outPath = join(DEST, slug + '.txt');
+    const dir     = join(DEST, slug);            // one folder per project …
+    await mkdir(dir, { recursive: true });
+    const outPath = join(dir, slug + '.txt');    // … with the .txt inside it
     const raw     = await readFile(join(SRC, file), 'utf8');
     const txt     = mdToTxt(raw, slug);
     await writeFile(outPath, txt, 'utf8');
     cache[slug] = (await stat(outPath)).mtimeMs;
-    console.log(`  ✓  ${file}  →  ${slug}.txt`);
+    console.log(`  ✓  ${file}  →  ${slug}/${slug}.txt`);
+  }
+  await cleanupFlatTxt();
+}
+
+/** Remove legacy flat root-level <slug>.txt files — the .txt now lives inside a
+ *  per-project folder. (Only touches root-level .txt; folders are left alone.) */
+async function cleanupFlatTxt() {
+  const entries = await readdir(DEST, { withFileTypes: true });
+  for (const e of entries) {
+    if (e.isFile() && e.name.endsWith('.txt')) {
+      await rm(join(DEST, e.name));
+      console.log(`  ✗  moved legacy ${e.name} into ${basename(e.name, '.txt')}/`);
+    }
   }
 }
 
-/** Remove .txt files whose source .md no longer exists (deleted projects). */
+/** Source .md deleted → remove only the derived <slug>/<slug>.txt, never the
+ *  folder itself (it may hold images the user dropped in). */
 async function pruneOrphans(cache) {
   const slugs = new Set(
     (await readdir(SRC)).filter(f => f.endsWith('.md')).map(f => basename(f, '.md'))
   );
-  const txtFiles = (await readdir(DEST)).filter(f => f.endsWith('.txt'));
-  for (const txt of txtFiles) {
-    const slug = basename(txt, '.txt');
-    if (!slugs.has(slug)) {
-      await rm(join(DEST, txt));
-      delete cache[slug];
-      console.log(`  ✗  removed orphan ${txt} (source .md deleted)`);
+  const entries = await readdir(DEST, { withFileTypes: true });
+  for (const e of entries) {
+    if (!e.isDirectory() || e.name.startsWith('.')) continue;
+    const slug = e.name;
+    if (slugs.has(slug)) continue;
+    const txt = join(DEST, slug, slug + '.txt');
+    if (existsSync(txt)) {
+      await rm(txt);
+      console.log(`  ✗  removed orphan ${slug}/${slug}.txt (source .md deleted; folder kept)`);
     }
+    delete cache[slug];
   }
 }
 
@@ -550,7 +569,7 @@ async function importChanged(cache) {
 
   for (const file of files) {
     const slug    = basename(file, '.md');
-    const txtPath = join(DEST, slug + '.txt');
+    const txtPath = join(DEST, slug, slug + '.txt');
     const mdPath  = join(SRC, file);
 
     if (!existsSync(txtPath)) continue;

@@ -273,6 +273,55 @@ function layoutFullStage(writeup: HTMLElement, tile: HTMLElement | null): void {
   spacer.style.height = `${Math.max(0, relTop + tr.height + gap)}px`;
 }
 
+/* Float the project's hero image into the TOP-LEFT tile and wrap the copy around
+   it (magazine-style), so every project opens to the same layout regardless of
+   which tile was clicked. The hero lives inside the write-up, so the radial mask
+   fizzles it in along with the text. On mobile it's a full-width lead image. */
+function layoutProjectHero(writeup: HTMLElement, coverSrc: string | null): void {
+  writeup.style.cssText = ''; // fill the stage via CSS inset:0
+  let hero = writeup.querySelector<HTMLElement>(':scope > .wrap-hero');
+  if (!coverSrc) { hero?.remove(); return; }
+  if (!hero) {
+    hero = document.createElement('div');
+    hero.className = 'wrap-hero';
+    hero.setAttribute('aria-hidden', 'true');
+    const img = document.createElement('img');
+    img.className = 'wrap-hero-img';
+    img.alt = '';
+    hero.appendChild(img);
+    writeup.insertBefore(hero, writeup.firstChild);
+  }
+  const img = hero.querySelector('img')!;
+  if (img.getAttribute('src') !== coverSrc) img.src = coverSrc;
+  // Match the top-left grid cell so the hero lands exactly where a tile would.
+  if (compact()) {
+    hero.style.width = '';
+    hero.style.height = '';
+  } else {
+    const cell0 = gridCells()[0].getBoundingClientRect();
+    hero.style.width = `${Math.round(cell0.width)}px`;
+    hero.style.height = `${Math.round(cell0.height)}px`;
+  }
+}
+
+/* "Not on the homepage" = a project/CV is open, or a non-home view (page ≠ 1).
+   Toggles the sticky home marquee + the content offset beneath it. */
+function refreshHome(): void {
+  if (!stage) return;
+  const notHome = !!openId || (stage.dataset.page ?? '1') !== '1';
+  document.documentElement.classList.toggle('not-home', notHome);
+}
+
+/* Marquee / "home" action: close any open view, return to page 1, collapse
+   "more works", and refresh the marquee state. */
+async function goHome(): Promise<void> {
+  if (!stage) return;
+  if (openId) await closeProject();
+  if (stage.dataset.page !== '1') await setView('1', originOf(gridCells()[0]));
+  if (document.documentElement.classList.contains('more-open')) toggleMore();
+  refreshHome();
+}
+
 /* Open / close fizzle the WHOLE stage as one continuous radial wave rippling out
    from the clicked tile, with two cooperating parts:
 
@@ -371,24 +420,29 @@ function clearMask(el: HTMLElement): void {
   el.style.maskImage = '';
 }
 
-async function openProject(cell: HTMLElement, tile: HTMLElement, id: string): Promise<void> {
+async function openProject(tile: HTMLElement, id: string): Promise<void> {
   if (openId || paging || !stage) return;
   openId = id;
   stage.classList.add('is-open');
-  // cell--active: z-raise (must persist through close). cell--reading: blue +
-  // sliced title — added/removed on the click itself, never gated by the fizzle.
-  cell.classList.add('cell--active', 'cell--reading');
+  // No tile persists in place any more — the clicked tile dissolves with the
+  // rest, and the project's hero image fizzles into the TOP-LEFT tile, so every
+  // project opens to the same consistent layout (hero top-left, copy wrapping).
+  // Toggle the marquee FIRST so the grid is already offset when we measure the
+  // top-left cell (the hero is sized to match it).
+  refreshHome();
   const origin = originOf(tile);
   const maxDist = maxDistFrom(origin);
+  const cover = tile.querySelector<HTMLImageElement>('.tile-img')?.getAttribute('src') ?? null;
 
   // The write-up sits over the grid (z 6 > tiles); masked to nothing at first so
   // the grid still shows, then revealed outward from the click point as the
-  // static ring passes — the grid beneath is left untouched and simply covered.
+  // static ring passes. The hero float lives inside the write-up, so it fizzles
+  // in with it rather than sitting above the wave.
   const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
   if (writeup) {
     writeup.hidden = false;
     initCarousels(writeup);
-    layoutFullStage(writeup, compact() ? null : tile); // mobile: no hero wrap
+    layoutProjectHero(writeup, cover);
   }
   if (reduced() || compact()) { // instant, no wave
     if (compact()) document.documentElement.classList.add('view-open');
@@ -412,6 +466,7 @@ async function openCV(origin: Point): Promise<void> {
   if (openId || paging || !stage) return;
   openId = 'cv';
   stage.classList.add('is-open');
+  refreshHome();
   const navCell = stage.querySelector<HTMLElement>('.tile--nav')?.closest<HTMLElement>('.cell') ?? null;
   navCell?.classList.add('cell--active');
   const page = stage.dataset.page ?? '1';
@@ -440,13 +495,17 @@ async function closeProject(): Promise<void> {
   if (!openId || !stage) return;
   const id = openId;
   openId = null;
+  // Reset the home state up front, so the marquee + content offset are gone
+  // before the wave reveals the (home-positioned) grid — no jump at the end.
+  refreshHome();
 
+  // CV raises the nav box (cell--active); a project leaves nothing raised and
+  // its hero sits in the top-left tile — collapse back toward whichever it is.
   const active = stage.querySelector<HTMLElement>('.cell--active');
   const persist = active?.querySelector<HTMLElement>(`.tile[data-page="${stage.dataset.page ?? '1'}"]`) ?? null;
-  // Un-slice / un-blue the title immediately on the click — snappy feedback that
-  // doesn't wait for the fizzle. (cell--active/z-raise stays until the wave ends.)
   active?.classList.remove('cell--reading');
-  const origin = persist ? originOf(persist) : { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
+  const cells = gridCells();
+  const origin = persist ? originOf(persist) : (cells[0] ? originOf(cells[0]) : { x: stage.clientWidth / 2, y: stage.clientHeight / 2 });
   const maxDist = maxDistFrom(origin);
 
   // Mirror of open: the write-up (old page) is masked AWAY from the click point
@@ -528,7 +587,7 @@ async function setView(page: '1' | '2', origin: Point): Promise<void> {
   if (!stage || paging || openId || stage.dataset.page === page) return;
   paging = true;
   const prev = stage.dataset.page ?? '1';
-  if (reduced() || compact()) { stage.dataset.page = page; paging = false; return; } // instant swap via CSS
+  if (reduced() || compact()) { stage.dataset.page = page; paging = false; refreshHome(); return; } // instant swap via CSS
   const sr = stage.getBoundingClientRect();
   const maxDist = maxDistFrom(origin);
 
@@ -563,6 +622,7 @@ async function setView(page: '1' | '2', origin: Point): Promise<void> {
     s.entering.style.removeProperty('display');
   });
   paging = false;
+  refreshHome();
 }
 
 /* ── "More works" scroll toggle ────────────────────────────────────────────
@@ -614,10 +674,7 @@ function onStageClick(e: MouseEvent): void {
 
   const tile = target.closest<HTMLElement>('.tile');
   if (!tile) return;
-  if (tile.dataset.open) {
-    const cell = tile.closest<HTMLElement>('.cell');
-    if (cell) openProject(cell, tile, tile.dataset.open);
-  }
+  if (tile.dataset.open) openProject(tile, tile.dataset.open);
 }
 
 /* ── Init + load-in animation ────────────────────────────────────────────── */
@@ -645,17 +702,30 @@ function init(): void {
     if (e.key === 'Escape') { if (lightboxOpen) closeLightbox(); else if (openId) closeProject(); }
   });
 
-  // The open write-up wraps around the persisting tile, whose position shifts
-  // when the grid reflows — recompute the wrap spacer on resize.
+  // Sticky home marquee (shown when not on the homepage) → back to home.
+  document.querySelector<HTMLElement>('[data-home]')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    goHome();
+  });
+
+  // The open view wraps around either the project hero (top-left) or, for the
+  // CV, the raised nav box — both shift when the grid reflows, so recompute.
   let resizeRAF = 0;
   window.addEventListener('resize', () => {
     if (!openId || !stage) return;
     cancelAnimationFrame(resizeRAF);
     resizeRAF = requestAnimationFrame(() => {
-      const page = stage!.dataset.page ?? '1';
-      const tile = stage!.querySelector<HTMLElement>(`.cell--active .tile[data-page="${page}"]`);
       const writeup = stage!.querySelector<HTMLElement>(`.writeup[data-for="${openId}"]`);
-      if (tile && writeup) layoutFullStage(writeup, tile);
+      if (!writeup) return;
+      const active = stage!.querySelector<HTMLElement>('.cell--active'); // CV only
+      if (active) {
+        const page = stage!.dataset.page ?? '1';
+        const tile = active.querySelector<HTMLElement>(`.tile[data-page="${page}"]`);
+        if (tile) layoutFullStage(writeup, tile);
+      } else {
+        const cover = writeup.querySelector<HTMLImageElement>('.wrap-hero-img')?.getAttribute('src') ?? null;
+        layoutProjectHero(writeup, cover);
+      }
     });
   });
 
