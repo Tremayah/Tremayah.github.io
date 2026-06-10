@@ -7,26 +7,55 @@ Raphael Murray-Browne's portfolio. Astro static site → GitHub Pages.
 - **The site we build here is LIVE at <https://tremayah.github.io/>.** That is the working
   URL. (A custom domain `raphael.murraybrowne.com` is set in `public/CNAME` but its DNS isn't
   pointed yet, so use the `tremayah.github.io` URL for now.)
-- **`raphaelmurraybrowne.com` is the OLD WordPress site — it's dead.** Raphael has jumped ship
-  to the new site in this repo. The *only* reason to ever touch `raphaelmurraybrowne.com` is to
-  scavenge **images or text** for projects (its `wp-content/uploads/...` image URLs are used as
-  some project covers). Do not treat it as the live site or a thing to keep in sync.
+- **`raphaelmurraybrowne.com` is the OLD WordPress site.** Raphael has jumped ship to the new
+  site in this repo. The *only* reason to ever touch `raphaelmurraybrowne.com` is to scavenge
+  **images or text** for projects (its `wp-content/uploads/...` image URLs are used as some
+  project covers; project pages like `/keycaps/` still serve real write-up copy). Don't treat
+  it as the live site or something to keep in sync.
 
 Those are the only two addresses that exist. Don't invent others.
 
 ## What this is
 
-A **single-page** site: one `/` route, a 3×2 grid of tiles, no nav/router. See `README.md`
-for the full architecture. The three files that matter:
+A **single-page** site: one `/` route, no nav/router. A 3×2 grid of tiles fills the viewport.
+The three files that matter:
 
-- `src/pages/index.astro` — builds the grid (`cells` array, two pages of tiles) + embeds each
-  write-up hidden. `CONTACT_EMAIL` and the `writeupIds` list live up top.
-- `src/scripts/site.ts` — all behaviour (pixel dissolve/reveal, open-in-place, "more works"
-  crossfade pager, lightbox, carousels, contact form).
-- `src/styles/global.css` — all styling, design tokens in `:root`.
+- `src/pages/index.astro` — builds the grid from the `cells` array (each cell has a page-1 and
+  a page-2 variant) and embeds every opened view's write-up, hidden. `CONTACT_EMAIL` and the
+  `writeupIds` list live up top.
+- `src/scripts/site.ts` — all behaviour (see the model below).
+- `src/styles/global.css` — all styling; design tokens in `:root` (`--grid-gap`, `--grid-pad`,
+  `--cap` caption-band height, `--marquee-h`, colours).
 
-Projects are markdown in `src/content/projects/*.md`; a pre-commit hook mirrors them to a
-Plain Text folder, so committing/​deleting `.md` files prints a sync log (that's expected).
+## Behaviour model (current — README goes deeper)
+
+- **Grid.** Cell 0 = the contact card. Cells 1–4 = project tiles. Cell 5 = a 2×2 **nav box**
+  that persists: top-left holds an **animations on/off toggle** + a **description panel**; the
+  other three are buttons — **personal projects**, **cv**, **more works**. Their labels are
+  stretched to fill each box (an SVG with `preserveAspectRatio="none"`, see `fillNavBoxes`).
+- **Hover** any tile → its blurb shows in the nav description panel (no typing animation).
+- **Opening a project** (`openView`): the *whole* stage fizzles (radial wave) and the project's
+  **hero image appears in the TOP-LEFT**, with the copy wrapping around it — the same layout
+  for every project, regardless of which tile was clicked. The opened write-up carries a sticky
+  **home bar** at the top (the scrolling name); click it (or anywhere off a link/image) to go
+  home. **cv** opens the same way but full-page (no hero). The clicked tile does **not** persist
+  any more (no "sliced title").
+- **personal projects** radial-swaps cells 0–4 between page 1 (home) and page 2 (placeholder
+  project tiles) via `setView`; click it again to come back.
+- **more works** = the homepage scrolls; scrolling down reveals extra `.more-grid` tiles below
+  and lights the "more works" button. The button is a shortcut (scroll down / back to top).
+- **Robustness:** one `busy` lock serialises every transition (open/close/swap) so spam-clicking
+  can't overlap waves. Animations honour `prefers-reduced-motion` and the toggle
+  (`html.reduce-motion` → instant, no wave). On narrow screens (`≤680px`) the grid becomes a
+  single-column scroller and an opened view is a full-screen overlay (`compact()` → instant).
+- **The fizzle**: `runStageWave` (a stage-level pixel "static" ring) + `animateMask` (a radial
+  mask that reveals/hides the write-up under the ring). Tunables: `SPREAD`, `HOLD`, `JITTER`,
+  `PX` (pixel-cell size).
+
+Projects are markdown in `src/content/projects/*.md`. A **pre-commit hook** mirrors each to
+`…/Plain Text/<slug>/<slug>.txt` (one folder per project, so images can be dropped alongside).
+Committing/deleting `.md` files prints a sync log — that's expected. The hook only ever removes
+the derived `.txt`, never a project folder.
 
 ## Gotchas
 
@@ -34,11 +63,11 @@ Plain Text folder, so committing/​deleting `.md` files prints a sync log (that
   GitHub runs its own Jekyll build alongside the real workflow and serves the README as the
   homepage. (This already bit us once.)
 - **FormSubmit needs a one-time activation**: the first message submitted triggers a
-  confirmation email to `CONTACT_EMAIL`; only Raphael can click it. The dev preview sandbox
-  also blocks outbound requests to formsubmit.co, so the form can't be end-to-end tested from
-  here — verify markup/JS, not delivery.
-- **Preview screenshots lag** (`preview_screenshot` often returns a stale frame). Trust
-  `preview_eval` DOM measurements for correctness; use screenshots only for rough visuals.
+  confirmation email to `CONTACT_EMAIL`; only Raphael can click it. The dev sandbox may also
+  block outbound requests to formsubmit.co, so verify markup/JS, not delivery.
+- **The preview throttles `requestAnimationFrame` and smooth-scroll**, so animation *timing*
+  and rAF-driven state can't be observed there — assert on `preview_eval` DOM measurements and
+  end states, not on mid-animation reads. `preview_screenshot` can also return a stale frame.
 - The Astro **dev toolbar** (dark pill, bottom-centre) is dev-only and never ships.
 
 ## Commands

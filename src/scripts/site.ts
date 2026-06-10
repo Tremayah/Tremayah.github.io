@@ -211,6 +211,64 @@ function initAnimToggle(): void {
   switches.forEach((s) => s.addEventListener('change', () => apply(s.checked)));
 }
 
+/* ── Stretch nav-box labels to fill their boxes ───────────────────────────────
+   Each label becomes an SVG <text> (one word per line) drawn with
+   preserveAspectRatio="none", so setting the viewBox to the text's own bounding
+   box makes it scale non-uniformly to fill the box — leaving only the thin
+   margin from .nav-fill's inset. Measured after fonts load; the SVG then
+   re-scales itself on resize with no further work. The two nav pages share
+   identical labels, so a hidden twin (0×0 bbox) reuses its visible match. */
+function fillNavBoxes(): void {
+  const NS = 'http://www.w3.org/2000/svg';
+  document.querySelectorAll<HTMLElement>('.nav-box').forEach((box) => {
+    const label = box.querySelector<HTMLElement>('.nav-label');
+    if (!label || box.querySelector('.nav-fill')) return;
+    const words = (label.textContent ?? '').trim().split(/\s+/);
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'nav-fill');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.setAttribute('aria-hidden', 'true');
+    const text = document.createElementNS(NS, 'text');
+    text.setAttribute('text-anchor', 'middle');
+    words.forEach((w, i) => {
+      const tspan = document.createElementNS(NS, 'tspan');
+      tspan.setAttribute('x', '0');
+      tspan.setAttribute('dy', i === 0 ? '0.85em' : '0.95em');
+      tspan.textContent = w;
+      text.appendChild(tspan);
+    });
+    svg.appendChild(text);
+    box.appendChild(svg);
+    label.classList.add('sr-only'); // keep for screen readers
+  });
+
+  const apply = (): void => {
+    const cache: Record<string, string> = {};
+    const svgs = Array.from(document.querySelectorAll<SVGSVGElement>('.nav-fill'));
+    svgs.forEach((svg) => {
+      const t = svg.querySelector('text');
+      if (!t) return;
+      const key = t.textContent ?? '';
+      if (cache[key]) return;
+      const bb = t.getBBox();
+      if (bb.width > 0 && bb.height > 0) {
+        // a hair of padding so glyph extremes aren't clipped by the tight viewBox
+        const px = bb.width * 0.02;
+        const py = bb.height * 0.06;
+        cache[key] = `${bb.x - px} ${bb.y - py} ${bb.width + 2 * px} ${bb.height + 2 * py}`;
+      }
+    });
+    svgs.forEach((svg) => {
+      const t = svg.querySelector('text');
+      const vb = t && cache[t.textContent ?? ''];
+      if (vb) svg.setAttribute('viewBox', vb);
+    });
+  };
+
+  apply();
+  if (document.fonts?.ready) document.fonts.ready.then(apply);
+}
+
 /* ── Open / close a project in place ──────────────────────────────────────
    The clicked tile stays exactly where it is — its hero image and sliced
    title anchor the view. Every OTHER visible tile dissolves to background,
@@ -629,6 +687,9 @@ function init(): void {
 
   // Animations on/off (accessibility) — sets html.reduce-motion
   initAnimToggle();
+
+  // Stretch the nav-box labels to fill their boxes
+  fillNavBoxes();
 
   // Contact form — AJAX submit via FormSubmit
   stage.querySelectorAll<HTMLFormElement>('.contact-form').forEach(initContactForm);

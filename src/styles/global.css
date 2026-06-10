@@ -202,6 +202,8 @@ html.view-open { overflow: hidden; }
   background: transparent;
 }
 .nav-box {
+  position: relative;
+  overflow: hidden;
   border: none;
   margin: 0;
   background: #ff4d4d;
@@ -225,6 +227,33 @@ html.view-open { overflow: hidden; }
   outline: none;
 }
 .nav-label { display: block; }
+/* Each label is stretched to fill its box (see fillNavBoxes in site.ts): an SVG
+   <text> scaled non-uniformly to the box via preserveAspectRatio="none", leaving
+   a thin margin (= the message-box border width). */
+.nav-fill {
+  position: absolute;
+  top: 1.5px;
+  left: 1.5px;
+  width: calc(100% - 3px);   /* explicit size: an SVG is a replaced element, so */
+  height: calc(100% - 3px);  /* `inset` alone falls back to its intrinsic size  */
+  display: block;
+  pointer-events: none;
+}
+.nav-fill text {
+  fill: #fff;
+  font-family: var(--nav-font);
+  font-weight: 700;
+}
+/* Visually hidden, kept for screen readers (the SVG fill is aria-hidden). */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
 /* "More works" is a toggle — it goes (and stays) blue while the page is in its
    scrollable, expanded state. */
 html.more-open .nav-box--more {
