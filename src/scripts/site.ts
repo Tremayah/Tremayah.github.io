@@ -39,7 +39,7 @@ function buildSplitWords(el: HTMLElement): void {
    Each tile gets an overlay grid of background-coloured cells. Fading the
    cells in covers (dissolves) the tile; fading them out reveals it. Per-cell
    random delays give the blocky corruption look. */
-const PX = 17; // approx pixel-cell size — smaller = finer-grained corruption
+const PX = 22; // approx pixel-cell size — smaller = finer-grained (but heavier) corruption
 
 function ensureOverlay(tile: HTMLElement): HTMLElement[] {
   const w = tile.clientWidth;
@@ -230,56 +230,13 @@ function visibleTiles(): HTMLElement[] {
   return Array.from(stage!.querySelectorAll<HTMLElement>(`.tile[data-page="${page}"]`));
 }
 
-/* Lay the writeup across the WHOLE stage and float an invisible spacer the
-   size + position of the persisting tile, so the body copy wraps around the
-   hero image like a magazine. The real tile sits above the writeup (its cell
-   is raised in CSS), showing through the gap the spacer holds the text out of. */
-function layoutFullStage(writeup: HTMLElement, tile: HTMLElement | null): void {
-  writeup.style.cssText = ''; // drop any leftover inline rectangle; fill via CSS inset:0
-
-  const existing = writeup.querySelector<HTMLElement>(':scope > .wrap-spacer');
-  // No hero tile (e.g. the CV page) → no wrap; the text just fills the stage.
-  if (!tile) { existing?.remove(); return; }
-
-  let spacer = existing;
-  if (!spacer) {
-    spacer = document.createElement('div');
-    spacer.className = 'wrap-spacer';
-    spacer.setAttribute('aria-hidden', 'true');
-    writeup.insertBefore(spacer, writeup.firstChild);
-  }
-
-  const cs = getComputedStyle(writeup);
-  const padL = parseFloat(cs.paddingLeft) || 0;
-  const padR = parseFloat(cs.paddingRight) || 0;
-  const padT = parseFloat(cs.paddingTop) || 0;
-  const wr = writeup.getBoundingClientRect();
-  const tr = tile.getBoundingClientRect();
-  const gap = 20;
-  const contentW = writeup.clientWidth - padL - padR;
-  const relLeft = tr.left - wr.left - padL;
-  const relRight = tr.right - wr.left - padL;
-  const relTop = tr.top - wr.top - padT;
-
-  // Float toward whichever side the tile sits on, so the text fills the larger
-  // area beside and below it.
-  if ((relLeft + relRight) / 2 < contentW / 2) {
-    spacer.style.float = 'left';
-    spacer.style.width = `${Math.max(0, relRight + gap)}px`;
-  } else {
-    spacer.style.float = 'right';
-    spacer.style.width = `${Math.max(0, contentW - relLeft + gap)}px`;
-  }
-  spacer.style.height = `${Math.max(0, relTop + tr.height + gap)}px`;
-}
-
-/* Float the project's hero image into the TOP-LEFT tile and wrap the copy around
-   it (magazine-style), so every project opens to the same layout regardless of
-   which tile was clicked. The hero lives inside the write-up, so the radial mask
-   fizzles it in along with the text. On mobile it's a full-width lead image. */
+/* Float the project's hero image into the TOP-LEFT of the writeup body and wrap
+   the copy around it, so every project opens to the same layout regardless of
+   which tile was clicked. The hero lives inside the (masked) write-up, so it
+   fizzles in with the page. On mobile it's a full-width lead image. */
 function layoutProjectHero(writeup: HTMLElement, coverSrc: string | null): void {
-  writeup.style.cssText = ''; // fill the stage via CSS inset:0
-  let hero = writeup.querySelector<HTMLElement>(':scope > .wrap-hero');
+  const inner = writeup.querySelector<HTMLElement>(':scope > .writeup-inner') ?? writeup;
+  let hero = inner.querySelector<HTMLElement>(':scope > .wrap-hero');
   if (!coverSrc) { hero?.remove(); return; }
   if (!hero) {
     hero = document.createElement('div');
@@ -289,11 +246,11 @@ function layoutProjectHero(writeup: HTMLElement, coverSrc: string | null): void 
     img.className = 'wrap-hero-img';
     img.alt = '';
     hero.appendChild(img);
-    writeup.insertBefore(hero, writeup.firstChild);
+    inner.insertBefore(hero, inner.firstChild);
   }
   const img = hero.querySelector('img')!;
   if (img.getAttribute('src') !== coverSrc) img.src = coverSrc;
-  // Match the top-left grid cell so the hero lands exactly where a tile would.
+  // Match the top-left grid cell so the hero lands where a tile would.
   if (compact()) {
     hero.style.width = '';
     hero.style.height = '';
@@ -304,22 +261,11 @@ function layoutProjectHero(writeup: HTMLElement, coverSrc: string | null): void 
   }
 }
 
-/* "Not on the homepage" = a project/CV is open, or a non-home view (page ≠ 1).
-   Toggles the sticky home marquee + the content offset beneath it. */
-function refreshHome(): void {
-  if (!stage) return;
-  const notHome = !!openId || (stage.dataset.page ?? '1') !== '1';
-  document.documentElement.classList.toggle('not-home', notHome);
-}
-
-/* Marquee / "home" action: close any open view, return to page 1, collapse
-   "more works", and refresh the marquee state. */
+/* "Home" action (clicking the writeup bar): close the open view, return to page 1. */
 async function goHome(): Promise<void> {
   if (!stage) return;
   if (openId) await closeProject();
   if (stage.dataset.page !== '1') await setView('1', originOf(gridCells()[0]));
-  if (document.documentElement.classList.contains('more-open')) toggleMore();
-  refreshHome();
 }
 
 /* Open / close fizzle the WHOLE stage as one continuous radial wave rippling out
@@ -332,8 +278,8 @@ async function goHome(): Promise<void> {
       hidden (close) pixel-by-pixel exactly at the wave's leading edge, so the
       old grid (left in place beneath, z auto) is swapped for the new page right
       under the static ring — no per-tile flicker, and the old + new pages coexist
-      either side of the ring. The persisting tile (z 10) stays above everything,
-      so the hero image + title never fizzle. */
+      either side of the ring. The write-up carries its own hero + home bar, so
+      the whole new page fizzles in together. */
 const SPREAD = 440; // ms for the wavefront to travel origin → far corner
 const HOLD = 80;    // ms a cell stays static (width of the static ring); < SPREAD ⇒ overlap
 const JITTER = 25;  // ± ms per-cell timing jitter, so the wavefront stays ragged
@@ -420,109 +366,90 @@ function clearMask(el: HTMLElement): void {
   el.style.maskImage = '';
 }
 
-async function openProject(tile: HTMLElement, id: string): Promise<void> {
-  if (openId || paging || !stage) return;
-  openId = id;
-  stage.classList.add('is-open');
-  // No tile persists in place any more — the clicked tile dissolves with the
-  // rest, and the project's hero image fizzles into the TOP-LEFT tile, so every
-  // project opens to the same consistent layout (hero top-left, copy wrapping).
-  // Toggle the marquee FIRST so the grid is already offset when we measure the
-  // top-left cell (the hero is sized to match it).
-  refreshHome();
-  const origin = originOf(tile);
-  const maxDist = maxDistFrom(origin);
-  const cover = tile.querySelector<HTMLImageElement>('.tile-img')?.getAttribute('src') ?? null;
+/* One lock for every stage transition (open / close / view-swap), so spam
+   clicking can never overlap two waves — each runs to completion before the
+   next can start. This is what makes the fizzle robust under rapid clicks. */
+let busy = false;
 
-  // The write-up sits over the grid (z 6 > tiles); masked to nothing at first so
-  // the grid still shows, then revealed outward from the click point as the
-  // static ring passes. The hero float lives inside the write-up, so it fizzles
-  // in with it rather than sitting above the wave.
-  const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
-  if (writeup) {
-    writeup.hidden = false;
-    initCarousels(writeup);
-    layoutProjectHero(writeup, cover);
-  }
-  if (reduced() || compact()) { // instant, no wave
-    if (compact()) document.documentElement.classList.add('view-open');
-    if (writeup) clearMask(writeup);
-    return;
-  }
-  if (writeup) setMask(writeup, origin, 0, false);
-
-  await Promise.all([
-    runStageWave(origin),
-    writeup ? animateMask(writeup, origin, maxDist, false) : Promise.resolve(),
-  ]);
-  if (writeup) clearMask(writeup); // fully visible from here
+/* Lock page scroll while a view is open (the fixed/absolute write-up must stay
+   put) and snap to the top so it's in view; release on close. */
+function lockScroll(): void {
+  document.documentElement.classList.remove('more-open');
+  document.documentElement.classList.add('view-open');
+  window.scrollTo(0, 0);
+}
+function unlockScroll(): void {
+  document.documentElement.classList.remove('view-open');
 }
 
-/* The CV button fizzles the whole stage onto a full-page CV view. Unlike a
-   project open, the persisting tile is the NAV BOX (raised via cell--active), so
-   its buttons stay above the CV — that's how you get back out. The CV text wraps
-   around the nav box like a hero image. Closing works through closeProject. */
-async function openCV(origin: Point): Promise<void> {
-  if (openId || paging || !stage) return;
-  openId = 'cv';
-  stage.classList.add('is-open');
-  refreshHome();
-  const navCell = stage.querySelector<HTMLElement>('.tile--nav')?.closest<HTMLElement>('.cell') ?? null;
-  navCell?.classList.add('cell--active');
-  const page = stage.dataset.page ?? '1';
-  const navTile = navCell?.querySelector<HTMLElement>(`.tile[data-page="${page}"]`) ?? null;
-  const maxDist = maxDistFrom(origin);
-  const writeup = stage.querySelector<HTMLElement>('.writeup[data-for="cv"]');
-  if (writeup) {
-    writeup.hidden = false;
-    initCarousels(writeup);
-    layoutFullStage(writeup, compact() ? null : navTile); // desktop: wrap around nav box
+/* Open a write-up view (a project, with a hero; or the CV, coverSrc=null). The
+   whole stage fizzles and the write-up — its home bar + hero + copy — reveals
+   under the static ring from the click point out, so it all fizzles in as one
+   page. The marquee animation is paused during the wave (.animating) for perf. */
+async function openView(id: string, origin: Point, coverSrc: string | null): Promise<void> {
+  if (openId || busy || !stage) return;
+  busy = true;
+  try {
+    openId = id;
+    stage.classList.add('is-open');
+    lockScroll();
+    const maxDist = maxDistFrom(origin);
+    const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
+    if (writeup) {
+      writeup.hidden = false;
+      initCarousels(writeup);
+      layoutProjectHero(writeup, coverSrc);
+    }
+    if (reduced() || compact()) { if (writeup) clearMask(writeup); return; } // instant, no wave
+    stage.classList.add('animating');
+    if (writeup) setMask(writeup, origin, 0, false);
+    await Promise.all([
+      runStageWave(origin),
+      writeup ? animateMask(writeup, origin, maxDist, false) : Promise.resolve(),
+    ]);
+    if (writeup) clearMask(writeup); // fully visible from here
+  } finally {
+    stage.classList.remove('animating');
+    busy = false;
   }
-  if (reduced() || compact()) {
-    if (compact()) document.documentElement.classList.add('view-open');
-    if (writeup) clearMask(writeup);
-    return;
-  }
-  if (writeup) setMask(writeup, origin, 0, false);
-  await Promise.all([
-    runStageWave(origin),
-    writeup ? animateMask(writeup, origin, maxDist, false) : Promise.resolve(),
-  ]);
-  if (writeup) clearMask(writeup);
+}
+
+/* Clicking a project: everything fizzles and its hero appears top-left. */
+function openProject(tile: HTMLElement, id: string): Promise<void> {
+  const cover = tile.querySelector<HTMLImageElement>('.tile-img')?.getAttribute('src') ?? null;
+  return openView(id, originOf(tile), cover);
+}
+/* CV button: a full-page CV (no hero). The write-up's home bar is the way out. */
+function openCV(origin: Point): Promise<void> {
+  return openView('cv', origin, null);
 }
 
 async function closeProject(): Promise<void> {
-  if (!openId || !stage) return;
-  const id = openId;
-  openId = null;
-  // Reset the home state up front, so the marquee + content offset are gone
-  // before the wave reveals the (home-positioned) grid — no jump at the end.
-  refreshHome();
-
-  // CV raises the nav box (cell--active); a project leaves nothing raised and
-  // its hero sits in the top-left tile — collapse back toward whichever it is.
-  const active = stage.querySelector<HTMLElement>('.cell--active');
-  const persist = active?.querySelector<HTMLElement>(`.tile[data-page="${stage.dataset.page ?? '1'}"]`) ?? null;
-  active?.classList.remove('cell--reading');
-  const cells = gridCells();
-  const origin = persist ? originOf(persist) : (cells[0] ? originOf(cells[0]) : { x: stage.clientWidth / 2, y: stage.clientHeight / 2 });
-  const maxDist = maxDistFrom(origin);
-
-  // Mirror of open: the write-up (old page) is masked AWAY from the click point
-  // out, revealing the grid beneath right under the static ring.
-  const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
-  if (!reduced() && !compact()) {
-    if (writeup) setMask(writeup, origin, 0, true);
-    await Promise.all([
-      runStageWave(origin),
-      writeup ? animateMask(writeup, origin, maxDist, true) : Promise.resolve(),
-    ]);
+  if (!openId || busy || !stage) return;
+  busy = true;
+  try {
+    const id = openId;
+    openId = null;
+    // Collapse back toward the top-left, where the hero/content sits.
+    const cells = gridCells();
+    const origin = cells[0] ? originOf(cells[0]) : { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
+    const maxDist = maxDistFrom(origin);
+    const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
+    if (!reduced() && !compact()) {
+      stage.classList.add('animating');
+      if (writeup) setMask(writeup, origin, 0, true);
+      await Promise.all([
+        runStageWave(origin),
+        writeup ? animateMask(writeup, origin, maxDist, true) : Promise.resolve(),
+      ]);
+    }
+    if (writeup) { writeup.hidden = true; clearMask(writeup); }
+    stage.classList.remove('is-open');
+    unlockScroll();
+  } finally {
+    stage.classList.remove('animating');
+    busy = false;
   }
-
-  if (writeup) { writeup.hidden = true; clearMask(writeup); }
-  active?.classList.remove('cell--active');
-  stage.classList.remove('is-open');
-  document.documentElement.classList.remove('view-open'); // unlock mobile overlay
 }
 
 /* ── Contact form ─────────────────────────────────────────────────────────
@@ -581,75 +508,84 @@ function initContactForm(form: HTMLFormElement): void {
    page just as the ring covers it, so the new set is revealed from the click
    point out — same look as opening a project, but swapping the whole grid. The
    nav box (tile--persist) doesn't swap. */
-let paging = false;
-
 async function setView(page: '1' | '2', origin: Point): Promise<void> {
-  if (!stage || paging || openId || stage.dataset.page === page) return;
-  paging = true;
-  const prev = stage.dataset.page ?? '1';
-  if (reduced() || compact()) { stage.dataset.page = page; paging = false; refreshHome(); return; } // instant swap via CSS
-  const sr = stage.getBoundingClientRect();
-  const maxDist = maxDistFrom(origin);
+  if (!stage || busy || openId || stage.dataset.page === page) return;
+  busy = true;
+  try {
+    const prev = stage.dataset.page ?? '1';
+    if (reduced() || compact()) { stage.dataset.page = page; return; } // instant swap via CSS
+    const sr = stage.getBoundingClientRect();
+    const maxDist = maxDistFrom(origin);
+    stage.classList.add('animating');
 
-  const swaps = gridCells()
-    .map((cell) => ({
-      cell,
-      leaving: cell.querySelector<HTMLElement>(`.tile[data-page="${prev}"]`),
-      entering: cell.querySelector<HTMLElement>(`.tile[data-page="${page}"]`),
-    }))
-    .filter((s): s is { cell: HTMLElement; leaving: HTMLElement; entering: HTMLElement } =>
-      !!s.leaving && !!s.entering && !s.entering.classList.contains('tile--persist'));
+    const swaps = gridCells()
+      .map((cell) => ({
+        cell,
+        leaving: cell.querySelector<HTMLElement>(`.tile[data-page="${prev}"]`),
+        entering: cell.querySelector<HTMLElement>(`.tile[data-page="${page}"]`),
+      }))
+      .filter((s): s is { cell: HTMLElement; leaving: HTMLElement; entering: HTMLElement } =>
+        !!s.leaving && !!s.entering && !s.entering.classList.contains('tile--persist'));
 
-  // Switch each cell's visible tile when the wavefront reaches its centre + half
-  // the ring's hold, i.e. while it's fully covered by static, so nothing flashes.
-  swaps.forEach((s) => {
-    const r = s.cell.getBoundingClientRect();
-    const cx = r.left + r.width / 2 - sr.left;
-    const cy = r.top + r.height / 2 - sr.top;
-    const tc = Math.max(0, (Math.hypot(cx - origin.x, cy - origin.y) / maxDist) * SPREAD);
-    setTimeout(() => {
-      s.leaving.style.display = 'none';
-      s.entering.style.display = 'flex';
-    }, tc + HOLD / 2);
-  });
+    // Switch each cell's visible tile when the wavefront reaches its centre + half
+    // the ring's hold, i.e. while it's fully covered by static, so nothing flashes.
+    swaps.forEach((s) => {
+      const r = s.cell.getBoundingClientRect();
+      const cx = r.left + r.width / 2 - sr.left;
+      const cy = r.top + r.height / 2 - sr.top;
+      const tc = Math.max(0, (Math.hypot(cx - origin.x, cy - origin.y) / maxDist) * SPREAD);
+      setTimeout(() => {
+        s.leaving.style.display = 'none';
+        s.entering.style.display = 'flex';
+      }, tc + HOLD / 2);
+    });
 
-  await runStageWave(origin);
+    await runStageWave(origin);
 
-  stage.dataset.page = page;
-  // Hand visibility back to the CSS page-toggle now that data-page matches.
-  swaps.forEach((s) => {
-    s.leaving.style.removeProperty('display');
-    s.entering.style.removeProperty('display');
-  });
-  paging = false;
-  refreshHome();
+    stage.dataset.page = page;
+    // Hand visibility back to the CSS page-toggle now that data-page matches.
+    swaps.forEach((s) => {
+      s.leaving.style.removeProperty('display');
+      s.entering.style.removeProperty('display');
+    });
+  } finally {
+    stage.classList.remove('animating');
+    busy = false;
+  }
 }
 
-/* ── "More works" scroll toggle ────────────────────────────────────────────
-   The page is normally clipped to one screen. Toggling .more-open on <html>
-   makes it scrollable so the extra .more-grid tiles below come into view; the
-   "more works" button stays blue while expanded. Toggling off scrolls back to
-   the top and re-locks. The grid handles any number of extra tiles. */
+/* ── "More works" ───────────────────────────────────────────────────────────
+   The homepage scrolls freely; scrolling down reveals the extra .more-grid tiles
+   and lights the "more works" button (html.more-open, driven by scroll position
+   in initScrollSync) to show it's a toggle. The button itself is a shortcut:
+   scroll down to the tiles, or back to the top. */
 function toggleMore(): void {
-  const open = document.documentElement.classList.toggle('more-open');
   const moreGrid = document.querySelector<HTMLElement>('[data-more-grid]');
-  moreGrid?.setAttribute('aria-hidden', open ? 'false' : 'true');
   const behavior: ScrollBehavior = reduced() ? 'auto' : 'smooth';
-  // Reveal → scroll down to the extra tiles; collapse → return to the top. (rAF
-  // so the overflow:auto from .more-open is applied before we scroll.)
-  const rect = moreGrid?.getBoundingClientRect();
-  const target = open ? window.scrollY + (rect?.top ?? window.innerHeight) : 0;
-  requestAnimationFrame(() => window.scrollTo({ top: target, behavior }));
+  const atTop = window.scrollY < 40;
+  const target = atTop && moreGrid ? window.scrollY + moreGrid.getBoundingClientRect().top : 0;
+  window.scrollTo({ top: target, behavior });
+}
+
+/* Light the "more works" button whenever the page is scrolled down (and not in
+   an open view), so it reads as a live toggle for the extra tiles. A class
+   toggle per scroll is cheap (it only flips a colour), so no rAF coalescing. */
+function initScrollSync(): void {
+  const update = (): void =>
+    void document.documentElement.classList.toggle('more-open', window.scrollY > 40 && !openId);
+  window.addEventListener('scroll', update, { passive: true });
+  update();
 }
 
 /* ── Click handling ──────────────────────────────────────────────────────── */
 function onStageClick(e: MouseEvent): void {
   const target = e.target as Element;
 
-  // While a project is open: a click closes it, unless it's a functional
-  // control (a link, a carousel button, or a zoomable writeup image).
+  // While a view is open: the home bar returns home; other clicks close it,
+  // unless it's a functional control (link, carousel button, zoomable image).
   if (openId) {
     if (lightboxOpen) return;
+    if (target.closest('[data-home]')) { goHome(); return; }
     if (target.closest('a[href], .carousel-btn')) return;
     const img = target.closest('.project-body img') as HTMLImageElement | null;
     if (img) { openLightbox(img); return; }
@@ -699,17 +635,19 @@ function init(): void {
 
   stage.addEventListener('click', onStageClick);
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { if (lightboxOpen) closeLightbox(); else if (openId) closeProject(); }
+    if (e.key === 'Escape') { if (lightboxOpen) closeLightbox(); else if (openId) closeProject(); return; }
+    // Keyboard-activate the writeup home bar (role=button).
+    if ((e.key === 'Enter' || e.key === ' ') && (e.target as Element)?.closest?.('[data-home]')) {
+      e.preventDefault();
+      goHome();
+    }
   });
 
-  // Sticky home marquee (shown when not on the homepage) → back to home.
-  document.querySelector<HTMLElement>('[data-home]')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    goHome();
-  });
+  // Light the "more works" button while the page is scrolled down.
+  initScrollSync();
 
-  // The open view wraps around either the project hero (top-left) or, for the
-  // CV, the raised nav box — both shift when the grid reflows, so recompute.
+  // The open project's hero is sized to the top-left grid cell — recompute it
+  // when the grid reflows on resize. (CV has no hero; this is then a no-op.)
   let resizeRAF = 0;
   window.addEventListener('resize', () => {
     if (!openId || !stage) return;
@@ -717,15 +655,8 @@ function init(): void {
     resizeRAF = requestAnimationFrame(() => {
       const writeup = stage!.querySelector<HTMLElement>(`.writeup[data-for="${openId}"]`);
       if (!writeup) return;
-      const active = stage!.querySelector<HTMLElement>('.cell--active'); // CV only
-      if (active) {
-        const page = stage!.dataset.page ?? '1';
-        const tile = active.querySelector<HTMLElement>(`.tile[data-page="${page}"]`);
-        if (tile) layoutFullStage(writeup, tile);
-      } else {
-        const cover = writeup.querySelector<HTMLImageElement>('.wrap-hero-img')?.getAttribute('src') ?? null;
-        layoutProjectHero(writeup, cover);
-      }
+      const cover = writeup.querySelector<HTMLImageElement>('.wrap-hero-img')?.getAttribute('src') ?? null;
+      layoutProjectHero(writeup, cover);
     });
   });
 

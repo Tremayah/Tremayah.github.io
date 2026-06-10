@@ -53,18 +53,24 @@ html, body {
    second set. All behaviour is in site.ts.
    ════════════════════════════════════════════════════════════════════════════ */
 
+/* The document element is the scroller (so window.scrollY / scrollTo track the
+   page); keep horizontal overflow clipped. */
+html { overflow-x: hidden; }
 .landing-page {
-  height: 100dvh;
-  overflow: hidden;
+  min-height: 100dvh;
+  height: auto;
   background: var(--bg);
 }
+/* While a project/CV is open the page is locked so the (fixed/absolute) writeup
+   stays put and the grid behind can't scroll away. */
+html.view-open { overflow: hidden; }
 .stage {
   position: relative;
   height: 100dvh;
   width: 100%;
   overflow: hidden;
   /* Own stacking context so the open-state layers order predictably:
-     persisting cell (10) > full-stage fizzle (8) > writeup (6) > grid. */
+     full-stage fizzle (8) > writeup (6) > grid. */
   isolation: isolate;
 }
 /* Hidden until site.ts has covered the tiles with pixels, so they assemble
@@ -76,21 +82,14 @@ html, body {
   .landing-grid { visibility: visible !important; }
 }
 
-/* "More works" expanded state: the page is normally clipped to one screen
-   (.landing-page overflow:hidden). Toggling .more-open on <html> lets it grow
-   and scroll, bringing the .more-grid (below the fold) into view. */
-html.more-open,
-html.more-open body.landing-page {
-  height: auto;
-}
-html.more-open body.landing-page {
-  overflow-y: auto;
-  overflow-x: hidden;
-}
+/* The page is freely scrollable on the homepage — scrolling down reveals the
+   "more works" tiles below. The "more works" nav button lights up (blue) while
+   scrolled (html.more-open is driven by scroll position in site.ts), to signal
+   it's a toggle/shortcut. */
 
 /* The extra tiles, laid out like the landing grid (3 columns, rows the same
    height as a landing row) so they read as "more of the same" once scrolled to.
-   Sits directly below the stage; clipped out of view until .more-open. */
+   Sits directly below the stage. */
 .more-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -246,43 +245,28 @@ html.more-open .nav-box--more {
    prefers-reduced-motion at load (see site.ts). Toggling off adds
    html.reduce-motion, which neutralises transitions, keyframes and the
    pixel-fizzle timing. */
-.anim-toggle {
+/* Styled like the send button: a solid box with white lowercase text. Red while
+   on (resting, matching the nav boxes); blue while off, so the state reads. */
+.anim-toggle { display: flex; cursor: pointer; user-select: none; }
+.anim-switch { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.anim-toggle-box {
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
-  gap: 0.45em;
-  cursor: pointer;
-  user-select: none;
+  justify-content: center;
+  padding: 0.32em 0.6em;
+  background: var(--body-color);
+  color: #fff;
   font-family: var(--nav-font);
   font-weight: 700;
-  font-size: clamp(0.52rem, 0.8vw, 0.7rem);
+  font-size: clamp(0.55rem, 0.85vw, 0.72rem);
   text-transform: lowercase;
-  color: var(--body-color);
-}
-.anim-switch { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-.anim-toggle-track {
-  position: relative;
-  flex: 0 0 auto;
-  width: 1.8em;
-  height: 0.95em;
-  border-radius: 1em;
-  background: #ccc;
+  line-height: 1;
   transition: background-color 0.2s ease;
 }
-.anim-toggle-thumb {
-  position: absolute;
-  top: 50%;
-  left: 0.13em;
-  width: 0.7em;
-  height: 0.7em;
-  border-radius: 50%;
-  background: #fff;
-  transform: translateY(-50%);
-  transition: left 0.2s ease;
-}
-.anim-switch:checked + .anim-toggle-track { background: var(--highlight); }
-.anim-switch:checked + .anim-toggle-track .anim-toggle-thumb { left: calc(100% - 0.83em); }
-.anim-switch:focus-visible + .anim-toggle-track { outline: 2px solid var(--highlight); outline-offset: 2px; }
-.anim-toggle-label { white-space: nowrap; }
+.anim-switch:not(:checked) + .anim-toggle-box { background: var(--highlight); }
+.anim-toggle:hover .anim-toggle-box { opacity: 0.9; }
+.anim-switch:focus-visible + .anim-toggle-box { outline: 2px solid var(--highlight); outline-offset: 2px; }
 
 /* Description panel — a white box with a red border (matching the message box).
    Shows the hovered project's / nav item's blurb in blue; no animation, the
@@ -519,11 +503,11 @@ html.reduce-motion *::after {
   z-index: 8;
 }
 
-/* ── Open state: writeup fills the WHOLE stage, wrapping the hero image ──────
-   The clicked tile stays put and is raised above the writeup (cell--active,
-   below); the writeup covers the whole stage as normal block flow with an
-   invisible floated .wrap-spacer the size/position of that tile, so the body
-   copy wraps around the image like a magazine. */
+/* ── Open state: the writeup fills the stage and fizzles in ──────────────────
+   A sticky scrolling-name BAR sits at the very top (the home control); below it
+   the body fills the stage, with the project's hero image floated into the
+   top-left and the copy wrapping around it. Bar + hero + copy all live inside
+   the masked write-up, so they fizzle in together as one page. */
 .writeups {
   display: contents;
 }
@@ -534,19 +518,14 @@ html.reduce-motion *::after {
   display: block;
   overflow-y: auto;
   background: var(--bg);
-  padding: var(--grid-pad);
 }
 /* !important so [hidden] always beats the display:block above — a closed
    project must never stay visually stuck covering the stage. */
 .writeup[hidden] { display: none !important; }
-/* Invisible float the text wraps around (CV: wraps around the nav box). JS
-   sizes/sides it. */
-.wrap-spacer {
-  pointer-events: none;
-}
-/* Project hero: the cover image floated into the top-left tile, text wrapping
-   around it. Lives inside the write-up so the radial mask fizzles it in. JS
-   sizes it to the top-left grid cell. */
+.writeup-inner { padding: var(--grid-pad); }
+
+/* Project hero: the cover image floated into the top-left, copy wrapping around
+   it. JS sizes it to the top-left grid cell. */
 .wrap-hero {
   float: left;
   margin: 0 var(--grid-gap) var(--grid-gap) 0;
@@ -559,41 +538,30 @@ html.reduce-motion *::after {
   height: 100%;
   object-fit: cover;
 }
-/* Raise the persisting tile's cell above the writeup (z 6) AND the full-stage
-   fizzle (z 8), so its hero image and title stay visible while everything else
-   dissolves. The other tiles stay at their default z (below the writeup): the
-   writeup's radial mask reveals over them, so they need no flipping. */
-.cell--active {
-  z-index: 10;
-}
 
-/* ── Sticky home marquee ────────────────────────────────────────────────────
-   Hidden on the homepage; shown (html.not-home) when a project/CV is open or on
-   a non-home view. A horizontally-scrolling band of the name, slightly smaller
-   than the homepage name, fixed to the top — click anywhere on it to go home. */
-.home-marquee {
-  position: fixed;
-  top: 0; left: 0; right: 0;
+/* Sticky home bar — the scrolling name at the top of an opened view, slightly
+   smaller than the homepage name. Full-bleed, sticks while you scroll the page;
+   click anywhere on it to go home. */
+.writeup-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   height: var(--marquee-h);
-  z-index: 150;
-  display: none;
+  display: flex;
   align-items: center;
   overflow: hidden;
-  margin: 0;
-  padding: 0;
-  border: none;
-  border-bottom: 1.5px solid var(--body-color);
   background: var(--bg);
+  border-bottom: 1.5px solid var(--body-color);
   cursor: pointer;
 }
-html.not-home .home-marquee { display: flex; }
-.home-marquee-track {
+.writeup-bar-track {
   display: flex;
   flex: none;
   white-space: nowrap;
   animation: marquee-scroll 26s linear infinite;
+  will-change: transform;
 }
-.home-marquee-item {
+.writeup-bar-item {
   font-family: 'lores-9-plus-narrow', var(--nav-font);
   font-weight: 700;
   font-size: clamp(1.1rem, 2.8vw, 2rem); /* slightly smaller than the homepage name */
@@ -603,21 +571,11 @@ html.not-home .home-marquee { display: flex; }
   color: var(--title-color);
   padding: 0 0.55em;
 }
-.home-marquee:hover .home-marquee-item { color: var(--highlight); }
+.writeup-bar:hover .writeup-bar-item { color: var(--highlight); }
+/* Pause the scroll while the fizzle runs, so its repaints don't fight the
+   masked write-up's per-frame raster (keeps the fizzle smooth). */
+.stage.animating .writeup-bar-track { animation-play-state: paused; }
 @keyframes marquee-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-
-/* Push content clear of the marquee when it's shown. */
-html.not-home .writeup { padding-top: calc(var(--grid-pad) + var(--marquee-h)); }
-html.not-home .landing-grid { padding-top: calc(var(--grid-pad) + var(--marquee-h)); }
-/* The "you're reading this one" cue — blue + sliced title. Driven by
-   .cell--reading (added on open-click, removed on close-click), NOT .cell--active,
-   so the title responds to the click immediately rather than waiting for the
-   fizzle to finish. (.cell--active only handles the z-raise, which has to persist
-   through the whole close animation.) */
-.cell--reading .tile-name,
-.cell--reading .tile-label {
-  color: var(--highlight);
-}
 
 /* ── Word-split slice animation ─────────────────── */
 .word-wrap { display: inline-block; position: relative; vertical-align: top; }
@@ -639,8 +597,7 @@ html.not-home .landing-grid { padding-top: calc(var(--grid-pad) + var(--marquee-
 }
 
 /* ── Project body: justified copy that fills the page around the hero ─────
-   The persisting hero tile is the project's image now, so the writeup is pure
-   text — it fills the whole stage and wraps around the floated .wrap-spacer. */
+   The copy fills the write-up and wraps around the floated .wrap-hero image. */
 .project-body {
   font-family: var(--body-font);
   font-size: clamp(0.85rem, 1.5vw, 1.1rem);
@@ -853,7 +810,7 @@ html.not-home .landing-grid { padding-top: calc(var(--grid-pad) + var(--marquee-
   /* Bump small type for legibility on a phone */
   .contact-blurb { font-size: 0.82rem; }
   .nav-box { font-size: 0.8rem; }
-  .anim-toggle { font-size: 0.66rem; }
+  .anim-toggle-box { font-size: 0.7rem; }
   .nav-desc-text { font-size: 0.78rem; }
 
   /* "More works" — a single column of full-width tiles below the stack. */
