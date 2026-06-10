@@ -22,3 +22,7 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# pdf-tiles skill: scratch output + test fixtures (never commit the rendered PNGs)
+/pdf-tiles/
+.claude/skills/pdf-tiles/.test/

@@ -70,6 +70,14 @@ the derived `.txt`, never a project folder.
   end states, not on mid-animation reads. `preview_screenshot` can also return a stale frame.
 - The Astro **dev toolbar** (dark pill, bottom-centre) is dev-only and never ships.
 
+## Reading PDF mockups / design specs
+
+Raphael may send project-page designs as a tall PDF. **Don't view a tall page directly** — it's
+downscaled to a fixed budget and fine text/measurements blur. Use the **`pdf-tiles`** skill
+(`.claude/skills/pdf-tiles/`): `sh .claude/skills/pdf-tiles/tile.sh <file.pdf>`, then Read the
+`pdf-tiles/tile_*.png` strips in order (each rendered at the display width, so it stays sharp;
+`pdf-tiles/tiles.txt` lists the y-range of each). Needs poppler (`pdftoppm`), already installed.
+
 ## Commands
 
 `npm run dev` (→ :4321) · `npm run build` (→ ./dist) · `npm run preview`
