@@ -17,7 +17,7 @@ Acrylic sandwich lamps were the result of a university project requiring 10 prod
  Corian
  Laserply
 with varying aesthetics and success.
-With the simple geometric forms, any innacuracies were amplified, and so I decided to slightly round the corners to make any misalignment less obvious. The materials were lasercut or CNC milled to minimise variation.
+With the simple geometric forms, any inaccuracies were amplified, and so I decided to slightly round the corners to make any misalignment less obvious. The materials were lasercut or CNC milled to minimise variation.
 <div class="carousel">
   <img loading="lazy" decoding="async" src="/images/exploration/sketch-a.jpg" alt="Early lamp silhouette sketches" />
   <img loading="lazy" decoding="async" src="/images/exploration/sketch-b.jpg" alt="Stacking and section sketches" />
