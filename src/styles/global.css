@@ -694,6 +694,15 @@ html.reduce-motion *::after {
 .proj-full + p { margin-top: var(--gap-sm); }
 .proj-full img { width: 100%; height: auto; margin: 0; display: block; }
 
+/* Narrow body paragraphs that hug alternating sides between full-bleed images
+   (e.g. the Corian paragraph hugs the left, the larch one the right). */
+.project-body .proj-aside {
+  clear: both;
+  max-width: min(52%, 30rem);
+  margin: var(--gap-sm) 0 0;
+}
+.project-body .proj-aside--r { margin-left: auto; text-align: left; }
+
 /* Image + text row, vertically centred. --rev flips the order. */
 .proj-row {
   clear: both;
@@ -708,32 +717,34 @@ html.reduce-motion *::after {
 .proj-media--a4 { flex: 0 0 36%; }           /* A4 keeps its page edge + aspect */
 .proj-text { flex: 1 1 44%; }
 
-/* Split image: one cut-out shown as two halves either side of centred text. */
+/* Split image: ONE (transparent) cut-out shown as its left + right halves at the
+   two page edges, text centred between. Each half is the full image at 200% of
+   the half's width with overflow hidden, so the left half shows the image's left
+   50% and the right half (shifted left by one half-width) shows its right 50% —
+   a true split, not the same image twice. */
 .proj-split {
   clear: both;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: var(--gap-sm);
   margin: var(--gap-lg) calc(-1 * var(--grid-pad));
   width: calc(100% + 2 * var(--grid-pad));
-  min-height: clamp(260px, 34vw, 460px);
 }
-.proj-split-half { flex: 1 1 0; position: relative; overflow: hidden; min-width: 0; }
-/* zoom-in: clicking a half opens the FULL cutout in the lightbox */
-.proj-split-img { position: absolute; top: 50%; height: 100%; width: auto; max-width: none; margin: 0; transform: translateY(-50%); cursor: zoom-in; }
-.proj-split-img--l { left: 0; }
-.proj-split-img--r { right: 0; }
+.proj-split-half { flex: 1 1 0; overflow: hidden; min-width: 0; }
+.proj-split-half img { display: block; width: 200%; height: auto; max-width: none; margin: 0; cursor: zoom-in; }
+.proj-split-half--r img { margin-left: -100%; } /* show the right 50% */
 .proj-split .proj-text { flex: 1 1 34%; align-self: center; }
 
-/* Poster row: equal squares. */
+/* Poster row: natural aspect ratios, equal widths, top-aligned — so the two
+   square posters and the taller A4 poster sit correctly (not all cropped square). */
 .proj-posters {
   clear: both;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  align-items: flex-start;
   gap: var(--gap-sm);
-  margin: var(--gap-sm) 0 0;
+  margin: var(--gap-lg) 0 0;
 }
-.proj-posters img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; margin: 0; }
+.proj-posters img { flex: 1 1 0; width: 100%; height: auto; margin: 0; min-width: 0; }
 
 /* Placeholder for an image that isn't in the folder yet — a clearly-marked box
    so it reads as "to come", not a broken image. */
@@ -760,10 +771,13 @@ html.reduce-motion *::after {
 @media (max-width: 680px) {
   .proj-row, .proj-row--rev { flex-direction: column; align-items: stretch; gap: var(--gap-sm); }
   .proj-media--a4 { flex: 1 1 auto; }
-  .proj-split { flex-direction: column; min-height: 0; }
-  .proj-split-half { height: 60vw; }
-  .proj-split-img { left: 50%; transform: translate(-50%, -50%); height: auto; width: 100%; }
-  .proj-posters { grid-template-columns: 1fr; }
+  .proj-aside, .proj-aside--r { max-width: 100%; margin-left: 0; }
+  /* stacked: show the cutout once (full), drop the duplicate right half */
+  .proj-split { flex-direction: column; }
+  .proj-split-half { overflow: visible; }
+  .proj-split-half img { width: 100%; margin-left: 0; }
+  .proj-split-half--r { display: none; }
+  .proj-posters { flex-direction: column; align-items: stretch; }
 }
 
 /* ── Hero pair: 2-up landscape (3:2) ───────────────
