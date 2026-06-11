@@ -682,7 +682,7 @@ html.reduce-motion *::after {
    small (≈ image↔text) and large (≈ between sections). */
 .project-body {
   --gap-sm: clamp(20px, 2.4vw, 36px);
-  --gap-lg: clamp(72px, 16vw, 320px);
+  --gap-lg: clamp(54px, 12vw, 240px);
 }
 
 /* Full-bleed image: breaks out of the write-up's inner padding to the edges. */
@@ -691,7 +691,6 @@ html.reduce-motion *::after {
   margin: var(--gap-lg) calc(-1 * var(--grid-pad)) 0;
   width: calc(100% + 2 * var(--grid-pad));
 }
-.proj-full + p { margin-top: var(--gap-sm); }
 .proj-full img { width: 100%; height: auto; margin: 0; display: block; }
 
 /* Narrow body paragraphs that hug alternating sides between full-bleed images
@@ -702,6 +701,16 @@ html.reduce-motion *::after {
   margin: var(--gap-sm) 0 0;
 }
 .project-body .proj-aside--r { margin-left: auto; text-align: left; }
+
+/* The materials paragraph + list drop the float-wrap beside the hero and run
+   straight down the page (everything after follows, since it starts below
+   the hero's bottom edge). */
+.project-body .proj-clear { clear: both; }
+
+/* Image↔paragraph gaps either side of the two full-bleed images: same as the
+   page-edge inset, and (for the second image) one small margin above it. */
+.project-body .proj-full + .proj-aside { margin-top: var(--grid-pad); }
+.project-body .proj-aside--r + .proj-full { margin-top: var(--gap-sm); }
 
 /* Image + text row, vertically centred. --rev flips the order. */
 .proj-row {
@@ -740,16 +749,29 @@ html.reduce-motion *::after {
 .proj-split .proj-text { flex: 1 1 auto; align-self: center; }
 .proj-split .proj-split-full { display: none; }
 
-/* Poster row: natural aspect ratios, equal widths, top-aligned — so the two
-   square posters and the taller A4 poster sit correctly (not all cropped square). */
+/* Pull the press release up closer to the split section, by 2 small margins. */
+.project-body .proj-split { margin-bottom: calc(var(--gap-lg) - 2 * var(--gap-sm)); }
+.project-body .proj-split + .proj-row { margin-top: calc(var(--gap-lg) - 2 * var(--gap-sm)); }
+
+/* Poster row: the two square posters sit side by side; the taller A4 poster
+   floats right so the closing paragraph fills the space below the squares and
+   to the left of the A4, instead of leaving a gap under the squares. */
 .proj-posters {
   clear: both;
-  display: flex;
-  align-items: flex-start;
-  gap: var(--gap-sm);
   margin: var(--gap-lg) 0 0;
 }
-.proj-posters img { flex: 1 1 0; width: 100%; height: auto; margin: 0; min-width: 0; }
+.project-body .proj-poster-a4 {
+  float: right;
+  width: calc((100% - 2 * var(--gap-sm)) / 3);
+  height: auto;
+  margin: 0 0 0 var(--gap-sm);
+}
+.proj-poster-squares {
+  display: flex;
+  gap: var(--gap-sm);
+  overflow: hidden;
+}
+.proj-poster-squares img { flex: 1 1 0; width: 100%; height: auto; margin: 0; min-width: 0; }
 
 /* Placeholder for an image that isn't in the folder yet — a clearly-marked box
    so it reads as "to come", not a broken image. */
@@ -781,7 +803,9 @@ html.reduce-motion *::after {
   .proj-split { flex-direction: column; }
   .proj-split .proj-split-img { display: none; }
   .proj-split-full { display: block; height: auto; width: 72%; max-width: 72%; margin: 0 auto; }
-  .proj-posters { flex-direction: column; align-items: stretch; }
+  .proj-posters { display: flex; flex-direction: column; gap: var(--gap-sm); }
+  .project-body .proj-poster-a4 { float: none; width: 100%; margin: 0; order: 2; }
+  .proj-poster-squares { order: 1; }
 }
 
 /* ── Hero pair: 2-up landscape (3:2) ───────────────

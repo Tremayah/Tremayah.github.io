@@ -4,9 +4,9 @@ Raphael Murray-Browne's portfolio. Astro static site → GitHub Pages.
 
 ## Addresses (important — read this)
 
-- **The site we build here is LIVE at <https://tremayah.github.io/>.** That is the working
-  URL. (The intended custom domain `tremayah.com` is set in `public/CNAME`, but Raphael hasn't
-  registered it yet / its DNS isn't pointed — so use the `tremayah.github.io` URL for now.)
+- **The site we build here is LIVE at <https://tremayah.com/>.** That's the custom domain (set
+  in `public/CNAME`, DNS pointed at GitHub Pages, HTTPS enforced). `tremayah.github.io` still
+  resolves and redirects to it.
 - **`raphaelmurraybrowne.com` is the OLD WordPress site.** Raphael has jumped ship to the new
   site in this repo. The *only* reason to ever touch `raphaelmurraybrowne.com` is to scavenge
   **images or text** for projects (its `wp-content/uploads/...` image URLs are used as some

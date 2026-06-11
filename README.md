@@ -1,9 +1,9 @@
 # tremayah.com
 
 Portfolio of Raphael Murray-Browne — product designer. Built with [Astro](https://astro.build)
-and deployed to GitHub Pages. **Live at <https://tremayah.github.io/>**; the intended custom
-domain `tremayah.com` is set in `public/CNAME`, but until it's registered and its DNS pointed at
-GitHub, `tremayah.github.io` is the working URL.
+and deployed to GitHub Pages. **Live at <https://tremayah.com/>** — the custom domain is set in
+`public/CNAME` with DNS pointed at GitHub Pages and HTTPS enforced; `tremayah.github.io`
+redirects there too.
 
 ## Architecture
 

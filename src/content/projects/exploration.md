@@ -10,7 +10,7 @@ cover: "/images/exploration/lamp-corian.jpg"
 
 Acrylic sandwich lamps were the result of a university project requiring 10 products to be made with optimisation for batch production with the aim of selling them at the Bovey Tracey Craft Fair.
 
-The lamps were made from layers of 5mm clear acrylic as the “filling” of the sandwich, and then a variety of materials made up the “bread”. The materials in question were:
+<p class="proj-clear">The lamps were made from layers of 5mm clear acrylic as the “filling” of the sandwich, and then a variety of materials made up the “bread”. The materials in question were:</p>
 
 - Larch
 - Ash
@@ -63,9 +63,11 @@ With the simple geometric forms, any inaccuracies were amplified, and so I decid
 </section>
 
 <section class="proj-posters">
-  <img loading="lazy" decoding="async" src="/images/exploration/poster-b.jpg" alt="Dark 'Sandwich Lamp 304' poster" />
-  <img loading="lazy" decoding="async" src="/images/exploration/poster-c.jpg" alt="Y2K checkered sandwich lamp poster" />
-  <img loading="lazy" decoding="async" src="/images/exploration/poster-a.jpg" alt="'304 Sandwich Lamp' spec poster" />
+  <img loading="lazy" decoding="async" class="proj-poster-a4" src="/images/exploration/poster-a.jpg" alt="'304 Sandwich Lamp' spec poster" />
+  <div class="proj-poster-squares">
+    <img loading="lazy" decoding="async" src="/images/exploration/poster-b.jpg" alt="Dark 'Sandwich Lamp 304' poster" />
+    <img loading="lazy" decoding="async" src="/images/exploration/poster-c.jpg" alt="Y2K checkered sandwich lamp poster" />
+  </div>
 </section>
 
 I made a series of posters and instagram posts for online presence. This was originally because I didn't know what a press release is, and thought it meant just a kind of online presence. The Y2K poster for my metal lamp is inspired by the colour palette and artstyle from the videogame “MARATHON”, which released in 2026 and has been my latest graphical obsession.
