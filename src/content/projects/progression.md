@@ -5,7 +5,7 @@ year: 2025
 category: "Product Design"
 tags: ["Research", "Wearables", "CAD", "Blender", "3D Printing", "Concept Design"]
 order: 6
-cover: "https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/ring.png"
+cover: "/images/progression/ring.png"
 ---
 
 The brief was to design "something between a smartphone and a dumbphone", with a trans-generational audience in mind. Where my earlier work had been hands-on from day one, this project was led by research — and that was the point. If I want to be a good product designer, I have to be able to find and understand the people I'm designing for.
@@ -21,16 +21,16 @@ Three products came out of it:
 - **A camera pendant** — no screen, operated by a single button on the chain, sending photos straight to a phone over Bluetooth once in range — for people whose essential is always having a camera on them.
 
 <div class="carousel">
-  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/ring.png" alt="Communication ring concept" />
-  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/bracelet.png" alt="AI wristband concept" />
-  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/camera-pendant-2.png" alt="Camera pendant concept" />
+  <img loading="lazy" decoding="async" src="/images/progression/ring.png" alt="Communication ring concept" />
+  <img loading="lazy" decoding="async" src="/images/progression/bracelet.png" alt="AI wristband concept" />
+  <img loading="lazy" decoding="async" src="/images/progression/camera-pendant-2.png" alt="Camera pendant concept" />
 </div>
 
 I rendered the pieces in Blender — its material and lighting workflow is far ahead of anything else I have access to — and built two posters: a system map showing who each piece is for, and a hero shot to present the set at its best.
 
 <div class="carousel">
-  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/nomophobia-poster-finished-1.png" alt="Project poster" />
-  <img loading="lazy" decoding="async" src="https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/smart-jewellery-thing.jpg" alt="Smart jewellery render" />
+  <img loading="lazy" decoding="async" src="/images/progression/nomophobia-poster-finished-1.png" alt="Project poster" />
+  <img loading="lazy" decoding="async" src="/images/progression/smart-jewellery-thing.jpg" alt="Smart jewellery render" />
 </div>
 
 Finally I made final sketch models of each product. With the university workshops closed for Christmas I ordered the prints from a third party; they came back surprisingly clean off a 0.2 mm nozzle, and a coat of silver spray plus a few details finished them off.

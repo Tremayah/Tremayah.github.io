@@ -64,7 +64,7 @@ I reclaimed some larch from a previous project and laser cut it into shape befor
 I made a series of posters and Instagram posts for online presence — originally because I didn't know what a press release was, and thought it just meant a kind of online presence. The Y2K-style poster for my metal lamp is inspired by the colour palette and art style of the videogame “MARATHON”, released in 2026, which has been my latest graphical obsession.
 
 <section class="proj-posters">
-  <img loading="lazy" decoding="async" src="/images/exploration/poster-c.png" alt="Sandwich lamp spec poster" />
+  <img loading="lazy" decoding="async" src="/images/exploration/poster-c.jpg" alt="Sandwich lamp spec poster" />
   <img loading="lazy" decoding="async" src="/images/exploration/poster-b.jpg" alt="Sandwich lamp Instagram poster" />
   <img loading="lazy" decoding="async" src="/images/exploration/poster-y2k.jpg" alt="Y2K-style metal lamp poster" />
 </section>

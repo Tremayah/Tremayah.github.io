@@ -719,7 +719,8 @@ html.reduce-motion *::after {
   min-height: clamp(260px, 34vw, 460px);
 }
 .proj-split-half { flex: 1 1 0; position: relative; overflow: hidden; min-width: 0; }
-.proj-split-img { position: absolute; top: 50%; height: 100%; width: auto; max-width: none; margin: 0; transform: translateY(-50%); cursor: default; }
+/* zoom-in: clicking a half opens the FULL cutout in the lightbox */
+.proj-split-img { position: absolute; top: 50%; height: 100%; width: auto; max-width: none; margin: 0; transform: translateY(-50%); cursor: zoom-in; }
 .proj-split-img--l { left: 0; }
 .proj-split-img--r { right: 0; }
 .proj-split .proj-text { flex: 1 1 34%; align-self: center; }

@@ -103,7 +103,7 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
                       action={`https://formsubmit.co/ajax/${CONTACT_EMAIL}`}
                       method="POST"
                     >
-                      <input type="hidden" name="_subject" value="New message — raphaelmurraybrowne.com" />
+                      <input type="hidden" name="_subject" value="New message — portfolio (tremayah.github.io)" />
                       <input type="hidden" name="_template" value="basic" />
                       <input
                         class="contact-honey"
@@ -164,7 +164,7 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
             return (
               <button class="tile tile--photo" data-page={page} data-open={t.id} data-desc={t.desc} type="button">
                 <span class="tile-media">
-                  <img class="tile-img" src={t.cover} alt="" loading="lazy" />
+                  <img class="tile-img" src={t.cover} alt="" loading={page === 1 ? 'eager' : 'lazy'} decoding="async" />
                 </span>
                 <span class="tile-name">{t.title}</span>
               </button>

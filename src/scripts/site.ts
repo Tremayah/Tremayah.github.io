@@ -2,14 +2,16 @@
    Single-page portfolio behaviour.
 
    The whole site is one page (index.astro): a 3×2 grid of tiles with every
-   project's writeup embedded and hidden. This script drives:
-     • the pixel dissolve/reveal animation (corruption look)
+   opened view's writeup embedded and hidden. This script drives:
+     • the pixel fizzle (radial static ring + masked reveal — the corruption look)
      • the load-in (tiles assemble from background pixels)
-     • opening a project in place — the clicked tile stays put while the rest
-       dissolve and the writeup fizzles into the freed grid rectangle
-     • closing (click anywhere that isn't a link/carousel button/zoom image)
-     • the "more works" pager (per-cell crossfade to a second set of projects)
-     • the hover overview typing on photo tiles
+     • opening a project — everything fizzles, the hero lands top-left and the
+       copy wraps around it; a sticky scrolling-name home bar tops the page
+     • closing (click the home bar, anywhere off a link/image, or Escape)
+     • the "personal projects" radial view swap (page 1 ⇄ page 2)
+     • "more works": free page scroll, with the nav button lit while scrolled
+     • the hover description panel, the animations toggle, the nav-label fill,
+       the contact form's AJAX submit, carousels and the lightbox
    ========================================================================== */
 
 /* ── Word-split (slice animation on titles) ──────────────────────────────── */
@@ -269,13 +271,11 @@ function fillNavBoxes(): void {
   if (document.fonts?.ready) document.fonts.ready.then(apply);
 }
 
-/* ── Open / close a project in place ──────────────────────────────────────
-   The clicked tile stays exactly where it is — its hero image and sliced
-   title anchor the view. Every OTHER visible tile dissolves to background,
-   and the writeup fizzles in to fill the largest grid-aligned rectangle the
-   freed cells leave behind. Both halves of the swap run at once (Promise.all),
-   so the new content resolves from background while the old is still leaving:
-   one motion, not "everything out, then everything in". */
+/* ── Open / close state ───────────────────────────────────────────────────
+   Opening a view fizzles the whole stage and reveals its write-up (home bar +
+   hero + copy) under the wave — see openView below. Both halves of the swap
+   run at once (Promise.all), so the new page resolves while the old is still
+   leaving: one motion, not "everything out, then everything in". */
 let stage: HTMLElement | null = null;
 let openId: string | null = null;
 
@@ -364,7 +364,9 @@ function maxDistFrom(origin: Point): number {
   return Math.hypot(Math.max(origin.x, w - origin.x), Math.max(origin.y, h - origin.y)) || 1;
 }
 
-/* One radial cover→uncover pass over the stage overlay (the static ring). */
+/* One radial cover→uncover pass over the stage overlay (the static ring).
+   Cell times are bucketed to ~frame resolution so the whole wave runs on a few
+   dozen timers instead of two per cell (~5k) — far fewer style flushes. */
 function runStageWave(origin: Point): Promise<void> {
   const cells = ensureOverlay(stage!);
   const overlay = stage!.querySelector<HTMLElement>(':scope > .pixel-overlay');
@@ -373,15 +375,21 @@ function runStageWave(origin: Point): Promise<void> {
   const w = stage!.clientWidth || 1;
   const h = stage!.clientHeight || 1;
   const maxDist = maxDistFrom(origin);
+  const BIN = 16; // ms — one display frame; per-cell jitter stays visible
+  const covers = new Map<number, HTMLElement[]>();
+  const uncovers = new Map<number, HTMLElement[]>();
   cells.forEach((c, i) => {
     c.style.transition = 'none';
     const cx = ((i % cols) + 0.5) / cols * w;
     const cy = (((i / cols) | 0) + 0.5) / rows * h;
     const n = Math.hypot(cx - origin.x, cy - origin.y) / maxDist;
-    const tc = Math.max(0, n * SPREAD + (Math.random() * 2 - 1) * JITTER);
-    setTimeout(() => { c.style.opacity = '1'; }, tc);        // cover → static
-    setTimeout(() => { c.style.opacity = '0'; }, tc + HOLD); // uncover → content beneath
+    const tc = Math.round(Math.max(0, n * SPREAD + (Math.random() * 2 - 1) * JITTER) / BIN) * BIN;
+    (covers.get(tc) ?? covers.set(tc, []).get(tc)!).push(c);
+    const tu = tc + HOLD;
+    (uncovers.get(tu) ?? uncovers.set(tu, []).get(tu)!).push(c);
   });
+  covers.forEach((group, t) => setTimeout(() => { for (const c of group) c.style.opacity = '1'; }, t));
+  uncovers.forEach((group, t) => setTimeout(() => { for (const c of group) c.style.opacity = '0'; }, t));
   return new Promise((res) => setTimeout(res, SPREAD + HOLD + JITTER + 80));
 }
 
