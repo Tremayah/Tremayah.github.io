@@ -43,15 +43,16 @@ With the simple geometric forms, any inaccuracies were amplified, and so I decid
 
 <section class="proj-row proj-row--rev">
   <figure class="proj-media">
-    <img loading="lazy" decoding="async" src="/images/exploration/metal-construction.jpg" alt="Welding the stainless steel" />
+    <img loading="lazy" decoding="async" src="/images/exploration/laser-cutting.jpg" alt="Laser-cutting the stainless steel" />
   </figure>
   <div class="proj-text">An initial prototype testing out the feasibility as well as the attractiveness of stainless steel. The strip was manually drilled with no jig hence any misalignment. All metals, woods, and acrylics used in this project were laser cut, allowing for high accuracy between layers and consistency among units.</div>
 </section>
 
 <section class="proj-split">
-  <div class="proj-split-half"><img loading="lazy" decoding="async" class="proj-split-img" src="/images/exploration/lamp-metal-cutout.png" alt="" /></div>
+  <img loading="lazy" decoding="async" class="proj-split-img" src="/images/exploration/lamp-split-left.png" alt="" />
   <div class="proj-text">A large part of this project was working around costings. For this, I learnt how to use Microsoft Excel, creating a large spreadsheet capable of taking word material inputs at “stainless steel” and outputting a calculated price using a lookup table. The spreadsheet also took into account the variations in labour costs for each combination of materials.</div>
-  <div class="proj-split-half proj-split-half--r"><img loading="lazy" decoding="async" class="proj-split-img" src="/images/exploration/lamp-metal-cutout.png" alt="The stainless steel lamp, cut out" /></div>
+  <img loading="lazy" decoding="async" class="proj-split-img" src="/images/exploration/lamp-split-right.png" alt="The stainless steel lamp, cut out" />
+  <img loading="lazy" decoding="async" class="proj-split-full" src="/images/exploration/lamp-metal-cutout.png" alt="The stainless steel lamp, cut out" />
 </section>
 
 <section class="proj-row proj-row--rev">
