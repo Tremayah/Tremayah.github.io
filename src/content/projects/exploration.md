@@ -56,7 +56,7 @@ I reclaimed some larch from a previous project and laser cut it into shape befor
 
 <section class="proj-row">
   <figure class="proj-media proj-media--a4">
-    <img loading="lazy" decoding="async" src="/images/exploration/poster-a.jpg" alt="The single-page press release" />
+    <div class="img-placeholder" style="aspect-ratio: 595 / 842">press release<br /><small>image to come</small></div>
   </figure>
   <div class="proj-text">I wrote a press release: dense text conveying an exact intention on a single A4 side, with the important words coloured red so it can be scanned quickly. It was instrumental in pinning down the identity of the lamps and the contexts I imagined them in — the warmer hues of the wooden lamp suited a night light, whereas the cooler light of the metal and Corian lamps suited a desk, or a kitchen.</div>
 </section>

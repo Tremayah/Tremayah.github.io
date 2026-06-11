@@ -734,6 +734,27 @@ html.reduce-motion *::after {
 }
 .proj-posters img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; margin: 0; }
 
+/* Placeholder for an image that isn't in the folder yet — a clearly-marked box
+   so it reads as "to come", not a broken image. */
+.img-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2em;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  background: repeating-linear-gradient(45deg, #f2f2f2 0 11px, #e9e9e9 11px 22px);
+  border: 1.5px dashed var(--body-color);
+  color: var(--body-color);
+  font-family: var(--nav-font);
+  font-weight: 700;
+  text-transform: lowercase;
+  font-size: clamp(0.72rem, 1.1vw, 0.95rem);
+  text-align: center;
+}
+.img-placeholder small { font-weight: 400; opacity: 0.6; }
+
 /* Mobile: stack rows/splits/posters into a single column. */
 @media (max-width: 680px) {
   .proj-row, .proj-row--rev { flex-direction: column; align-items: stretch; gap: var(--gap-sm); }
