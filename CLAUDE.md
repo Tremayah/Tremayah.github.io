@@ -9,9 +9,9 @@ Raphael Murray-Browne's portfolio. Astro static site → GitHub Pages.
   resolves and redirects to it.
 - **`raphaelmurraybrowne.com` is the OLD WordPress site.** Raphael has jumped ship to the new
   site in this repo. The *only* reason to ever touch `raphaelmurraybrowne.com` is to scavenge
-  **images or text** for projects (its `wp-content/uploads/...` image URLs are used as some
-  project covers; project pages like `/keycaps/` still serve real write-up copy). Don't treat
-  it as the live site or something to keep in sync.
+  **images or text** for projects (pages like `/keycaps/` still serve real write-up copy).
+  Nothing in this repo references it any more — don't reintroduce hot-links to it, and don't
+  treat it as the live site or something to keep in sync.
 
 Those are the only two addresses that exist. Don't invent others.
 
@@ -53,7 +53,14 @@ The three files that matter:
   `PX` (pixel-cell size).
 
 Projects are markdown in `src/content/projects/*.md`. A **pre-commit hook** mirrors each to
-`…/Plain Text/<slug>/<slug>.txt` (one folder per project, so images can be dropped alongside).
+`…/Plain Text/<slug>/<slug>.txt` (one folder per project, so images can be dropped alongside)
+and first syncs Raphael's `.txt` edits back into the `.md`. The txt format (v2) is documented
+in `scripts/export-plain-text.js` and `…/Plain Text/_read-me-first.txt`: bespoke-layout prose
+exports as tagged blocks (`[CLEAR]`, `[ASIDE LEFT/RIGHT]`, `[ROW: …]`, `[SPLIT: …]`) whose text
+round-trips into the right element; picture-only structures are `#anchor:` lines. The importer
+requires the marker sequence to match the page — on any mismatch it leaves that section
+untouched and flags it in `…/Plain Text/.pending-review`, so a txt edit can never delete or
+corrupt layout (structural changes are requested via `+` lines, for Claude to implement).
 Committing/deleting `.md` files prints a sync log — that's expected. The hook only ever removes
 the derived `.txt`, never a project folder.
 

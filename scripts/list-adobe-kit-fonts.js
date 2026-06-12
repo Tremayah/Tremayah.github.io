@@ -56,7 +56,7 @@ async function handle({ id, method, params }) {
       result: {
         tools: [{
           name: 'list_kit_fonts',
-          description: 'List all CSS font-family names available in Adobe Fonts kit var1bvf (raphael.murraybrowne.com)',
+          description: 'List all CSS font-family names available in Adobe Fonts kit var1bvf (tremayah.com)',
           inputSchema: { type: 'object', properties: {} },
         }],
       },

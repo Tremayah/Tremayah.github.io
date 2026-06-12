@@ -25,6 +25,10 @@ const {
   <meta name="description" content={description} />
   <title>{title}</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <!-- Warm the font host's connection (once for the CSS, once CORS for the
+       font files themselves) before the render-blocking kit CSS is requested. -->
+  <link rel="preconnect" href="https://use.typekit.net" />
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin />
   <link rel="stylesheet" href="https://use.typekit.net/var1bvf.css" />
 </head>
 <body class="landing-page">

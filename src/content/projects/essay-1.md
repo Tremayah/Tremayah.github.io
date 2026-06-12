@@ -5,7 +5,6 @@ year: 2026
 category: "Writing"
 tags: []
 order: 20
-cover: "https://raphaelmurraybrowne.com/wp-content/uploads/2026/01/img_2077.jpeg?w=1024"
 ---
 
 Placeholder essay. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Real essay copy will replace this.

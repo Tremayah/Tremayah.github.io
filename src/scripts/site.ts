@@ -14,29 +14,6 @@
        the contact form's AJAX submit, carousels and the lightbox
    ========================================================================== */
 
-/* ── Word-split (slice animation on titles) ──────────────────────────────── */
-function buildSplitWords(el: HTMLElement): void {
-  if (el.dataset.split) return;
-  el.dataset.split = '1';
-  const text = el.textContent?.trim() ?? '';
-  el.textContent = '';
-  const words = text.split(' ');
-  words.forEach((word, i) => {
-    const wrap = document.createElement('span');
-    wrap.className = 'word-wrap';
-    const top = document.createElement('span');
-    top.className = 'word-half word-top';
-    top.textContent = word;
-    const bot = document.createElement('span');
-    bot.className = 'word-half word-bot';
-    bot.textContent = word;
-    bot.setAttribute('aria-hidden', 'true');
-    wrap.append(top, bot);
-    el.appendChild(wrap);
-    if (i < words.length - 1) el.appendChild(document.createTextNode(' '));
-  });
-}
-
 /* ── Pixel dissolve / reveal ──────────────────────────────────────────────
    Each tile gets an overlay grid of background-coloured cells. Fading the
    cells in covers (dissolves) the tile; fading them out reveals it. Per-cell
@@ -137,7 +114,7 @@ function initCarousels(root: ParentNode): void {
     let idx = 0;
     const go = (i: number) => {
       idx = (i + imgs.length) % imgs.length;
-      track.scrollTo({ left: track.clientWidth * idx, behavior: 'smooth' });
+      track.scrollTo({ left: track.clientWidth * idx, behavior: reduced() ? 'auto' : 'smooth' });
       counter.textContent = `${idx + 1} / ${imgs.length}`;
     };
     prev.addEventListener('click', (e) => { e.stopPropagation(); go(idx - 1); });
@@ -252,7 +229,10 @@ function fillNavBoxes(): void {
       if (!t) return;
       const key = t.textContent ?? '';
       if (cache[key]) return;
-      const bb = t.getBBox();
+      let bb: DOMRect;
+      // Older Firefox throws on getBBox() for non-rendered elements (the
+      // hidden page-2 twin labels) — treat that as a 0×0 box and move on.
+      try { bb = t.getBBox(); } catch { return; }
       if (bb.width > 0 && bb.height > 0) {
         // a hair of padding so glyph extremes aren't clipped by the tight viewBox
         const px = bb.width * 0.02;
@@ -438,11 +418,13 @@ function clearMask(el: HTMLElement): void {
 let busy = false;
 
 /* Lock page scroll while a view is open (the fixed/absolute write-up must stay
-   put) and snap to the top so it's in view; release on close. */
+   put) and, on desktop, snap to the top so the stage is in view; release on
+   close. On mobile the write-up is a fixed overlay, so the page keeps its
+   scroll position and closing returns the visitor to the tile they tapped. */
 function lockScroll(): void {
   document.documentElement.classList.remove('more-open');
   document.documentElement.classList.add('view-open');
-  window.scrollTo(0, 0);
+  if (!compact()) window.scrollTo(0, 0);
 }
 function unlockScroll(): void {
   document.documentElement.classList.remove('view-open');
@@ -652,7 +634,7 @@ function onStageClick(e: MouseEvent): void {
   if (openId) {
     if (lightboxOpen) return;
     if (target.closest('[data-home]')) { goHome(); return; }
-    if (target.closest('a[href], .carousel-btn')) return;
+    if (target.closest('a[href], .carousel-btn, .carousel-counter')) return;
     const img = target.closest('.project-body img') as HTMLImageElement | null;
     if (img) { openLightbox(img); return; }
     closeProject();
@@ -683,12 +665,6 @@ function onStageClick(e: MouseEvent): void {
 function init(): void {
   stage = document.querySelector<HTMLElement>('.stage');
   if (!stage) return;
-
-  // Slice animation: split every tile title into word-halves (each stacked
-  // line of the contact name is its own span, so split them individually —
-  // splitting the whole heading would collapse the line breaks).
-  stage.querySelectorAll<HTMLElement>('.tile-name, .tile-label, .contact-name span')
-    .forEach(buildSplitWords);
 
   // Hovering a tile fills the nav box's description panel
   initDescPanel();

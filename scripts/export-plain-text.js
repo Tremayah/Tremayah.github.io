@@ -5,38 +5,42 @@
  * Bidirectional sync between src/content/projects/*.md and the
  * "Plain Text" folder in the Personal Projects directory.
  *
- * ── txt FORMAT ───────────────────────────────────────────────────────────────
+ * ── txt FORMAT (v2 — bespoke-layout aware) ──────────────────────────────────
  *
- *   [BLACK] <text>        — project description (black text, top of page)
- *   [DROPCAP] HEADING     — section heading in a feature project (drop-cap)
- *   [SECTION] HEADING     — section heading in a standard project
- *   (plain text)          — body prose (red text on the page)
+ * Page-level lines:
+ *   [BLACK] <text>            — project description (black text, top of page)
+ *   [DROPCAP] HEADING         — section heading in a feature project
+ *   [SECTION] HEADING         — section heading in a standard project
+ *   (plain paragraphs)        — body prose (red text on the page)
  *
- *   #carousel: alt1 | alt2 | ...   — existing carousel (keep as-is)
- *   #grid: alt1 | alt2 | ...        — existing image grid
- *   #hero pair: alt1 | alt2         — existing hero pair
- *   #hero trio: alt1 | alt2 | alt3  — existing hero trio
- *   #image: alt                     — existing standalone image
+ * Layout blocks with EDITABLE TEXT — the tag line describes where the text
+ * sits on the page; the text itself follows on the next line(s) and ends at
+ * the first blank line. Edit the text freely; leave the tag line alone:
+ *   [CLEAR]                   — paragraph that starts fully below the hero
+ *   [ASIDE LEFT]              — narrow paragraph hugging the left edge
+ *   [ASIDE RIGHT]             — narrow paragraph hugging the right edge
+ *   [ROW: <images>]           — image+text row (image left, text right)
+ *   [ROW REVERSED: <images>]  — image+text row (image right, text left)
+ *   [SPLIT: <images>]         — text centred between the split image halves
  *
- *   +carousel: ...   — add / replace with a carousel  ← flagged for Claude to implement
- *   +grid: ...       — add / replace with a grid
- *   +image: ...      — add / replace an image
- *   (etc.)
+ * Picture-only anchors — position markers, nothing editable:
+ *   #full: <alt>              — full-bleed image
+ *   #posters: <alts>          — the poster row
+ *   #image / #images / #carousel / #grid / #hero pair / #hero trio / #block
  *
- * The # lines serve as positional anchors: prose before the first #,
- * between two #s, and after the last # maps directly to the corresponding
- * prose zones in the markdown — no fuzzy matching needed.
+ *   +anything: ...            — a request for Claude to implement
  *
- * Removing a # line = delete that structure from the md.
- * Replacing # with + = flag that change for Claude to implement.
+ * The tag/anchor SEQUENCE is the contract: on import, the markers in the txt
+ * must match the structures in the md one-for-one, in order. If they don't
+ * (a tag was deleted, added, or reordered), that section is left UNTOUCHED
+ * and flagged in .pending-review — structural changes go through Claude, so
+ * a stray edit can never delete or corrupt part of a page.
  *
  * ── DIRECTIONS ───────────────────────────────────────────────────────────────
- *
- *   md → txt  (export):  strip formatting, describe structures as # lines
- *   txt → md  (import):  sync prose edits back, flag + lines for review
+ *   md → txt  (export):  strip formatting/HTML, describe layout as tag lines
+ *   txt → md  (import):  write prose edits back into the right structures
  *
  * ── USAGE ────────────────────────────────────────────────────────────────────
- *
  *   node scripts/export-plain-text.js          # export only
  *   node scripts/export-plain-text.js --sync   # import changed, then export
  */
@@ -54,8 +58,8 @@ const DEST        = '/Users/raphael/Documents/Personal Projects/Portfolio Websit
 const CACHE_FILE  = join(DEST, '.export-times.json');
 const REVIEW_FILE = join(DEST, '.pending-review');
 
-// Projects using the enlarged-body + drop-cap "feature" layout.
-// Keep in sync with the FEATURE array in src/pages/[slug].astro.
+// Projects using the enlarged-body + drop-cap "feature" layout (affects only
+// which heading tag the export uses).
 const FEATURE = new Set(['keycaps', 'exploration']);
 
 // ── Timestamp cache ───────────────────────────────────────────────────────────
@@ -68,7 +72,7 @@ async function saveCache(cache) {
   await writeFile(CACHE_FILE, JSON.stringify(cache, null, 2), 'utf8');
 }
 
-// ── md → txt helpers ──────────────────────────────────────────────────────────
+// ── Shared helpers ────────────────────────────────────────────────────────────
 
 /** Extract a quoted string field from YAML frontmatter. */
 function extractFrontmatterField(raw, field) {
@@ -89,95 +93,128 @@ function stripProseFormatting(text) {
     .replace(/&quot;/g, '"').replace(/&#039;/g, "'");
 }
 
-/**
- * Given a structure chunk, produce a human-readable # description line.
- * Returns null for unknown/unrecognised structures.
- */
-function describeStructure(chunk) {
-  const html = chunk.raw;
-
-  // Collect alt texts from img tags; fall back to filename if alt is empty
-  const imgMatches = [...html.matchAll(/<img[^>]*>/gi)];
-  const alts = imgMatches.map(m => {
-    const altM = m[0].match(/alt="([^"]*)"/i);
-    const srcM = m[0].match(/src="([^"]*)"/i);
-    const alt  = altM?.[1]?.trim();
-    if (alt) return alt;
-    // Fall back to filename
-    const src = srcM?.[1] ?? '';
-    return src.split('/').pop().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-  }).filter(Boolean);
-
-  // Also handle standalone markdown images  ![alt](src)
-  const mdImgs = [...html.matchAll(/!\[([^\]]*)\]\(([^)]*)\)/g)];
-  for (const m of mdImgs) {
-    const alt = m[1]?.trim() || m[2].split('/').pop().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-    alts.push(alt);
-  }
-
-  if (alts.length === 0) return null;
-  const desc = alts.join(' | ');
-
-  if (html.includes('class="carousel"'))   return `#carousel: ${desc}`;
-  if (html.includes('class="img-grid"'))   return `#grid: ${desc}`;
-  if (html.includes('class="hero-trio"'))  return `#hero trio: ${desc}`;
-  if (html.includes('class="hero-pair"'))  return `#hero pair: ${desc}`;
-  // Generic div with images
-  return `#images: ${desc}`;
+/** HTML inner content → clean single-paragraph plain text. */
+function htmlToText(html) {
+  return stripProseFormatting(html.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 }
 
-/**
- * Given a single-line inline image (markdown ![]()), produce a # line.
- */
-function describeInlineImage(line) {
-  const mdM = line.match(/!\[([^\]]*)\]\(([^)]*)\)/);
-  if (mdM) {
-    const alt = mdM[1]?.trim() ||
-      mdM[2].split('/').pop().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-    return `#image: ${alt}`;
-  }
-  const htmlM = line.match(/src="([^"]*)"[^>]*alt="([^"]*)"/i);
-  if (htmlM) {
-    const alt = htmlM[2]?.trim() ||
-      htmlM[1].split('/').pop().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-    return `#image: ${alt}`;
-  }
-  return null;
+function normaliseHeading(h) {
+  return (h || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+function normaliseForCompare(s) {
+  return (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
-// ── md body → chunks ──────────────────────────────────────────────────────────
+/** Collect image alts from a chunk of HTML/markdown; filenames as fallback. */
+function collectAlts(raw) {
+  const alts = [];
+  for (const m of raw.matchAll(/<img[^>]*>/gi)) {
+    const alt = m[0].match(/alt="([^"]*)"/i)?.[1]?.trim();
+    const src = m[0].match(/src="([^"]*)"/i)?.[1] ?? '';
+    alts.push(alt || src.split('/').pop().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '));
+  }
+  for (const m of raw.matchAll(/!\[([^\]]*)\]\(([^)]*)\)/g)) {
+    alts.push(m[1]?.trim() || m[2].split('/').pop().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '));
+  }
+  return [...new Set(alts.filter(Boolean))];
+}
 
-/** Parse a section body into alternating prose / structure blocks. */
+// ── Structure model ───────────────────────────────────────────────────────────
+// Every md chunk gets a `kind`. Prose-bearing kinds carry editable text that
+// round-trips through the txt; anchor kinds are picture-only position markers.
+
+const TAG_OF_KIND = {
+  'clear':   'CLEAR',
+  'aside-l': 'ASIDE LEFT',
+  'aside-r': 'ASIDE RIGHT',
+  'row':     'ROW',
+  'row-rev': 'ROW REVERSED',
+  'split':   'SPLIT',
+};
+const KIND_OF_TAG = Object.fromEntries(Object.entries(TAG_OF_KIND).map(([k, t]) => [t, k]));
+const PROSE_KINDS = new Set(Object.keys(TAG_OF_KIND));
+
+/** Class tokens of the chunk's opening tag. */
+function classTokens(line) {
+  return (line.match(/class="([^"]*)"/i)?.[1] ?? '').split(/\s+/).filter(Boolean);
+}
+
+function kindOfContainer(openLine, raw) {
+  const t = new Set(classTokens(openLine));
+  if (t.has('proj-row'))     return t.has('proj-row--rev') ? 'row-rev' : 'row';
+  if (t.has('proj-split'))   return 'split';
+  if (t.has('proj-posters')) return 'posters';
+  if (t.has('proj-full'))    return 'full';
+  if (t.has('carousel'))     return 'carousel';
+  if (t.has('img-grid'))     return 'grid';
+  if (t.has('hero-pair'))    return 'hero pair';
+  if (t.has('hero-trio'))    return 'hero trio';
+  return /<img/i.test(raw) ? 'images' : 'block';
+}
+
+/** Editable inner text of a prose-bearing structure (md side). */
+function innerTextOf(chunk) {
+  const m = PROSE_KINDS.has(chunk.kind) && (
+    chunk.kind.startsWith('aside') || chunk.kind === 'clear'
+      ? chunk.raw.match(/<p[^>]*>([\s\S]*?)<\/p>/i)
+      : chunk.raw.match(/<div class="proj-text">([\s\S]*?)<\/div>/i)
+  );
+  return m ? htmlToText(m[1]) : '';
+}
+
+/** Write new text into a prose-bearing structure, leaving everything else as-is. */
+function replaceInnerText(chunk, text) {
+  const re = chunk.kind.startsWith('aside') || chunk.kind === 'clear'
+    ? /(<p[^>]*>)[\s\S]*?(<\/p>)/i
+    : /(<div class="proj-text">)[\s\S]*?(<\/div>)/i;
+  return chunk.raw.replace(re, (_, open, close) => `${open}${text}${close}`);
+}
+
+// ── md body → typed chunks ────────────────────────────────────────────────────
+
 function parseMdChunks(body) {
   const lines  = body.split('\n');
   const chunks = [];
-  let cur      = { isStructure: false, lines: [] };
+  let cur      = { kind: 'prose', lines: [] };
   let depth    = 0;
+  let openLine = '';
 
   const push = () => {
-    if (cur.lines.length > 0) {
-      chunks.push({ isStructure: cur.isStructure, lines: cur.lines, raw: cur.lines.join('\n') });
-    }
-    cur = { isStructure: false, lines: [] };
+    const raw = cur.lines.join('\n');
+    if (raw.trim()) chunks.push({ ...cur, raw });
+    cur = { kind: 'prose', lines: [] };
   };
 
   for (const line of lines) {
     const openMatch = line.match(/^\s*<(div|aside|figure|section)(\s[^>]*)?>$/);
     if (openMatch && depth === 0) {
-      push(); cur = { isStructure: true, lines: [line] }; depth = 1; continue;
+      push(); cur = { kind: 'pending', lines: [line] }; depth = 1; openLine = line; continue;
     }
     if (depth > 0) {
       cur.lines.push(line);
       depth += (line.match(/<(div|aside|figure|section)(\s[^>]*)?>/g) || []).length;
       depth -= (line.match(/<\/(div|aside|figure|section)>/g)          || []).length;
-      if (depth <= 0) { depth = 0; push(); }
+      if (depth <= 0) {
+        depth = 0;
+        cur.kind = kindOfContainer(openLine, cur.lines.join('\n'));
+        push();
+      }
       continue;
     }
-    // Single-line structure: inline markdown image or bare <img>
-    if (/^!\[[^\]]*\]\([^)]*\)/.test(line) || /^<img[^>]*\/?>/.test(line)) {
-      push(); chunks.push({ isStructure: true, lines: [line], raw: line, inline: true }); continue;
+    // Single-line classed paragraph (bespoke layout prose)
+    const pMatch = line.match(/^\s*<p\s[^>]*class="([^"]*)"[^>]*>[\s\S]*<\/p>\s*$/);
+    if (pMatch) {
+      const t = new Set(pMatch[1].split(/\s+/));
+      const kind = t.has('proj-aside--l') ? 'aside-l'
+                 : t.has('proj-aside--r') ? 'aside-r'
+                 : t.has('proj-clear')    ? 'clear' : null;
+      if (kind) { push(); chunks.push({ kind, lines: [line], raw: line }); continue; }
     }
-    if (cur.isStructure) push();
+    // Single-line image: inline markdown image or bare <img>
+    if (/^!\[[^\]]*\]\([^)]*\)/.test(line) || /^<img[^>]*\/?>/.test(line)) {
+      push(); chunks.push({ kind: 'image', lines: [line], raw: line }); continue;
+    }
+    if (cur.kind !== 'prose') push();
     cur.lines.push(line);
   }
   push();
@@ -206,45 +243,44 @@ function splitMdSections(body) {
 
 // ── md → txt (export) ─────────────────────────────────────────────────────────
 
-function mdToTxt(raw, slug) {
-  const isFeature  = FEATURE.has(slug);
-  const description = extractFrontmatterField(raw, 'description');
+function describeChunk(chunk) {
+  if (PROSE_KINDS.has(chunk.kind)) {
+    const alts = collectAlts(chunk.raw);
+    const head = alts.length > 0 ? `[${TAG_OF_KIND[chunk.kind]}: ${alts.join(' | ')}]`
+                                 : `[${TAG_OF_KIND[chunk.kind]}]`;
+    return `${head}\n${innerTextOf(chunk)}`;
+  }
+  const alts = collectAlts(chunk.raw);
+  return alts.length > 0 ? `#${chunk.kind}: ${alts.join(' | ')}` : `#${chunk.kind}`;
+}
 
-  // Remove frontmatter
-  const body = raw.replace(/^---[\s\S]*?---\n?/, '');
-  const sections = splitMdSections(body);
+function mdToTxt(raw, slug) {
+  const isFeature   = FEATURE.has(slug);
+  const description = extractFrontmatterField(raw, 'description');
+  const body        = raw.replace(/^---[\s\S]*?---\n?/, '');
+  const sections    = splitMdSections(body);
 
   const parts = [];
   if (description) parts.push(`[BLACK] ${description}`);
 
   for (const section of sections) {
-    // Section heading
     if (section.heading) {
-      const tag = isFeature ? '[DROPCAP]' : '[SECTION]';
-      parts.push(`\n${tag} ${section.heading.toUpperCase()}`);
+      parts.push(`\n${isFeature ? '[DROPCAP]' : '[SECTION]'} ${section.heading.toUpperCase()}`);
     }
-
-    // Section body: alternate prose and # lines
-    const chunks = parseMdChunks(section.body);
-    for (const chunk of chunks) {
-      if (chunk.isStructure) {
-        const desc = chunk.inline ? describeInlineImage(chunk.raw) : describeStructure(chunk);
-        if (desc) parts.push(`\n${desc}`);
-      } else {
-        let prose = stripProseFormatting(chunk.lines.join('\n'));
-        // Collapse consecutive blank lines
-        prose = prose.replace(/\n{3,}/g, '\n\n').trim();
+    for (const chunk of parseMdChunks(section.body)) {
+      if (chunk.kind === 'prose') {
+        const prose = stripProseFormatting(chunk.raw).replace(/\n{3,}/g, '\n\n').trim();
         if (prose) parts.push(`\n${prose}`);
+      } else {
+        parts.push(`\n${describeChunk(chunk)}`);
       }
     }
   }
 
-  // Final clean-up: collapse 3+ blank lines, trim
-  let txt = parts.join('\n');
-  const lines = txt.split('\n').map(l => l.trimEnd());
+  // Collapse runs of blank lines, trim
   const collapsed = [];
   let lastBlank = false;
-  for (const line of lines) {
+  for (const line of parts.join('\n').split('\n').map((l) => l.trimEnd())) {
     const blank = line === '';
     if (blank && lastBlank) continue;
     collapsed.push(line);
@@ -253,197 +289,59 @@ function mdToTxt(raw, slug) {
   return collapsed.join('\n').trim();
 }
 
-// ── txt → md (import) ─────────────────────────────────────────────────────────
+// ── txt section body → zones + markers ────────────────────────────────────────
+
+const isTagLine    = (l) => /^\[([A-Z][A-Z ]*?)(?::[^\]]*)?\]\s*$/.test(l) && !/^\[(BLACK|DROPCAP|SECTION)\]/.test(l);
+const isAnchorLine = (l) => /^#[^#]/.test(l);
+const isPlusLine   = (l) => /^\+/.test(l);
 
 /**
- * Parse a txt section body into segments:
- *   { type: 'prose', text }
- *   { type: '#',     text }   — existing structure marker
- *   { type: '+',     text }   — pending directive for Claude
+ * Parse a txt section body into { zones, markers, plus }:
+ *   zones[i]   — editable plain prose between marker i-1 and marker i
+ *   markers[i] — { kind, text? } in page order (text only for tag blocks,
+ *                consumed from the lines after the tag up to a blank line)
  */
-function parseTxtSegments(body) {
-  const lines    = body.split('\n');
-  const segments = [];
-  let proseLines = [];
+function parseTxtSection(body) {
+  const lines   = body.split('\n');
+  const zones   = [];
+  const markers = [];
+  const plus    = [];
+  let zone      = [];
+  let i         = 0;
 
-  const flushProse = () => {
-    const text = proseLines.join('\n').trim();
-    if (text) segments.push({ type: 'prose', text });
-    proseLines = [];
-  };
+  const flushZone = () => { zones.push(zone.join('\n').trim()); zone = []; };
 
-  for (const line of lines) {
-    if (/^#[^#]/.test(line)) {          // # line (but not ## headings — those are stripped earlier)
-      flushProse();
-      segments.push({ type: '#', text: line });
-    } else if (/^\+/.test(line)) {
-      flushProse();
-      segments.push({ type: '+', text: line });
-    } else {
-      proseLines.push(line);
-    }
-  }
-  flushProse();
-  return segments;
-}
-
-/**
- * Rebuild a section body: update prose zones (positionally aligned with # anchors),
- * keep structure blocks whose # markers are still present, remove those that are gone,
- * and collect any + directives.
- */
-function updateSectionBody(mdBody, txtBody, pendingPlus) {
-  const mdChunks   = parseMdChunks(mdBody);
-  const txtSegs    = parseTxtSegments(txtBody);
-
-  // Collect + directives
-  for (const seg of txtSegs) {
-    if (seg.type === '+') pendingPlus.push(seg.text);
-  }
-
-  // Has the txt format got any # markers at all?
-  const hasTxtMarkers = txtSegs.some(s => s.type === '#');
-  const mdStructures  = mdChunks.filter(c => c.isStructure);
-  const txtMarkers    = txtSegs.filter(s => s.type === '#');
-  const txtProseZones = txtSegs.filter(s => s.type === 'prose');
-  const mdProseChunks = mdChunks.filter(c => !c.isStructure);
-
-  // ── Case A: no # markers in txt → old format, positional prose only ────────
-  // Keep all md structures, update prose using old-style distribution.
-  if (!hasTxtMarkers) {
-    const flatTxtProse = txtProseZones.map(z => z.text).join('\n\n');
-    return updateProseOnly(mdBody, flatTxtProse);
-  }
-
-  // ── Case B: # markers present → use them as structure anchors ───────────────
-  // prose zone N (between marker N-1 and N) → md prose zone N
-  // # marker N present → keep md structure N
-  // # marker N absent  → remove md structure N
-  // + marker → pending (structure stays for now)
-
-  // Check if prose changed
-  const proseChanged = txtProseZones.some((zone, i) => {
-    const mdProse = mdProseChunks[i]?.lines.join('\n').trim() ?? '';
-    return normaliseForCompare(zone.text) !== normaliseForCompare(mdProse);
-  });
-
-  const structureChanged = mdStructures.length !== txtMarkers.length;
-
-  if (!proseChanged && !structureChanged && pendingPlus.length === 0) {
-    return mdBody; // nothing to do
-  }
-
-  // Build the new section body chunk by chunk
-  const rebuiltParts = [];
-  let proseZoneIdx   = 0;
-  let structureIdx   = 0;
-
-  // Walk md chunks; for each structure decide keep/remove; for each prose update
-  for (const chunk of mdChunks) {
-    if (!chunk.isStructure) {
-      // Update this prose zone from txt
-      const newProse   = txtProseZones[proseZoneIdx]?.text ?? '';
-      const lead       = chunk.raw.match(/^\n*/)?.[0] ?? '';
-      const trail      = chunk.raw.match(/\n*$/)?.[0] ?? '';
-      rebuiltParts.push(lead + newProse.trim() + trail);
-      proseZoneIdx++;
-    } else {
-      // Is there a matching # marker at this position in the txt?
-      if (structureIdx < txtMarkers.length) {
-        // Keep this structure
-        rebuiltParts.push(chunk.raw);
+  while (i < lines.length) {
+    const line = lines[i];
+    if (isPlusLine(line)) { plus.push(line); i++; continue; }
+    if (isTagLine(line)) {
+      flushZone();
+      const m    = line.match(/^\[([A-Z][A-Z ]*?)(?::\s*[^\]]*)?\]\s*$/);
+      const kind = KIND_OF_TAG[m[1].trim()];
+      i++;
+      const text = [];
+      while (i < lines.length && lines[i].trim() !== '' &&
+             !isTagLine(lines[i]) && !isAnchorLine(lines[i]) && !isPlusLine(lines[i])) {
+        text.push(lines[i].trim());
+        i++;
       }
-      // If no marker at this position, the structure is omitted (deleted)
-      structureIdx++;
+      markers.push({ kind: kind ?? `?${m[1].trim()}`, text: text.join(' ').trim() });
+      continue;
     }
-  }
-
-  return rebuiltParts.join('');
-}
-
-/** Fallback for txt files without # markers: use fuzzy paragraph distribution. */
-function updateProseOnly(mdBody, newProseFlat) {
-  const chunks      = parseMdChunks(mdBody);
-  const proseChunks = chunks.filter(c => !c.isStructure);
-  const origProse   = proseChunks.map(c => c.lines.join('\n').trim());
-  const origFlat    = origProse.join('\n\n');
-
-  if (normaliseForCompare(origFlat) === normaliseForCompare(newProseFlat)) return mdBody;
-
-  const newParas    = splitParagraphs(newProseFlat);
-  const distributed = distributeParagraphs(origProse, newParas);
-
-  let proseIdx = 0;
-  const rebuiltParts = [];
-  for (const chunk of chunks) {
-    if (chunk.isStructure) {
-      rebuiltParts.push(chunk.raw);
-    } else {
-      const updated = distributed[proseIdx++] ?? '';
-      const lead    = chunk.raw.match(/^\n*/)?.[0] ?? '';
-      const trail   = chunk.raw.match(/\n*$/)?.[0] ?? '';
-      rebuiltParts.push(lead + updated.trim() + trail);
+    if (isAnchorLine(line)) {
+      flushZone();
+      markers.push({ kind: line.slice(1).split(':')[0].trim().toLowerCase() });
+      i++;
+      continue;
     }
+    zone.push(line);
+    i++;
   }
-  return rebuiltParts.join('');
+  flushZone();
+  return { zones, markers, plus };
 }
 
-/** Normalise heading text for matching: "INITIAL IDEAS" ↔ "Initial ideas" */
-function normaliseHeading(h) {
-  return (h || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-}
-
-function normaliseForCompare(s) {
-  return (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
-}
-
-function splitParagraphs(text) {
-  return (text || '').split(/\n\n+/).map(p => p.trim()).filter(Boolean);
-}
-
-// ── Fuzzy distribution (fallback for old txt files without # markers) ─────────
-
-function distributeParagraphs(origZones, newParas) {
-  if (origZones.length === 0) return [];
-  if (origZones.length === 1) return [newParas.join('\n\n')];
-  const origParas   = origZones.flatMap(z => splitParagraphs(z));
-  const sim         = origParas.map(op => newParas.map(np => jaccardSimilarity(op, np)));
-  const assignments = assignParas(origParas, newParas, sim);
-  const cumul       = cumulative(origZones.map(z => splitParagraphs(z).length));
-  const zones       = origZones.map(() => []);
-  newParas.forEach((para, ni) => {
-    const oi = assignments[ni];
-    const zi = cumul.findIndex(c => oi < c);
-    zones[zi >= 0 ? zi : zones.length - 1].push(para);
-  });
-  return zones.map(z => z.join('\n\n'));
-}
-function assignParas(orig, next, sim) {
-  const a = new Array(next.length).fill(0);
-  let ptr = 0;
-  for (let ni = 0; ni < next.length; ni++) {
-    let best = -1, bi = ptr;
-    for (let oi = ptr; oi < orig.length; oi++) if (sim[oi][ni] > best) { best = sim[oi][ni]; bi = oi; }
-    a[ni] = bi;
-    if (best > 0.4 && bi === ptr && ptr < orig.length - 1) ptr++;
-  }
-  return a;
-}
-function jaccardSimilarity(a, b) {
-  const wa = new Set((a || '').toLowerCase().split(/\W+/).filter(Boolean));
-  const wb = new Set((b || '').toLowerCase().split(/\W+/).filter(Boolean));
-  let inter = 0; for (const w of wa) if (wb.has(w)) inter++;
-  const union = wa.size + wb.size - inter;
-  return union === 0 ? 0 : inter / union;
-}
-function cumulative(arr) { let s = 0; return arr.map(n => { s += n; return s; }); }
-
-// ── Split txt into sections ────────────────────────────────────────────────────
-
-/**
- * Split a txt string into sections.
- * Headings are [DROPCAP] / [SECTION] tagged lines, or legacy bare-uppercase lines.
- */
+/** Split a txt string into sections by [DROPCAP]/[SECTION] heading lines. */
 function splitTxtSections(txt) {
   const lines    = txt.split('\n');
   const sections = [];
@@ -451,78 +349,128 @@ function splitTxtSections(txt) {
   let bodyLines  = [];
   const flush = () => { current.body = bodyLines.join('\n').trim(); sections.push(current); };
   for (const line of lines) {
-    // Skip [BLACK] line — handled separately
-    if (/^\[BLACK\]/.test(line)) { bodyLines.push(line); continue; }
     const taggedM = line.match(/^\[(DROPCAP|SECTION)\]\s+(.+)$/);
     if (taggedM) { flush(); bodyLines = []; current = { heading: taggedM[2].trim(), body: '' }; continue; }
-    // Legacy bare uppercase
-    if (/^[A-Z][A-Z0-9\s&,'\/\-]+$/.test(line.trim()) && line.trim().length > 2 && !/^#/.test(line)) {
-      flush(); bodyLines = []; current = { heading: line.trim(), body: '' }; continue;
-    }
     bodyLines.push(line);
   }
   flush();
   return sections;
 }
 
-// ── Main rebuild ───────────────────────────────────────────────────────────────
+// ── txt → md (import) ─────────────────────────────────────────────────────────
 
-function rebuildMdFromTxt(originalMd, newTxt, slug) {
+/**
+ * Sync one section. The txt's marker sequence must match the md's structure
+ * sequence exactly (same kinds, same order) — otherwise the section is left
+ * untouched and reported as a mismatch. Prose zones and tag-block texts are
+ * written back positionally; picture anchors and all HTML survive verbatim.
+ */
+function syncSection(mdBody, txtBody, pendingPlus) {
+  const chunks = parseMdChunks(mdBody);
+  const txt    = parseTxtSection(txtBody);
+  pendingPlus.push(...txt.plus);
+
+  const mdMarkers = chunks.filter((c) => c.kind !== 'prose');
+  if (mdMarkers.length !== txt.markers.length ||
+      mdMarkers.some((c, i) => c.kind !== txt.markers[i].kind)) {
+    return { mismatch: true };
+  }
+
+  // md prose zones between structures (may be empty where structures touch)
+  const mdZones = [];
+  let zoneRaw = '';
+  for (const c of chunks) {
+    if (c.kind === 'prose') zoneRaw = c.raw.trim();
+    else { mdZones.push(zoneRaw); zoneRaw = ''; }
+  }
+  mdZones.push(zoneRaw);
+
+  let changed = false;
+  const out = [];
+  for (let i = 0; i <= mdMarkers.length; i++) {
+    const mdZone  = mdZones[i] ?? '';
+    const txtZone = txt.zones[i] ?? '';
+    if (normaliseForCompare(stripProseFormatting(mdZone)) !== normaliseForCompare(txtZone)) {
+      changed = true;
+      if (txtZone) out.push(txtZone);
+    } else if (mdZone) {
+      out.push(mdZone); // untouched zone keeps its original markdown formatting
+    }
+    if (i === mdMarkers.length) break;
+    const chunk  = mdMarkers[i];
+    const marker = txt.markers[i];
+    if (PROSE_KINDS.has(chunk.kind) && marker.text != null &&
+        normaliseForCompare(innerTextOf(chunk)) !== normaliseForCompare(marker.text)) {
+      changed = true;
+      out.push(replaceInnerText(chunk, marker.text).trim());
+    } else {
+      out.push(chunk.raw.trim());
+    }
+  }
+
+  return { mismatch: false, changed, body: out.join('\n\n') };
+}
+
+function rebuildMdFromTxt(originalMd, newTxt) {
   let updatedMd = originalMd;
   let txtBody   = newTxt;
 
-  // ── Handle [BLACK] description ──────────────────────────────────────────────
+  // [BLACK] description (replacer fn so `$` in the text can't act as a pattern)
   const blackMatch = newTxt.match(/^\[BLACK\]\s+(.+?)(?:\n|$)/m);
   if (blackMatch) {
     const newDesc = blackMatch[1].trim();
     updatedMd = updatedMd.replace(
       /(^---[\s\S]*?\ndescription:\s*)"[^"]*"([\s\S]*?---)/m,
-      `$1"${newDesc}"$2`
+      (_, pre, post) => `${pre}"${newDesc}"${post}`
     );
     txtBody = newTxt.replace(/^\[BLACK\]\s+.+\n?/, '').replace(/^\n+/, '');
   }
 
-  // ── Split md body ────────────────────────────────────────────────────────────
   const fmMatch     = updatedMd.match(/^(---[\s\S]*?---\n)/);
   const frontmatter = fmMatch ? fmMatch[1] : '';
-  const mdBody      = updatedMd.slice(frontmatter.length);
-  const mdSections  = splitMdSections(mdBody);
-
-  // ── Split txt body ───────────────────────────────────────────────────────────
+  const mdSections  = splitMdSections(updatedMd.slice(frontmatter.length));
   const txtSections = splitTxtSections(txtBody);
-  const txtByKey    = new Map(txtSections.map(s => [normaliseHeading(s.heading), s.body]));
+  const txtByKey    = new Map(txtSections.map((s) => [normaliseHeading(s.heading), s.body]));
 
-  // ── Rebuild each section ─────────────────────────────────────────────────────
   const pendingPlus = [];
-  const rebuilt = mdSections.map(section => {
-    if (!section.heading) {
-      const txtProse = txtSections[0]?.heading === '' ? txtSections[0].body : null;
-      if (!txtProse) return section.raw;
-      return updateSectionBody(section.body, txtProse, pendingPlus);
-    }
-    const key      = normaliseHeading(section.heading);
-    const txtProse = txtByKey.get(key);
+  const mismatches  = [];
+  const rebuilt = mdSections.map((section) => {
+    const txtProse = section.heading
+      ? txtByKey.get(normaliseHeading(section.heading))
+      : (txtSections[0]?.heading === '' ? txtSections[0].body : undefined);
     if (txtProse === undefined) return section.raw;
-    const updatedBody = updateSectionBody(section.body, txtProse, pendingPlus);
-    return '\n' + section.headingLine + '\n' + updatedBody;
+    const res = syncSection(section.body, txtProse, pendingPlus);
+    if (res.mismatch) { mismatches.push(section.heading || '(top section)'); return section.raw; }
+    if (!res.changed) return section.raw;
+    return section.heading
+      ? '\n' + section.headingLine + '\n\n' + res.body + '\n'
+      : res.body + '\n';
   });
 
-  return { md: frontmatter + rebuilt.join(''), pendingPlus };
+  const md = (frontmatter + rebuilt.join('')).replace(/\n{3,}/g, '\n\n');
+  return { md, pendingPlus, mismatches };
 }
 
 // ── Orchestration ──────────────────────────────────────────────────────────────
 
-async function exportAll(cache) {
+async function exportAll(cache, { doSync, syncedSet }) {
   await mkdir(DEST, { recursive: true });
-  const files = (await readdir(SRC)).filter(f => f.endsWith('.md'));
+  const files = (await readdir(SRC)).filter((f) => f.endsWith('.md'));
   for (const file of files) {
     const slug    = basename(file, '.md');
     const dir     = join(DEST, slug);            // one folder per project …
     await mkdir(dir, { recursive: true });
     const outPath = join(dir, slug + '.txt');    // … with the .txt inside it
-    const raw     = await readFile(join(SRC, file), 'utf8');
-    const txt     = mdToTxt(raw, slug);
-    await writeFile(outPath, txt, 'utf8');
+    // Don't clobber txt edits that haven't been imported (export-only runs).
+    if (!doSync && !syncedSet.has(slug) && existsSync(outPath)) {
+      const mtime = (await stat(outPath)).mtimeMs;
+      if (cache[slug] && mtime > cache[slug]) {
+        console.log(`  !  ${slug}/${slug}.txt has un-synced edits — skipped (run with --sync)`);
+        continue;
+      }
+    }
+    const raw = await readFile(join(SRC, file), 'utf8');
+    await writeFile(outPath, mdToTxt(raw, slug), 'utf8');
     cache[slug] = (await stat(outPath)).mtimeMs;
     console.log(`  ✓  ${file}  →  ${slug}/${slug}.txt`);
   }
@@ -530,11 +478,11 @@ async function exportAll(cache) {
 }
 
 /** Remove legacy flat root-level <slug>.txt files — the .txt now lives inside a
- *  per-project folder. (Only touches root-level .txt; folders are left alone.) */
+ *  per-project folder. (Skips dot/underscore helper files like _read-me-first.txt.) */
 async function cleanupFlatTxt() {
   const entries = await readdir(DEST, { withFileTypes: true });
   for (const e of entries) {
-    if (e.isFile() && e.name.endsWith('.txt')) {
+    if (e.isFile() && e.name.endsWith('.txt') && !/^[._]/.test(e.name)) {
       await rm(join(DEST, e.name));
       console.log(`  ✗  moved legacy ${e.name} into ${basename(e.name, '.txt')}/`);
     }
@@ -545,7 +493,7 @@ async function cleanupFlatTxt() {
  *  folder itself (it may hold images the user dropped in). */
 async function pruneOrphans(cache) {
   const slugs = new Set(
-    (await readdir(SRC)).filter(f => f.endsWith('.md')).map(f => basename(f, '.md'))
+    (await readdir(SRC)).filter((f) => f.endsWith('.md')).map((f) => basename(f, '.md'))
   );
   const entries = await readdir(DEST, { withFileTypes: true });
   for (const e of entries) {
@@ -563,9 +511,10 @@ async function pruneOrphans(cache) {
 
 async function importChanged(cache) {
   await mkdir(DEST, { recursive: true });
-  const files       = (await readdir(SRC)).filter(f => f.endsWith('.md'));
-  const synced      = [];
-  const allPlus     = {};
+  const files         = (await readdir(SRC)).filter((f) => f.endsWith('.md'));
+  const synced        = [];
+  const allPlus       = {};
+  const allMismatches = {};
 
   for (const file of files) {
     const slug    = basename(file, '.md');
@@ -580,13 +529,15 @@ async function importChanged(cache) {
 
     const originalMd = await readFile(mdPath, 'utf8');
     const newTxt     = await readFile(txtPath, 'utf8');
-    const { md: updatedMd, pendingPlus } = rebuildMdFromTxt(originalMd, newTxt, slug);
+    const { md: updatedMd, pendingPlus, mismatches } = rebuildMdFromTxt(originalMd, newTxt);
 
-    if (pendingPlus.length > 0) {
-      allPlus[slug] = pendingPlus;
+    if (pendingPlus.length > 0) allPlus[slug] = pendingPlus;
+    if (mismatches.length > 0) {
+      allMismatches[slug] = mismatches;
+      console.warn(`  ⚠  ${slug}.txt — layout markers don't match the page in: ${mismatches.join(', ')} — those parts left untouched`);
     }
 
-    if (updatedMd === originalMd && pendingPlus.length === 0) {
+    if (updatedMd === originalMd && pendingPlus.length === 0 && mismatches.length === 0) {
       console.log(`  ○  ${slug}.txt  unchanged, skipping`);
       continue;
     }
@@ -595,14 +546,13 @@ async function importChanged(cache) {
       await writeFile(mdPath, updatedMd, 'utf8');
       try { execSync(`git -C "${ROOT}" add "${mdPath}"`, { stdio: 'inherit' }); }
       catch { console.warn(`  !  Could not git-add ${file}`); }
+      synced.push(slug);
+      const plusNote = pendingPlus.length > 0 ? `  [${pendingPlus.length} pending +]` : '';
+      console.log(`  ↑  ${slug}.txt  →  ${file}  (synced + staged)${plusNote}`);
     }
-
-    const plusNote = pendingPlus.length > 0 ? `  [${pendingPlus.length} pending +]` : '';
-    console.log(`  ↑  ${slug}.txt  →  ${file}  (synced + staged)${plusNote}`);
-    synced.push(slug);
   }
 
-  return { synced, allPlus };
+  return { synced, allPlus, allMismatches };
 }
 
 // ── Entry point ────────────────────────────────────────────────────────────────
@@ -612,44 +562,57 @@ async function main() {
   await mkdir(DEST, { recursive: true });
   const cache = await loadCache();
 
-  let synced = [], allPlus = {};
+  let synced = [], allPlus = {}, allMismatches = {};
 
   if (doSync) {
-    ({ synced, allPlus } = await importChanged(cache));
+    ({ synced, allPlus, allMismatches } = await importChanged(cache));
     if (synced.length > 0) console.log(`\nImported ${synced.length} edited file(s) into md.\n`);
   }
 
   console.log('Exporting md → txt...');
-  await exportAll(cache);
+  await exportAll(cache, { doSync, syncedSet: new Set(synced) });
   await pruneOrphans(cache);
   await saveCache(cache);
 
-  // Write .pending-review if there's anything to action
-  if (synced.length > 0 || Object.keys(allPlus).length > 0) {
+  const hasPlus     = Object.keys(allPlus).length > 0;
+  const hasMismatch = Object.keys(allMismatches).length > 0;
+  if (synced.length > 0 || hasPlus || hasMismatch) {
     const lines = [
       `Synced at: ${new Date().toISOString()}`,
       synced.length > 0 ? `Files synced:   ${synced.join(', ')}` : null,
-      Object.keys(allPlus).length > 0
+      hasMismatch
+        ? `Marker mismatches (sections left untouched — ask Claude):\n${Object.entries(allMismatches)
+            .map(([slug, secs]) => `  ${slug}: ${secs.join(', ')}`)
+            .join('\n')}`
+        : null,
+      hasPlus
         ? `Pending + directives:\n${Object.entries(allPlus)
-            .map(([slug, lines]) => `  ${slug}:\n${lines.map(l => `    ${l}`).join('\n')}`)
+            .map(([slug, ls]) => `  ${slug}:\n${ls.map((l) => `    ${l}`).join('\n')}`)
             .join('\n')}`
         : null,
       '',
       'Ask Claude to check formatting and implement any + directives.',
-    ].filter(l => l !== null).join('\n');
+    ].filter((l) => l !== null).join('\n');
     await writeFile(REVIEW_FILE, lines, 'utf8');
   }
 
   console.log(`\nDone. Plain Text folder:\n  ${DEST}\n`);
-  return { synced, allPlus };
+  return { synced, allPlus, allMismatches };
 }
 
-main().then(({ synced, allPlus }) => {
-  const hasPending = Object.keys(allPlus ?? {}).length > 0;
-  if (synced?.length > 0 || hasPending) {
+main().then(({ synced, allPlus, allMismatches }) => {
+  const hasPending  = Object.keys(allPlus ?? {}).length > 0;
+  const hasMismatch = Object.keys(allMismatches ?? {}).length > 0;
+  if (synced?.length > 0 || hasPending || hasMismatch) {
     console.log('─'.repeat(60));
     console.log('⚠  FORMATTING REVIEW NEEDED');
     if (synced?.length > 0) console.log(`   Prose synced: ${synced.join(', ')}`);
+    if (hasMismatch) {
+      console.log('   Marker mismatches (left untouched):');
+      for (const [slug, secs] of Object.entries(allMismatches)) {
+        console.log(`     ${slug}: ${secs.join(', ')}`);
+      }
+    }
     if (hasPending) {
       console.log('   Pending + directives:');
       for (const [slug, lines] of Object.entries(allPlus)) {
@@ -659,4 +622,4 @@ main().then(({ synced, allPlus }) => {
     console.log('   Ask Claude to check formatting and act on any + directives.');
     console.log('─'.repeat(60));
   }
-}).catch(err => { console.error(err); process.exit(1); });
+}).catch((err) => { console.error(err); process.exit(1); });

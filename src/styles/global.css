@@ -74,10 +74,14 @@ html.view-open { overflow: hidden; }
   isolation: isolate;
 }
 /* Hidden until site.ts has covered the tiles with pixels, so they assemble
-   from the background rather than flicking in. (no-JS still shows the grid.) */
+   from the background rather than flicking in. (no-JS still shows the grid.)
+   The delayed keyframe is a fail-safe: if the script never loads (flaky
+   network — distinct from scripting:none below), the grid still appears. */
 .stage:not(.ready) .landing-grid {
   visibility: hidden;
+  animation: grid-failsafe 0s 2.5s forwards;
 }
+@keyframes grid-failsafe { to { visibility: visible; } }
 @media (scripting: none) {
   .landing-grid { visibility: visible !important; }
 }
@@ -174,8 +178,7 @@ html.view-open { overflow: hidden; }
   color: var(--body-color);
 }
 /* Fixed caption band so the image bottom sits on the shared --cap line that the
-   nav boxes and send button also align to. (Not display:flex — that would drop
-   the whitespace between the split-word spans and run the title together.) */
+   nav boxes and send button also align to. */
 .tile-name {
   flex: 0 0 var(--cap);
   padding-top: 0.4rem;
@@ -606,15 +609,6 @@ html.reduce-motion *::after {
 .stage.animating .writeup-bar-track { animation-play-state: paused; }
 @keyframes marquee-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-/* ── Word-split slice animation ─────────────────── */
-.word-wrap { display: inline-block; position: relative; vertical-align: top; }
-.word-half { display: block; transition: transform 0.22s cubic-bezier(0.77,0,0.175,1); will-change: transform; }
-.word-top  { clip-path: inset(0 0 42% 0); }
-.word-bot  { position: absolute; top:0; left:0; width:100%; clip-path: inset(58% 0 0 0); }
-/* Slice apart while reading — the opened tile's title shears into its two halves */
-.cell--reading .word-top { transform: translateX(2px); }
-.cell--reading .word-bot { transform: translateX(-2px); }
-
 /* ── Project title: sits beside the hero at the top of an opened project ── */
 .writeup-title {
   font-family: 'lores-9-plus-narrow', var(--nav-font);
@@ -798,11 +792,13 @@ html.reduce-motion *::after {
 @media (max-width: 680px) {
   .proj-row, .proj-row--rev { flex-direction: column; align-items: stretch; gap: var(--gap-sm); }
   .proj-media--a4 { flex: 1 1 auto; }
-  .proj-aside, .proj-aside--r { max-width: 100%; margin-left: 0; }
-  /* stacked: hide the two edge-halves, show the full cutout once */
+  .project-body .proj-aside,
+  .project-body .proj-aside--r { max-width: 100%; margin-left: 0; }
+  /* stacked: hide the two edge-halves, show the full cutout once.
+     (Selectors must match the desktop rules' specificity to win here.) */
   .proj-split { flex-direction: column; }
   .proj-split .proj-split-img { display: none; }
-  .proj-split-full { display: block; height: auto; width: 72%; max-width: 72%; margin: 0 auto; }
+  .proj-split .proj-split-full { display: block; height: auto; width: 72%; max-width: 72%; margin: 0 auto; }
   .proj-posters { display: flex; flex-direction: column; gap: var(--gap-sm); }
   .project-body .proj-poster-a4 { float: none; width: 100%; margin: 0; order: 2; }
   .proj-poster-squares { order: 1; }
