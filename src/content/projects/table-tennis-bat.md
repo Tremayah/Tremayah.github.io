@@ -1,6 +1,6 @@
 ---
 title: "Table Tennis Bat"
-description: "A 3D-printed glove–bat hybrid that narrows the gap between the player and the paddle."
+description: "Breaking down the distance between users and tools"
 year: 2024
 category: "Product Design"
 tags: ["3D Printing", "Ergonomics", "CAD", "Prototyping"]
@@ -8,9 +8,9 @@ order: 9
 cover: "/images/table-tennis-bat/img_1260.jpeg"
 ---
 
-This inaugural project set out to narrow the gap between the user and the object — to treat the tool less as something held and more as a direct extension of the body. The result is a 3D-printed glove–bat hybrid that deliberately blurs the line between handle and playing surface, so the boundary where the hand ends and the paddle begins is never quite clear. Where a conventional bat asks the hand to grip and adapt to a fixed form, this one wraps around and follows the hand, letting intention travel through the wrist and into the ball with as little translation as possible.
+The aim of this first project was to create a table tennis bat, with no concern for practicality or usefulness.
 
-Working through successive printed prototypes, each iteration tightened the fit and rebalanced the weight, testing how much of the paddle could dissolve into the glove before control was lost. The process became as much about removing material and ceremony as adding it — paring the object back until what remained felt like an honest continuation of the player rather than a separate piece of equipment.
+I took the vague brief as an opportunity to experiment with the link between the user and a tool. When a rake is used by a monkey to collect a reward from behind a barrier, the area associated with their hand lights up, as if it has become an extension of its body.
 
 <div class="carousel">
   <img loading="lazy" decoding="async" src="/images/table-tennis-bat/img_1246.jpeg" alt="Glove-bat hybrid, worn" />
@@ -19,6 +19,8 @@ Working through successive printed prototypes, each iteration tightened the fit 
   <img loading="lazy" decoding="async" src="/images/table-tennis-bat/img_1291.jpeg" alt="Prototype iteration" />
 </div>
 
-Modelled in CAD and scaled against the hand, the final form holds the playing surface as a natural extension of the palm.
+My desire for the Table Tennis Glove, apart from a great way to ease myself into 3D CAD and 3D printing, was for it to narrow the gap between the user and the object. To play into the idea that the tool becomes an extension of the body.
+
+The Table Tennis Glove was a first project I can be proud of. While its build quality could be better, I believe I did well to use the 3D printers for the first time, and came up with a genuinely out there concept. Out of all of the table tennis bats, mine was the only one which didn't have a clear handle-paddle distinction.
 
 <img loading="lazy" decoding="async" src="/images/table-tennis-bat/table-tennis-bat-scale.png" alt="Scale drawing of the bat against the hand" />
