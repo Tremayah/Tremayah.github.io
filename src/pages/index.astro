@@ -145,9 +145,9 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
                     </label>
                     <div class="nav-desc" data-desc-panel><span class="nav-desc-text"></span></div>
                   </div>
-                  <button class="nav-box" type="button" data-action="view" data-view="2" data-desc="A collection of my personal design projects."><span class="nav-label">personal projects</span></button>
-                  <button class="nav-box" type="button" data-action="cv" data-desc="My CV — education, skills, and experience."><span class="nav-label">cv</span></button>
-                  <button class="nav-box nav-box--more" type="button" data-action="more" data-desc="Scroll down to see more of my work."><span class="nav-label">more works</span></button>
+                  <button class="nav-box" type="button" data-action="view" data-view="2" data-desc="A collection of my personal design projects."><span class="nav-label">personal projects</span><span class="uc-badge uc-badge--small">under construction</span></button>
+                  <button class="nav-box" type="button" data-action="cv" data-desc="My CV — education, skills, and experience."><span class="nav-label">cv</span><span class="uc-badge uc-badge--small">under construction</span></button>
+                  <button class="nav-box nav-box--more" type="button" data-action="more" data-desc="Scroll down to see more of my work."><span class="nav-label">more works</span><span class="uc-badge uc-badge--small">under construction</span></button>
                 </div>
               );
             }
@@ -156,6 +156,7 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
               // hovering still feeds its blurb to the description panel.
               return (
                 <div class="tile tile--placeholder" data-page={page} data-desc={t.desc}>
+                  <span class="uc-badge">under construction</span>
                   <span class="placeholder-label">{t.title}</span>
                 </div>
               );
@@ -163,6 +164,7 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
             // photo tile
             return (
               <button class="tile tile--photo" data-page={page} data-open={t.id} data-desc={t.desc} type="button">
+                {t.id !== 'exploration' && <span class="uc-badge">under construction</span>}
                 <span class="tile-media">
                   <img class="tile-img" src={t.cover} alt="" loading={page === 1 ? 'eager' : 'lazy'} decoding="async" />
                 </span>
@@ -190,6 +192,7 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
               </span>
             </div>
             <div class="writeup-inner">
+              {w.id !== 'exploration' && <p class="uc-notice">under construction — this write-up is still being finished</p>}
               <h2 class="writeup-title">{w.entry.data.title}</h2>
               <p class="project-desc">{w.entry.data.description}</p>
               <div class="project-body"><Body /></div>
@@ -206,6 +209,7 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
   <section class="more-grid" data-more-grid>
     {moreWorks.map((t) => (
       <div class="more-tile" data-desc={t.desc}>
+        <span class="uc-badge">under construction</span>
         <span class="placeholder-label">{t.title}</span>
       </div>
     ))}

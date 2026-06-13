@@ -102,6 +102,7 @@ html.view-open { overflow: hidden; }
   grid-auto-rows: calc((100dvh - 2 * var(--grid-pad) - var(--grid-gap)) / 2);
 }
 .more-tile {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -188,6 +189,35 @@ html.view-open { overflow: hidden; }
   line-height: 1.1;
   color: var(--body-color);
   text-transform: lowercase;
+}
+
+/* "Under construction" ribbon — a top banner overlaid on any tile/section
+   that isn't finished yet. Tagged per-element in index.astro; only exploration
+   and the contact card currently go without one. */
+.uc-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.6rem, 0.95vw, 0.85rem);
+  line-height: 1.7;
+  text-align: center;
+  text-transform: lowercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 0.4em;
+  background: #ff4d4d;
+  color: #fff;
+  pointer-events: none;
+}
+/* Smaller variant for the cramped nav-box buttons. */
+.uc-badge--small {
+  font-size: clamp(0.45rem, 0.7vw, 0.6rem);
+  line-height: 1.5;
 }
 
 /* ── Nav box: the bottom-right cell is a 2×2 ────────────────────────────────
@@ -619,6 +649,20 @@ html.reduce-motion *::after {
   text-transform: uppercase;
   color: var(--title-color);
   margin: 0 0 0.45em;
+}
+
+/* ── Under-construction notice: sits above the title on unfinished writeups ── */
+.uc-notice {
+  display: inline-block;
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.7rem, 1.2vw, 0.9rem);
+  line-height: 1.4;
+  text-transform: lowercase;
+  color: #fff;
+  background: #ff4d4d;
+  padding: 0.35em 0.7em;
+  margin: 0 0 0.6em;
 }
 
 /* ── Project desc: lead-in line above the body copy ───────────────────── */
