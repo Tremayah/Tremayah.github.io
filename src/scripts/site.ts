@@ -299,11 +299,57 @@ function layoutProjectHero(writeup: HTMLElement, coverSrc: string | null): void 
   }
 }
 
-/* "Home" action (clicking the writeup bar): close the open view, return to page 1. */
-async function goHome(): Promise<void> {
-  if (!stage) return;
-  if (openId) await closeProject();
-  if (stage.dataset.page !== '1') await setView('1', originOf(gridCells()[0]));
+/* ── Browser history ──────────────────────────────────────────────────────
+   The site is one page, but every "page change" a visitor would expect to undo
+   with the Back button gets a real history entry: opening a project, opening
+   the CV, switching to the personal-projects view. The site isn't deep, so we
+   keep AT MOST ONE entry above the home base — Back therefore always returns to
+   the home page, never to an intermediate view. (Forward re-opens the last
+   view.) The home base entry is tagged {home:true}; any open view is
+   {home:false, …}, carrying enough to restore it on Forward.
+
+   In-app "home" controls (the writeup bar, Escape, clicking off, toggling the
+   view button back) don't animate directly — they call history.back(), so the
+   popstate handler runs the one home transition. That keeps history in sync and
+   makes "go home" look identical however it's triggered. */
+type AwayState = { home: false; view: 'project' | 'cv' | 'page2'; id?: string };
+const atHome = (): boolean => !(history.state && history.state.home === false);
+let navigatingHome = false; // guards against double history.back() on rapid clicks
+
+/* Record that we've navigated away from home. Push a new back-target when
+   leaving home; replace it when moving between away views, so there's only ever
+   one entry to go Back through. */
+function pushAway(state: Omit<AwayState, 'home'>): void {
+  const full: AwayState = { home: false, ...state };
+  if (atHome()) history.pushState(full, '');
+  else history.replaceState(full, '');
+}
+
+/* In-app home control → drive the Back button so popstate runs the transition. */
+function goHomeViaHistory(): void {
+  if (busy || navigatingHome) return;
+  if (atHome()) { fizzleHome(); return; } // already at base (shouldn't happen) — just animate
+  navigatingHome = true;
+  history.back();
+}
+
+/* Forward button: re-open the away view recorded in the entry. */
+function restoreView(state: AwayState): void {
+  if (busy || !stage) return;
+  const origin: Point = { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
+  if (state.view === 'cv') openView('cv', origin, null);
+  else if (state.view === 'page2') setView('2', origin);
+  else if (state.view === 'project' && state.id) {
+    const tile = stage.querySelector<HTMLElement>(`.tile[data-open="${state.id}"]`);
+    const cover = tile?.querySelector<HTMLImageElement>('.tile-img')?.getAttribute('src') ?? null;
+    openView(state.id, origin, cover);
+  }
+}
+
+function onPopState(e: PopStateEvent): void {
+  navigatingHome = false;
+  if (e.state && e.state.home === false) restoreView(e.state as AwayState); // Forward → re-open
+  else fizzleHome();                                                        // Back  → home
 }
 
 /* Open / close fizzle the WHOLE stage as one continuous radial wave rippling out
@@ -462,38 +508,52 @@ async function openView(id: string, origin: Point, coverSrc: string | null): Pro
   }
 }
 
-/* Clicking a project: everything fizzles and its hero appears top-left. */
+/* Clicking a project: everything fizzles and its hero appears top-left. Pushes
+   a history entry first (guarded by the same conditions openView checks, so we
+   never record a navigation that doesn't actually run). */
 function openProject(tile: HTMLElement, id: string): Promise<void> {
+  if (openId || busy || !stage) return Promise.resolve();
   const cover = tile.querySelector<HTMLImageElement>('.tile-img')?.getAttribute('src') ?? null;
+  pushAway({ view: 'project', id });
   return openView(id, originOf(tile), cover);
 }
 /* CV button: a full-page CV (no hero). The write-up's home bar is the way out. */
 function openCV(origin: Point): Promise<void> {
+  if (openId || busy || !stage) return Promise.resolve();
+  pushAway({ view: 'cv' });
   return openView('cv', origin, null);
 }
 
-async function closeProject(): Promise<void> {
-  if (!openId || busy || !stage) return;
+/* Return to the home page (page 1, nothing open) with a NON-radial fizzle — a
+   uniform pixel "static" that washes over the whole stage, distinct from the
+   radial ripple that opens a view. This is the one transition the Back button
+   (and every in-app home control) runs, whatever the current view: it closes an
+   open write-up and/or swaps the grid back to page 1, switching the content
+   while the stage is fully covered by static so nothing flashes. */
+async function fizzleHome(): Promise<void> {
+  if (!stage || busy) return;
+  const id = openId;
+  const swapPage = stage.dataset.page !== '1';
+  if (!id && !swapPage) return; // already home
+
   busy = true;
   try {
-    const id = openId;
-    openId = null;
-    // Collapse back toward the top-left, where the hero/content sits.
-    const cells = gridCells();
-    const origin = cells[0] ? originOf(cells[0]) : { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
-    const maxDist = maxDistFrom(origin);
-    const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
-    if (!reduced() && !compact()) {
-      stage.classList.add('animating');
-      if (writeup) setMask(writeup, origin, 0, true);
-      await Promise.all([
-        runStageWave(origin),
-        writeup ? animateMask(writeup, origin, maxDist, true) : Promise.resolve(),
-      ]);
-    }
-    if (writeup) { writeup.hidden = true; clearMask(writeup); }
-    stage.classList.remove('is-open');
-    unlockScroll();
+    const writeup = id ? stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`) : null;
+
+    // Apply the home end-state (run behind the static cover, or instantly when
+    // animations are off / on mobile's full-screen overlay).
+    const settle = (): void => {
+      if (writeup) { writeup.hidden = true; clearMask(writeup); }
+      if (id) { openId = null; stage!.classList.remove('is-open'); unlockScroll(); }
+      if (swapPage) stage!.dataset.page = '1';
+    };
+
+    if (reduced() || compact()) { settle(); return; }
+
+    stage.classList.add('animating');
+    await pixelate(stage, true);  // cover the whole stage with uniform random static
+    settle();                     // swap content while fully covered
+    await pixelate(stage, false); // clear the static, revealing the home grid
   } finally {
     stage.classList.remove('animating');
     busy = false;
@@ -631,13 +691,15 @@ function onStageClick(e: MouseEvent): void {
 
   // While a view is open: the home bar returns home; other clicks close it,
   // unless it's a functional control (link, carousel button, zoomable image).
+  // Home-going routes through the Back button (goHomeViaHistory) so the URL
+  // history stays in step with what's on screen.
   if (openId) {
     if (lightboxOpen) return;
-    if (target.closest('[data-home]')) { goHome(); return; }
+    if (target.closest('[data-home]')) { goHomeViaHistory(); return; }
     if (target.closest('a[href], .carousel-btn, .carousel-counter')) return;
     const img = target.closest('.project-body img') as HTMLImageElement | null;
     if (img) { openLightbox(img); return; }
-    closeProject();
+    goHomeViaHistory();
     return;
   }
 
@@ -647,9 +709,11 @@ function onStageClick(e: MouseEvent): void {
   if (actionEl) {
     const action = actionEl.dataset.action;
     if (action === 'view') {
-      // The one view button doubles as a toggle: into the view, then back home.
+      // The one view button doubles as a toggle: into the view (a history entry),
+      // then back home (via the Back button, so history stays in sync).
       const view = (actionEl.dataset.view as '1' | '2') ?? '2';
-      setView(stage!.dataset.page === view ? '1' : view, originOf(actionEl));
+      if (stage!.dataset.page === view) goHomeViaHistory();
+      else if (!busy) { pushAway({ view: 'page2' }); setView(view, originOf(actionEl)); }
       return;
     }
     if (action === 'cv') { openCV(originOf(actionEl)); return; }
@@ -680,13 +744,18 @@ function init(): void {
 
   stage.addEventListener('click', onStageClick);
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { if (lightboxOpen) closeLightbox(); else if (openId) closeProject(); return; }
+    if (e.key === 'Escape') { if (lightboxOpen) closeLightbox(); else if (openId) goHomeViaHistory(); return; }
     // Keyboard-activate the writeup home bar (role=button).
     if ((e.key === 'Enter' || e.key === ' ') && (e.target as Element)?.closest?.('[data-home]')) {
       e.preventDefault();
-      goHome();
+      goHomeViaHistory();
     }
   });
+
+  // History: tag the home base entry, then let Back/Forward drive the home and
+  // re-open transitions. Every open/view-swap pushes one entry on top of this.
+  if (atHome()) history.replaceState({ home: true }, '');
+  window.addEventListener('popstate', onPopState);
 
   // Light the "more works" button while the page is scrolled down.
   initScrollSync();
