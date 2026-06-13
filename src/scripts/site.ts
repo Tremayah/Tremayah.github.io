@@ -112,13 +112,28 @@ function initCarousels(root: ParentNode): void {
     counter.textContent = `1 / ${imgs.length}`;
     car.append(prev, next, counter);
     let idx = 0;
+    // Images can have different aspect ratios, so the track hugs the height of
+    // the current slide (CSS animates the change) — every image shows whole,
+    // uncropped, instead of being cover-cropped to a fixed box.
+    const sizeTrack = (): void => {
+      const h = imgs[idx]?.getBoundingClientRect().height ?? 0;
+      if (h > 0) track.style.height = `${h}px`;
+    };
     const go = (i: number) => {
       idx = (i + imgs.length) % imgs.length;
       track.scrollTo({ left: track.clientWidth * idx, behavior: reduced() ? 'auto' : 'smooth' });
       counter.textContent = `${idx + 1} / ${imgs.length}`;
+      sizeTrack();
     };
     prev.addEventListener('click', (e) => { e.stopPropagation(); go(idx - 1); });
     next.addEventListener('click', (e) => { e.stopPropagation(); go(idx + 1); });
+    // Size to the first slide now and re-measure as images finish loading
+    // (lazy ones report 0 height until then) and when the viewport reflows.
+    imgs.forEach((img) => {
+      if (!img.complete) img.addEventListener('load', () => { if (imgs[idx] === img) sizeTrack(); }, { once: true });
+    });
+    sizeTrack();
+    window.addEventListener('resize', sizeTrack);
   });
 }
 

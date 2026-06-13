@@ -913,12 +913,19 @@ html.reduce-motion *::after {
 }
 .carousel-track {
   display: flex;
+  align-items: flex-start;
   overflow-x: auto;
+  overflow-y: hidden;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  /* Height is set per-slide by site.ts so each image shows uncropped at its own
+     aspect ratio; the transition smooths the resize between differently-shaped
+     slides. */
+  transition: height 0.3s ease;
 }
 .carousel-track::-webkit-scrollbar { display: none; }
+html.reduce-motion .carousel-track { transition: none; }
 .carousel-slide {
   flex: 0 0 100%;
   scroll-snap-align: center;
@@ -926,8 +933,7 @@ html.reduce-motion *::after {
 .carousel-slide img,
 .carousel > img {           /* > img: pre-JS / no-JS fallback */
   width: 100%;
-  aspect-ratio: 3 / 2;
-  object-fit: cover;
+  height: auto;             /* natural aspect ratio — no cropping */
   display: block;
   margin: 0;
   cursor: zoom-in;
