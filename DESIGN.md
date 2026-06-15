@@ -95,13 +95,44 @@ Standard shape for a project writeup, top to bottom:
   matters more than each image's native framing.
 - Standalone `<img>` — a single figure (e.g. a scale drawing, diagram) —
   natural aspect ratio, centered, `cursor: zoom-in` for the lightbox.
-- `.proj-row` / `.proj-split` / `.proj-posters` — bespoke full-bleed layouts
-  for projects that need them (currently bespoke, not a default — use
-  sparingly).
+- `.proj-split` / `.proj-aside` — **text beside image**, the main pacing
+  levers. `.proj-split` pairs one image with a paragraph in a shared row;
+  `.proj-aside` is a constrained text column set beside floated media (`--r`
+  variant aligns right). Use these freely to break the full-width stack — see
+  Pacing & rhythm.
+- `.proj-row` / `.proj-posters` — bespoke full-bleed layouts for a deliberate
+  hero or section break. Full-bleed is punctuation: use it for emphasis, not as
+  a default.
 
 When source material doesn't cleanly fit any of these (process diagrams, video
 stills, side-by-side comparisons with annotations), **flag it** rather than
 forcing it into the nearest primitive.
+
+### Pacing & rhythm
+The page should read as a paced sequence of text and image, not a slab of prose
+followed by a gallery. Generous vertical breathing room is part of the look —
+lean on `--gap-lg` between movements.
+
+- **Interleave, don't batch.** Distribute media through the writeup so a visual
+  lands every screen or two of scrolling. Never stack all the prose first and
+  all the images last — the most common failure.
+- **Cap the prose run.** No more than ~2 short paragraphs (or a paragraph + a
+  short list) between visual breaks. Keep paragraphs to ~3–4 lines at the
+  body's reading width; break longer ones unless the thought genuinely can't be
+  split.
+- **No back-to-back media.** Two image blocks separated by one sentence read as
+  a dump — put a real beat of text between them, or merge them into a single
+  carousel/grid.
+- **Vary the block type.** Don't repeat the same full-width stack down the page.
+  Rotate the text↔image relationship: floated hero → text beside image →
+  full-bleed row → carousel → grid. Changing *how* text and image relate is
+  what creates rhythm.
+- **Full-width solo images are punctuation, not the default.** Reserve them for
+  a genuine hero or section break — a handful per page at most. Most images
+  belong in a carousel, grid, or beside text.
+- **Text-beside-image is the main pacing lever.** `.proj-split` / `.proj-aside`
+  break the full-width stack and let prose and media share a row — use them
+  freely, not "sparingly".
 
 ### Voice & copy
 - **Verbatim-first**: use the project owner's own words from prior write-ups

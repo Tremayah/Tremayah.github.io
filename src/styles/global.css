@@ -811,6 +811,75 @@ html.reduce-motion *::after {
 }
 .proj-poster-squares img { flex: 1 1 0; width: 100%; height: auto; margin: 0; min-width: 0; }
 
+/* ── Interview-question highlight (the "summary"): a lightweight pull-out of the
+   sharpest questions. Hairline red rules top & bottom (echoing the writeup bar),
+   no fills — airy by design. Index numerals in the display face, blue; question
+   in body red, the takeaway in muted dark below. Scoped to .project-body so it
+   beats the justified-body element rules. */
+.project-body .qa {
+  clear: both;
+  margin: var(--gap-sm) 0;
+  padding: clamp(1rem, 2.4vw, 1.6rem) 0;
+  border-top: 1.5px solid var(--body-color);
+  border-bottom: 1.5px solid var(--body-color);
+}
+.project-body .qa-kicker {
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.55rem, 0.9vw, 0.72rem);
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: var(--body-color);
+  margin: 0 0 clamp(0.9rem, 2vw, 1.4rem);
+}
+.project-body .qa-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: qa;
+}
+.project-body .qa-list li {
+  counter-increment: qa;
+  position: relative;
+  padding-left: clamp(2.6rem, 6vw, 4.4rem);
+  margin-bottom: clamp(1.1rem, 2.6vw, 1.7rem);
+}
+.project-body .qa-list li:last-child { margin-bottom: 0; }
+.project-body .qa-list li::before {
+  content: counter(qa, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: -0.06em;
+  font-family: 'lores-9-plus-narrow', var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(1.3rem, 3vw, 2.2rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--highlight);
+}
+.project-body .qa-q {
+  display: block;
+  font-family: var(--body-font);
+  font-weight: 700;
+  font-size: clamp(0.98rem, 1.9vw, 1.45rem);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--body-color);
+  text-align: left;
+  text-wrap: balance;
+}
+.project-body .qa-a {
+  display: block;
+  margin-top: 0.5em;
+  font-family: var(--body-font);
+  font-weight: 400;
+  font-size: clamp(0.78rem, 1.2vw, 0.95rem);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  text-align: left;
+}
+
 /* Placeholder for an image that isn't in the folder yet — a clearly-marked box
    so it reads as "to come", not a broken image. */
 .img-placeholder {

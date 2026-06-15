@@ -16,15 +16,42 @@ I interviewed people across a spread of generations — children, young adults, 
 
 The interviews followed a script that moved from screen-time habits to the things people genuinely couldn't do without. A few of the questions that shaped the brief most, and what they turned up:
 
-- "Are there any features of a phone you don't think you could live without?" — the answers differed from person to person, which is what pushed the design toward a set of single-function pieces rather than one do-everything device.
-- "What things are holding you back from permanently ditching your phone?" — the blockers were rarely practical; it was attachment more than utility.
-- "The product I have in mind is a set of jewellery that can fill a specific function of a phone, while not having any other functions … would you be potentially interested in these functions but in a different form?" — putting the idea to people directly is what turned three loose functions into the ring, the band and the pendant.
-- "Do you want to be able to use these features, or is it more about being available to certain people?" — the gap between using a phone and simply being reachable is the whole idea behind the communication ring.
-- "At what age do you think children should first be allowed to have access to a smart phone?" — the trans-generational thread I most wanted to pull on, and the one I later let slip.
+<div class="qa">
+  <p class="qa-kicker">the questions that shaped it</p>
+  <ol class="qa-list">
+    <li>
+      <span class="qa-q">"Are there any features of a phone you don't think you could live without?"</span>
+      <span class="qa-a">Every answer was different — which is what pushed the design toward a set of single-function pieces rather than one do-everything device.</span>
+    </li>
+    <li>
+      <span class="qa-q">"What things are holding you back from permanently ditching your phone?"</span>
+      <span class="qa-a">The blockers were rarely practical; it was attachment more than utility.</span>
+    </li>
+    <li>
+      <span class="qa-q">"Do you want to be able to use these features, or is it more about being available to certain people?"</span>
+      <span class="qa-a">The gap between using a phone and simply being reachable is the whole idea behind the communication ring.</span>
+    </li>
+    <li>
+      <span class="qa-q">"At what age do you think children should first be allowed to have access to a smart phone?"</span>
+      <span class="qa-a">The trans-generational thread I most wanted to pull on, and the one I later let slip.</span>
+    </li>
+  </ol>
+</div>
 
-I've learnt a lot through this interview process, possibly the most important of which is that I'm no longer just doing things for a school project, or to put it another way: the stakes are higher. I need to be serious and upfront about things like privacy, and making it clear to people what I'm using their image, voice, words, etc. for. Another thing I've found is that it is very difficult to get hold of people outside of my age group, especially those younger than me. The only gen-alpha person I know is my niece, and she is often busy with school and homelife, so organising even a half an hour call with her proved too difficult.
+I've learnt a lot through this interview process, possibly the most important of which is that I'm no longer just doing things for a school project, or to put it another way: the stakes are higher. I need to be serious and upfront about things like privacy, and making it clear to people what I'm using their image, voice, words, etc. for.
 
-The research kept circling one idea: **nomophobia** — the anxiety of being without a working phone, a term first coined by a UK Post Office study. Rather than fight that attachment head-on, the concept leans into it: a set of jewellery where each piece quietly takes over one specific phone function, so it's easier to leave the phone itself behind.
+Another thing I've found is that it is very difficult to get hold of people outside of my age group, especially those younger than me. The only gen-alpha person I know is my niece, and she is often busy with school and homelife, so organising even a half an hour call with her proved too difficult.
+
+## The idea
+
+<section class="proj-row">
+  <figure class="proj-media proj-media--a4">
+    <img loading="lazy" decoding="async" src="/images/progression/nomophobia-poster-finished-1.png" alt="Nomophobia poster — who each piece is for" />
+  </figure>
+  <div class="proj-text">The research kept circling one idea: <strong>nomophobia</strong> — the anxiety of being without a working phone, a term first coined by a UK Post Office study. Rather than fight that attachment head-on, the concept leans into it: a set of jewellery where each piece quietly takes over one specific phone function, so it's easier to leave the phone itself behind.</div>
+</section>
+
+## Three pieces
 
 Three products came out of it:
 
@@ -35,18 +62,20 @@ Three products came out of it:
 <div class="carousel">
   <img loading="lazy" decoding="async" src="/images/progression/ring.png" alt="Communication ring concept" />
   <img loading="lazy" decoding="async" src="/images/progression/ring-2.jpg" alt="Communication ring, side view" />
-  <img loading="lazy" decoding="async" src="/images/progression/bracelet.png" alt="AI wristband concept" />
   <img loading="lazy" decoding="async" src="/images/progression/camera-pendant-2.png" alt="Camera pendant concept" />
-  <img loading="lazy" decoding="async" src="/images/progression/camera-pendant-full.jpg" alt="Camera pendant and chain" />
 </div>
 
 I rendered the pieces in Blender — its material and lighting workflow is far ahead of anything else I have access to — and built two posters: a system map showing who each piece is for, and a hero shot to present the set at its best.
 
-<div class="carousel">
-  <img loading="lazy" decoding="async" src="/images/progression/nomophobia-poster-finished-1.png" alt="Project poster" />
-  <img loading="lazy" decoding="async" src="/images/progression/smart-jewellery-thing.jpg" alt="Smart jewellery render" />
-</div>
+<figure class="proj-full">
+  <img loading="lazy" decoding="async" src="/images/progression/camera-pendant-band.png" alt="Camera pendant with its chain laid out" />
+</figure>
 
 Finally I made final sketch models of each product. With the university workshops closed for Christmas I ordered the prints from a third party; they came back surprisingly clean off a 0.2 mm nozzle, and a coat of silver spray plus a few details finished them off.
 
-Overall I'm happy with it. If I'm honest I tunnelled onto the dumbphone idea and let the trans-generational side of the brief slip — something I'd hold onto more tightly next time — but the research-led approach taught me far more than the making did.
+<section class="proj-row proj-row--rev">
+  <figure class="proj-media proj-media--a4">
+    <img loading="lazy" decoding="async" src="/images/progression/smart-jewellery-thing.jpg" alt="Smart jewellery hero render" />
+  </figure>
+  <div class="proj-text">Overall I'm happy with it. If I'm honest I tunnelled onto the dumbphone idea and let the trans-generational side of the brief slip — something I'd hold onto more tightly next time — but the research-led approach taught me far more than the making did.</div>
+</section>
