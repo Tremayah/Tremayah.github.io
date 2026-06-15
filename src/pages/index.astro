@@ -67,7 +67,8 @@ const moreWorks = Array.from({ length: 6 }, (_, i) => ({
   desc: 'Placeholder — more work to come.',
 }));
 
-const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
+// FormSubmit alias — keeps the real address out of the page source (manage at formsubmit.co).
+const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
 ---
 
 <LandingLayout title="Raphael Murray-Browne">
@@ -100,7 +101,7 @@ const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
                     <form
                       class="contact-form"
                       data-contact-form
-                      action={`https://formsubmit.co/ajax/${CONTACT_EMAIL}`}
+                      action={`https://formsubmit.co/ajax/${FORMSUBMIT_ALIAS}`}
                       method="POST"
                     >
                       <input type="hidden" name="_subject" value="New message — portfolio (tremayah.com)" />
