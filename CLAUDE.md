@@ -52,17 +52,17 @@ The three files that matter:
   mask that reveals/hides the write-up under the ring). Tunables: `SPREAD`, `HOLD`, `JITTER`,
   `PX` (pixel-cell size).
 
-Projects are markdown in `src/content/projects/*.md`. A **pre-commit hook** mirrors each to
-`…/Plain Text/<slug>/<slug>.txt` (one folder per project, so images can be dropped alongside)
-and first syncs Raphael's `.txt` edits back into the `.md`. The txt format (v2) is documented
-in `scripts/export-plain-text.js` and `…/Plain Text/_read-me-first.txt`: bespoke-layout prose
-exports as tagged blocks (`[CLEAR]`, `[ASIDE LEFT/RIGHT]`, `[ROW: …]`, `[SPLIT: …]`) whose text
-round-trips into the right element; picture-only structures are `#anchor:` lines. The importer
-requires the marker sequence to match the page — on any mismatch it leaves that section
-untouched and flags it in `…/Plain Text/.pending-review`, so a txt edit can never delete or
-corrupt layout (structural changes are requested via `+` lines, for Claude to implement).
-Committing/deleting `.md` files prints a sync log — that's expected. The hook only ever removes
-the derived `.txt`, never a project folder.
+Projects are markdown in `src/content/projects/*.md` — the **source of truth**; the site builds
+from them. A **pre-commit hook** mirrors each to `…/Plain Text/<slug>/<slug>.txt` (one folder
+per project, so images can be dropped alongside) via `scripts/export-plain-text.js`. The `.txt`
+is a **plain-prose mirror** (a one-line tagline, `## headings`, body paragraphs, and read-only
+`[ note ]` lines marking where a photo/carousel sits) — **no strict syntax**. Raphael edits the
+words; there is **no auto-import**. The export protects any `.txt` edited since its last export
+(left untouched, listed in `…/Plain Text/_PENDING-EDITS.txt`); on the next push Claude folds
+those word changes into the `.md` by hand, then runs `export-plain-text.js --force` to refresh
+the mirror. See `…/Plain Text/_read-me-first.txt` (for Raphael) and the `build-project-page`
+skill ("Applying his plain-text edits"). Committing prints an export log — expected. The hook
+only ever removes a derived `.txt`, never a project folder.
 
 ## Gotchas
 

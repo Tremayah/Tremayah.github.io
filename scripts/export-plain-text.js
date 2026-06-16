@@ -2,65 +2,56 @@
 /**
  * export-plain-text.js
  *
- * Bidirectional sync between src/content/projects/*.md and the
- * "Plain Text" folder in the Personal Projects directory.
+ * One-way export of src/content/projects/*.md into a readable "Plain Text"
+ * mirror, plus a flag when those .txt files have been edited.
  *
- * ── txt FORMAT (v2 — bespoke-layout aware) ──────────────────────────────────
+ * ── WHAT THE .txt LOOKS LIKE ────────────────────────────────────────────────
  *
- * Page-level lines:
- *   [BLACK] <text>            — project description (black text, top of page)
- *   [DROPCAP] HEADING         — section heading in a feature project
- *   [SECTION] HEADING         — section heading in a standard project
- *   (plain paragraphs)        — body prose (red text on the page)
+ *   <one-line tagline>            ← the project's frontmatter description
  *
- * Layout blocks with EDITABLE TEXT — the tag line describes where the text
- * sits on the page; the text itself follows on the next line(s) and ends at
- * the first blank line. Edit the text freely; leave the tag line alone:
- *   [CLEAR]                   — paragraph that starts fully below the hero
- *   [ASIDE LEFT]              — narrow paragraph hugging the left edge
- *   [ASIDE RIGHT]             — narrow paragraph hugging the right edge
- *   [ROW: <images>]           — image+text row (image left, text right)
- *   [ROW REVERSED: <images>]  — image+text row (image right, text left)
- *   [SPLIT: <images>]         — text centred between the split image halves
+ *   <body paragraph>              ← plain prose, edit freely
  *
- * Picture-only anchors — position markers, nothing editable:
- *   #full: <alt>              — full-bleed image
- *   #posters: <alts>          — the poster row
- *   #image / #images / #carousel / #grid / #hero pair / #hero trio / #block
+ *   ## Section heading            ← a heading; reword it like any other text
  *
- *   +anything: ...            — a request for Claude to implement
+ *   [ carousel — alt / alt ]      ← a READ-ONLY note saying a photo/carousel
+ *   <paragraph beside it>            sits here. You don't keep it tidy; editing
+ *                                    it does nothing on its own.
  *
- * The tag/anchor SEQUENCE is the contract: on import, the markers in the txt
- * must match the structures in the md one-for-one, in order. If they don't
- * (a tag was deleted, added, or reordered), that section is left UNTOUCHED
- * and flagged in .pending-review — structural changes go through Claude, so
- * a stray edit can never delete or corrupt part of a page.
+ * No strict syntax: there is nothing to "get right". Lines in [ brackets ] and
+ * ## headings are just context so a long page stays navigable.
  *
- * ── DIRECTIONS ───────────────────────────────────────────────────────────────
- *   md → txt  (export):  strip formatting/HTML, describe layout as tag lines
- *   txt → md  (import):  write prose edits back into the right structures
+ * ── HOW EDITS REACH THE SITE (manual, on push) ──────────────────────────────
  *
- * ── USAGE ────────────────────────────────────────────────────────────────────
- *   node scripts/export-plain-text.js          # export only
- *   node scripts/export-plain-text.js --sync   # import changed, then export
+ * The site is built from the .md files, NOT the .txt. Editing a .txt does not
+ * change the site by itself. Instead:
+ *   • This script regenerates the .txt mirror from the .md (md → txt only).
+ *   • If a .txt was edited since its last export, it is LEFT ALONE (never
+ *     clobbered) and listed in `_PENDING-EDITS.txt`.
+ *   • On the next push, Claude reads each edited .txt and folds the word
+ *     changes into the matching .md by hand (handles rewording, adds, cuts,
+ *     reorders), then runs this script with --force to refresh the mirror.
+ *
+ * ── USAGE ───────────────────────────────────────────────────────────────────
+ *   node scripts/export-plain-text.js            # export; protect + flag edits
+ *   node scripts/export-plain-text.js --force    # regenerate every .txt from md
+ *                                                # (use AFTER folding edits in)
  */
 
 import { readdir, readFile, writeFile, mkdir, stat, rm } from 'fs/promises';
-import { existsSync }                                  from 'fs';
-import { join, basename }                              from 'path';
-import { fileURLToPath }                               from 'url';
-import { execSync }                                    from 'child_process';
+import { existsSync }                                    from 'fs';
+import { join, basename }                                from 'path';
+import { fileURLToPath }                                 from 'url';
 
-const __dirname   = fileURLToPath(new URL('.', import.meta.url));
-const ROOT        = join(__dirname, '..');
-const SRC         = join(ROOT, 'src/content/projects');
-const DEST        = '/Users/raphael/Documents/Personal Projects/Portfolio Website (git)/Plain Text';
-const CACHE_FILE  = join(DEST, '.export-times.json');
-const REVIEW_FILE = join(DEST, '.pending-review');
-
-// Projects using the enlarged-body + drop-cap "feature" layout (affects only
-// which heading tag the export uses).
-const FEATURE = new Set(['keycaps', 'exploration']);
+const __dirname  = fileURLToPath(new URL('.', import.meta.url));
+const ROOT       = join(__dirname, '..');
+const SRC        = join(ROOT, 'src/content/projects');
+// Override with PLAIN_TEXT_DIR (e.g. to test into a temp folder without touching
+// the real Plain Text repo).
+const DEST       = process.env.PLAIN_TEXT_DIR
+  || '/Users/raphael/Documents/Personal Projects/Portfolio Website (git)/Plain Text';
+const CACHE_FILE = join(DEST, '.export-times.json');
+const FLAG_FILE  = join(DEST, '_PENDING-EDITS.txt');
+const README     = join(DEST, '_read-me-first.txt');
 
 // ── Timestamp cache ───────────────────────────────────────────────────────────
 
@@ -80,7 +71,7 @@ function extractFrontmatterField(raw, field) {
   return m ? m[1] : null;
 }
 
-/** Strip only inline formatting (bold, italic, links, entities) — not structure. */
+/** Strip inline formatting (bold, italic, links, entities) — not structure. */
 function stripProseFormatting(text) {
   return text
     .replace(/\*{3}(.+?)\*{3}/g, '$1')
@@ -98,13 +89,6 @@ function htmlToText(html) {
   return stripProseFormatting(html.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 }
 
-function normaliseHeading(h) {
-  return (h || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-}
-function normaliseForCompare(s) {
-  return (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
-}
-
 /** Collect image alts from a chunk of HTML/markdown; filenames as fallback. */
 function collectAlts(raw) {
   const alts = [];
@@ -119,20 +103,12 @@ function collectAlts(raw) {
   return [...new Set(alts.filter(Boolean))];
 }
 
-// ── Structure model ───────────────────────────────────────────────────────────
-// Every md chunk gets a `kind`. Prose-bearing kinds carry editable text that
-// round-trips through the txt; anchor kinds are picture-only position markers.
+// ── md body → typed chunks ────────────────────────────────────────────────────
+// Each chunk is either plain `prose`, a prose-bearing structure (row/split/aside
+// carry editable text beside an image), or a picture-only structure.
 
-const TAG_OF_KIND = {
-  'clear':   'CLEAR',
-  'aside-l': 'ASIDE LEFT',
-  'aside-r': 'ASIDE RIGHT',
-  'row':     'ROW',
-  'row-rev': 'ROW REVERSED',
-  'split':   'SPLIT',
-};
-const KIND_OF_TAG = Object.fromEntries(Object.entries(TAG_OF_KIND).map(([k, t]) => [t, k]));
-const PROSE_KINDS = new Set(Object.keys(TAG_OF_KIND));
+const PROSE_KINDS = new Set(['clear', 'aside-l', 'aside-r', 'row', 'row-rev', 'split']);
+const ROW_KINDS   = new Set(['row', 'row-rev', 'split']);   // image + text together
 
 /** Class tokens of the chunk's opening tag. */
 function classTokens(line) {
@@ -161,16 +137,6 @@ function innerTextOf(chunk) {
   );
   return m ? htmlToText(m[1]) : '';
 }
-
-/** Write new text into a prose-bearing structure, leaving everything else as-is. */
-function replaceInnerText(chunk, text) {
-  const re = chunk.kind.startsWith('aside') || chunk.kind === 'clear'
-    ? /(<p[^>]*>)[\s\S]*?(<\/p>)/i
-    : /(<div class="proj-text">)[\s\S]*?(<\/div>)/i;
-  return chunk.raw.replace(re, (_, open, close) => `${open}${text}${close}`);
-}
-
-// ── md body → typed chunks ────────────────────────────────────────────────────
 
 function parseMdChunks(body) {
   const lines  = body.split('\n');
@@ -225,260 +191,93 @@ function parseMdChunks(body) {
 function splitMdSections(body) {
   const lines    = body.split('\n');
   const sections = [];
-  let current    = { heading: '', headingLine: '', body: '', raw: '' };
+  let current    = { heading: '', body: '' };
   let bodyLines  = [];
-  const flush = () => {
-    current.body = bodyLines.join('\n');
-    current.raw  = current.headingLine ? current.headingLine + '\n' + current.body : current.body;
-    sections.push(current);
-  };
+  const flush = () => { current.body = bodyLines.join('\n'); sections.push(current); };
   for (const line of lines) {
-    const m = line.match(/^(#{1,6})\s+(.+)$/);
-    if (m) { flush(); bodyLines = []; current = { heading: m[2], headingLine: line, body: '', raw: '' }; }
+    const m = line.match(/^#{1,6}\s+(.+)$/);
+    if (m) { flush(); bodyLines = []; current = { heading: m[1].trim(), body: '' }; }
     else bodyLines.push(line);
   }
   flush();
   return sections;
 }
 
-// ── md → txt (export) ─────────────────────────────────────────────────────────
+// ── md → txt (plain mirror) ────────────────────────────────────────────────────
 
-function describeChunk(chunk) {
-  if (PROSE_KINDS.has(chunk.kind)) {
-    const alts = collectAlts(chunk.raw);
-    const head = alts.length > 0 ? `[${TAG_OF_KIND[chunk.kind]}: ${alts.join(' | ')}]`
-                                 : `[${TAG_OF_KIND[chunk.kind]}]`;
-    return `${head}\n${innerTextOf(chunk)}`;
+/** Friendly word for the picture(s) in a chunk — used only in the [ note ]. */
+function noteLabel(raw) {
+  if (/class="[^"]*\bqa\b/i.test(raw))           return 'question highlight';
+  if (/class="[^"]*\bcarousel\b/i.test(raw))     return 'carousel';
+  if (/class="[^"]*\bimg-grid\b/i.test(raw))     return 'image grid';
+  if (/class="[^"]*\bhero-pair\b/i.test(raw))    return 'photos';
+  if (/class="[^"]*\bhero-trio\b/i.test(raw))    return 'photos';
+  if (/class="[^"]*\bproj-posters\b/i.test(raw)) return 'posters';
+  if (/class="[^"]*\bproj-split\b/i.test(raw))   return 'split image';
+  const imgCount = (raw.match(/<img/gi) || []).length
+                 + (raw.match(/!\[[^\]]*\]\([^)]*\)/g) || []).length;
+  return imgCount > 1 ? 'photos' : 'photo';
+}
+
+/** One chunk → its plain-text block (prose, or a [ note ] ± its paragraph). */
+function chunkToText(chunk) {
+  if (chunk.kind === 'prose') {
+    return stripProseFormatting(chunk.raw).replace(/\n{3,}/g, '\n\n').trim();
+  }
+  // positioned prose (aside / clear) — just the paragraph; position lives in md
+  if (chunk.kind === 'aside-l' || chunk.kind === 'aside-r' || chunk.kind === 'clear') {
+    return innerTextOf(chunk);
   }
   const alts = collectAlts(chunk.raw);
-  return alts.length > 0 ? `#${chunk.kind}: ${alts.join(' | ')}` : `#${chunk.kind}`;
+  const note = alts.length ? `[ ${noteLabel(chunk.raw)} — ${alts.join(' / ')} ]`
+                           : `[ ${noteLabel(chunk.raw)} ]`;
+  if (ROW_KINDS.has(chunk.kind)) {           // image + text row → note then prose
+    const text = innerTextOf(chunk);
+    return text ? `${note}\n${text}` : note;
+  }
+  return note;                               // picture-only structure → note only
 }
 
-function mdToTxt(raw, slug) {
-  const isFeature   = FEATURE.has(slug);
+function mdToTxt(raw) {
   const description = extractFrontmatterField(raw, 'description');
   const body        = raw.replace(/^---[\s\S]*?---\n?/, '');
-  const sections    = splitMdSections(body);
+  const parts       = [];
+  if (description) parts.push(description.trim());
 
-  const parts = [];
-  if (description) parts.push(`[BLACK] ${description}`);
-
-  for (const section of sections) {
-    if (section.heading) {
-      parts.push(`\n${isFeature ? '[DROPCAP]' : '[SECTION]'} ${section.heading.toUpperCase()}`);
-    }
+  for (const section of splitMdSections(body)) {
+    if (section.heading) parts.push(`## ${section.heading}`);
     for (const chunk of parseMdChunks(section.body)) {
-      if (chunk.kind === 'prose') {
-        const prose = stripProseFormatting(chunk.raw).replace(/\n{3,}/g, '\n\n').trim();
-        if (prose) parts.push(`\n${prose}`);
-      } else {
-        parts.push(`\n${describeChunk(chunk)}`);
-      }
+      const text = chunkToText(chunk);
+      if (text) parts.push(text);
     }
   }
-
-  // Collapse runs of blank lines, trim
-  const collapsed = [];
-  let lastBlank = false;
-  for (const line of parts.join('\n').split('\n').map((l) => l.trimEnd())) {
-    const blank = line === '';
-    if (blank && lastBlank) continue;
-    collapsed.push(line);
-    lastBlank = blank;
-  }
-  return collapsed.join('\n').trim();
-}
-
-// ── txt section body → zones + markers ────────────────────────────────────────
-
-const isTagLine    = (l) => /^\[([A-Z][A-Z ]*?)(?::[^\]]*)?\]\s*$/.test(l) && !/^\[(BLACK|DROPCAP|SECTION)\]/.test(l);
-const isAnchorLine = (l) => /^#[^#]/.test(l);
-const isPlusLine   = (l) => /^\+/.test(l);
-
-/**
- * Parse a txt section body into { zones, markers, plus }:
- *   zones[i]   — editable plain prose between marker i-1 and marker i
- *   markers[i] — { kind, text? } in page order (text only for tag blocks,
- *                consumed from the lines after the tag up to a blank line)
- */
-function parseTxtSection(body) {
-  const lines   = body.split('\n');
-  const zones   = [];
-  const markers = [];
-  const plus    = [];
-  let zone      = [];
-  let i         = 0;
-
-  const flushZone = () => { zones.push(zone.join('\n').trim()); zone = []; };
-
-  while (i < lines.length) {
-    const line = lines[i];
-    if (isPlusLine(line)) { plus.push(line); i++; continue; }
-    if (isTagLine(line)) {
-      flushZone();
-      const m    = line.match(/^\[([A-Z][A-Z ]*?)(?::\s*[^\]]*)?\]\s*$/);
-      const kind = KIND_OF_TAG[m[1].trim()];
-      i++;
-      const text = [];
-      while (i < lines.length && lines[i].trim() !== '' &&
-             !isTagLine(lines[i]) && !isAnchorLine(lines[i]) && !isPlusLine(lines[i])) {
-        text.push(lines[i].trim());
-        i++;
-      }
-      markers.push({ kind: kind ?? `?${m[1].trim()}`, text: text.join(' ').trim() });
-      continue;
-    }
-    if (isAnchorLine(line)) {
-      flushZone();
-      markers.push({ kind: line.slice(1).split(':')[0].trim().toLowerCase() });
-      i++;
-      continue;
-    }
-    zone.push(line);
-    i++;
-  }
-  flushZone();
-  return { zones, markers, plus };
-}
-
-/** Split a txt string into sections by [DROPCAP]/[SECTION] heading lines. */
-function splitTxtSections(txt) {
-  const lines    = txt.split('\n');
-  const sections = [];
-  let current    = { heading: '', body: '' };
-  let bodyLines  = [];
-  const flush = () => { current.body = bodyLines.join('\n').trim(); sections.push(current); };
-  for (const line of lines) {
-    const taggedM = line.match(/^\[(DROPCAP|SECTION)\]\s+(.+)$/);
-    if (taggedM) { flush(); bodyLines = []; current = { heading: taggedM[2].trim(), body: '' }; continue; }
-    bodyLines.push(line);
-  }
-  flush();
-  return sections;
-}
-
-// ── txt → md (import) ─────────────────────────────────────────────────────────
-
-/**
- * Sync one section. The txt's marker sequence must match the md's structure
- * sequence exactly (same kinds, same order) — otherwise the section is left
- * untouched and reported as a mismatch. Prose zones and tag-block texts are
- * written back positionally; picture anchors and all HTML survive verbatim.
- */
-function syncSection(mdBody, txtBody, pendingPlus) {
-  const chunks = parseMdChunks(mdBody);
-  const txt    = parseTxtSection(txtBody);
-  pendingPlus.push(...txt.plus);
-
-  const mdMarkers = chunks.filter((c) => c.kind !== 'prose');
-  if (mdMarkers.length !== txt.markers.length ||
-      mdMarkers.some((c, i) => c.kind !== txt.markers[i].kind)) {
-    return { mismatch: true };
-  }
-
-  // md prose zones between structures (may be empty where structures touch)
-  const mdZones = [];
-  let zoneRaw = '';
-  for (const c of chunks) {
-    if (c.kind === 'prose') zoneRaw = c.raw.trim();
-    else { mdZones.push(zoneRaw); zoneRaw = ''; }
-  }
-  mdZones.push(zoneRaw);
-
-  let changed = false;
-  const out = [];
-  for (let i = 0; i <= mdMarkers.length; i++) {
-    const mdZone  = mdZones[i] ?? '';
-    const txtZone = txt.zones[i] ?? '';
-    if (normaliseForCompare(stripProseFormatting(mdZone)) !== normaliseForCompare(txtZone)) {
-      changed = true;
-      if (txtZone) out.push(txtZone);
-    } else if (mdZone) {
-      out.push(mdZone); // untouched zone keeps its original markdown formatting
-    }
-    if (i === mdMarkers.length) break;
-    const chunk  = mdMarkers[i];
-    const marker = txt.markers[i];
-    if (PROSE_KINDS.has(chunk.kind) && marker.text != null &&
-        normaliseForCompare(innerTextOf(chunk)) !== normaliseForCompare(marker.text)) {
-      changed = true;
-      out.push(replaceInnerText(chunk, marker.text).trim());
-    } else {
-      out.push(chunk.raw.trim());
-    }
-  }
-
-  return { mismatch: false, changed, body: out.join('\n\n') };
-}
-
-function rebuildMdFromTxt(originalMd, newTxt) {
-  let updatedMd = originalMd;
-  let txtBody   = newTxt;
-
-  // [BLACK] description (replacer fn so `$` in the text can't act as a pattern)
-  const blackMatch = newTxt.match(/^\[BLACK\]\s+(.+?)(?:\n|$)/m);
-  if (blackMatch) {
-    const newDesc = blackMatch[1].trim();
-    updatedMd = updatedMd.replace(
-      /(^---[\s\S]*?\ndescription:\s*)"[^"]*"([\s\S]*?---)/m,
-      (_, pre, post) => `${pre}"${newDesc}"${post}`
-    );
-    txtBody = newTxt.replace(/^\[BLACK\]\s+.+\n?/, '').replace(/^\n+/, '');
-  }
-
-  const fmMatch     = updatedMd.match(/^(---[\s\S]*?---\n)/);
-  const frontmatter = fmMatch ? fmMatch[1] : '';
-  const mdSections  = splitMdSections(updatedMd.slice(frontmatter.length));
-  const txtSections = splitTxtSections(txtBody);
-  const txtByKey    = new Map(txtSections.map((s) => [normaliseHeading(s.heading), s.body]));
-
-  const pendingPlus = [];
-  const mismatches  = [];
-  const rebuilt = mdSections.map((section) => {
-    const txtProse = section.heading
-      ? txtByKey.get(normaliseHeading(section.heading))
-      : (txtSections[0]?.heading === '' ? txtSections[0].body : undefined);
-    if (txtProse === undefined) return section.raw;
-    const res = syncSection(section.body, txtProse, pendingPlus);
-    if (res.mismatch) { mismatches.push(section.heading || '(top section)'); return section.raw; }
-    if (!res.changed) return section.raw;
-    return section.heading
-      ? '\n' + section.headingLine + '\n\n' + res.body + '\n'
-      : res.body + '\n';
-  });
-
-  const md = (frontmatter + rebuilt.join('')).replace(/\n{3,}/g, '\n\n');
-  return { md, pendingPlus, mismatches };
+  return parts.join('\n\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
 }
 
 // ── Orchestration ──────────────────────────────────────────────────────────────
 
-async function exportAll(cache, { doSync, syncedSet }) {
-  await mkdir(DEST, { recursive: true });
-  const files = (await readdir(SRC)).filter((f) => f.endsWith('.md'));
-  for (const file of files) {
-    const slug    = basename(file, '.md');
-    const dir     = join(DEST, slug);            // one folder per project …
-    await mkdir(dir, { recursive: true });
-    const outPath = join(dir, slug + '.txt');    // … with the .txt inside it
-    // Don't clobber txt edits that haven't been imported (export-only runs).
-    if (!doSync && !syncedSet.has(slug) && existsSync(outPath)) {
-      const mtime = (await stat(outPath)).mtimeMs;
-      if (cache[slug] && mtime > cache[slug]) {
-        console.log(`  !  ${slug}/${slug}.txt has un-synced edits — skipped (run with --sync)`);
-        continue;
-      }
-    }
-    const raw = await readFile(join(SRC, file), 'utf8');
-    await writeFile(outPath, mdToTxt(raw, slug), 'utf8');
-    cache[slug] = (await stat(outPath)).mtimeMs;
-    console.log(`  ✓  ${file}  →  ${slug}/${slug}.txt`);
-  }
-  await cleanupFlatTxt();
-}
+const READProse = `HOW TO EDIT THESE FILES
+═══════════════════════
 
-/** Remove legacy flat root-level <slug>.txt files — the .txt now lives inside a
- *  per-project folder. (Skips dot/underscore helper files like _read-me-first.txt.) */
+Each project has a folder with a <name>.txt inside — that's the words from that
+project's page on the site. Just edit the text:
+
+  • Plain paragraphs are the body copy. Reword them however you like.
+  • A line starting with ## is a section heading. You can edit these too.
+  • A line in [ square brackets ] is a NOTE about a photo or carousel on the
+    page (e.g. "[ carousel — the finished hinge / the snapped tap ]"). It's only
+    there so you know where you are — you don't have to keep it tidy, and
+    changing it does nothing on its own. (Want to swap an image? Ask Claude.)
+  • The very first line is the project's one-line tagline.
+
+Your edits do NOT go live on their own. The site is built from separate files;
+next time we push, ask Claude to "apply the plain-text edits" and Claude will
+fold your changes into the pages by hand. A file called _PENDING-EDITS.txt will
+appear listing whatever is waiting to be applied.
+`;
+
+/** Remove legacy flat root-level <slug>.txt files (the .txt now lives in a
+ *  per-project folder). Skips dot/underscore helper files. */
 async function cleanupFlatTxt() {
   const entries = await readdir(DEST, { withFileTypes: true });
   for (const e of entries) {
@@ -509,117 +308,68 @@ async function pruneOrphans(cache) {
   }
 }
 
-async function importChanged(cache) {
+/** Export every .md → its .txt mirror. A .txt edited since its last export is
+ *  LEFT ALONE (returned as "pending") unless --force regenerates everything. */
+async function exportAll(cache, { force }) {
   await mkdir(DEST, { recursive: true });
-  const files         = (await readdir(SRC)).filter((f) => f.endsWith('.md'));
-  const synced        = [];
-  const allPlus       = {};
-  const allMismatches = {};
-
+  const files   = (await readdir(SRC)).filter((f) => f.endsWith('.md'));
+  const pending = [];
   for (const file of files) {
-    const slug    = basename(file, '.md');
-    const txtPath = join(DEST, slug, slug + '.txt');
-    const mdPath  = join(SRC, file);
-
-    if (!existsSync(txtPath)) continue;
-
-    const lastExport = cache[slug] ?? 0;
-    const txtMtime   = (await stat(txtPath)).mtimeMs;
-    if (txtMtime <= lastExport) continue;
-
-    const originalMd = await readFile(mdPath, 'utf8');
-    const newTxt     = await readFile(txtPath, 'utf8');
-    const { md: updatedMd, pendingPlus, mismatches } = rebuildMdFromTxt(originalMd, newTxt);
-
-    if (pendingPlus.length > 0) allPlus[slug] = pendingPlus;
-    if (mismatches.length > 0) {
-      allMismatches[slug] = mismatches;
-      console.warn(`  ⚠  ${slug}.txt — layout markers don't match the page in: ${mismatches.join(', ')} — those parts left untouched`);
+    const slug = basename(file, '.md');
+    const dir  = join(DEST, slug);
+    await mkdir(dir, { recursive: true });
+    const outPath = join(dir, slug + '.txt');
+    if (!force && existsSync(outPath)) {
+      const mtime = (await stat(outPath)).mtimeMs;
+      if (cache[slug] && mtime > cache[slug]) {
+        pending.push(slug);
+        console.log(`  !  ${slug}/${slug}.txt edited since last export — left as-is`);
+        continue;
+      }
     }
-
-    if (updatedMd === originalMd && pendingPlus.length === 0 && mismatches.length === 0) {
-      console.log(`  ○  ${slug}.txt  unchanged, skipping`);
-      continue;
-    }
-
-    if (updatedMd !== originalMd) {
-      await writeFile(mdPath, updatedMd, 'utf8');
-      try { execSync(`git -C "${ROOT}" add "${mdPath}"`, { stdio: 'inherit' }); }
-      catch { console.warn(`  !  Could not git-add ${file}`); }
-      synced.push(slug);
-      const plusNote = pendingPlus.length > 0 ? `  [${pendingPlus.length} pending +]` : '';
-      console.log(`  ↑  ${slug}.txt  →  ${file}  (synced + staged)${plusNote}`);
-    }
+    const raw = await readFile(join(SRC, file), 'utf8');
+    await writeFile(outPath, mdToTxt(raw), 'utf8');
+    cache[slug] = (await stat(outPath)).mtimeMs;
+    console.log(`  ✓  ${file}  →  ${slug}/${slug}.txt`);
   }
-
-  return { synced, allPlus, allMismatches };
+  await writeFile(README, READProse, 'utf8');
+  await cleanupFlatTxt();
+  return pending;
 }
 
 // ── Entry point ────────────────────────────────────────────────────────────────
 
 async function main() {
-  const doSync = process.argv.includes('--sync');
+  const force = process.argv.includes('--force');
   await mkdir(DEST, { recursive: true });
   const cache = await loadCache();
 
-  let synced = [], allPlus = {}, allMismatches = {};
-
-  if (doSync) {
-    ({ synced, allPlus, allMismatches } = await importChanged(cache));
-    if (synced.length > 0) console.log(`\nImported ${synced.length} edited file(s) into md.\n`);
-  }
-
-  console.log('Exporting md → txt...');
-  await exportAll(cache, { doSync, syncedSet: new Set(synced) });
+  console.log(force ? 'Regenerating every .txt from md...' : 'Exporting md → txt...');
+  const pending = await exportAll(cache, { force });
   await pruneOrphans(cache);
   await saveCache(cache);
 
-  const hasPlus     = Object.keys(allPlus).length > 0;
-  const hasMismatch = Object.keys(allMismatches).length > 0;
-  if (synced.length > 0 || hasPlus || hasMismatch) {
-    const lines = [
-      `Synced at: ${new Date().toISOString()}`,
-      synced.length > 0 ? `Files synced:   ${synced.join(', ')}` : null,
-      hasMismatch
-        ? `Marker mismatches (sections left untouched — ask Claude):\n${Object.entries(allMismatches)
-            .map(([slug, secs]) => `  ${slug}: ${secs.join(', ')}`)
-            .join('\n')}`
-        : null,
-      hasPlus
-        ? `Pending + directives:\n${Object.entries(allPlus)
-            .map(([slug, ls]) => `  ${slug}:\n${ls.map((l) => `    ${l}`).join('\n')}`)
-            .join('\n')}`
-        : null,
+  if (pending.length > 0) {
+    await writeFile(FLAG_FILE, [
+      `Plain-text edits waiting to go onto the site: ${pending.join(', ')}`,
+      `Last detected: ${new Date().toISOString()}`,
       '',
-      'Ask Claude to check formatting and implement any + directives.',
-    ].filter((l) => l !== null).join('\n');
-    await writeFile(REVIEW_FILE, lines, 'utf8');
+      'These .txt files were edited since their last export, so their words are',
+      'NOT on the site yet. On the next push, ask Claude to "apply the plain-text',
+      'edits" — Claude reads each edited .txt and updates the matching project',
+      'page by hand, then refreshes this mirror.',
+      '',
+    ].join('\n'), 'utf8');
+    console.log('─'.repeat(60));
+    console.log('⚠  PLAIN-TEXT EDITS PENDING — ask Claude to apply on next push:');
+    console.log(`     ${pending.join(', ')}`);
+    console.log('─'.repeat(60));
+  } else if (existsSync(FLAG_FILE)) {
+    await rm(FLAG_FILE);
   }
 
   console.log(`\nDone. Plain Text folder:\n  ${DEST}\n`);
-  return { synced, allPlus, allMismatches };
+  return pending;
 }
 
-main().then(({ synced, allPlus, allMismatches }) => {
-  const hasPending  = Object.keys(allPlus ?? {}).length > 0;
-  const hasMismatch = Object.keys(allMismatches ?? {}).length > 0;
-  if (synced?.length > 0 || hasPending || hasMismatch) {
-    console.log('─'.repeat(60));
-    console.log('⚠  FORMATTING REVIEW NEEDED');
-    if (synced?.length > 0) console.log(`   Prose synced: ${synced.join(', ')}`);
-    if (hasMismatch) {
-      console.log('   Marker mismatches (left untouched):');
-      for (const [slug, secs] of Object.entries(allMismatches)) {
-        console.log(`     ${slug}: ${secs.join(', ')}`);
-      }
-    }
-    if (hasPending) {
-      console.log('   Pending + directives:');
-      for (const [slug, lines] of Object.entries(allPlus)) {
-        console.log(`     ${slug}: ${lines.join(' | ')}`);
-      }
-    }
-    console.log('   Ask Claude to check formatting and act on any + directives.');
-    console.log('─'.repeat(60));
-  }
-}).catch((err) => { console.error(err); process.exit(1); });
+main().catch((err) => { console.error(err); process.exit(1); });

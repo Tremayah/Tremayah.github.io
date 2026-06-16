@@ -72,9 +72,12 @@ revealed by **more works** are the `moreWorks` array, rendered into `.more-grid`
 
 Projects also mirror to a `Plain Text/<slug>/<slug>.txt` folder on each commit (see
 `scripts/export-plain-text.js`) — Raphael drops reference images into those folders and edits
-project copy in the `.txt` files; the pre-commit hook syncs those edits back into the markdown.
-The format (tag lines for bespoke-layout blocks, `#` anchors for images, `+` lines to request
-structural changes) is documented in the script header and in `Plain Text/_read-me-first.txt`.
+project copy in the `.txt` files. The `.txt` is a plain-prose mirror (tagline, `## headings`,
+body paragraphs, read-only `[ note ]` lines for images) with **no strict syntax**: the markdown
+is the source of truth and there's no auto-import. Edited `.txt` files are left untouched and
+listed in `Plain Text/_PENDING-EDITS.txt`; their word changes are folded into the markdown by
+hand on the next push (then `node scripts/export-plain-text.js --force` refreshes the mirror).
+See the script header and `Plain Text/_read-me-first.txt`.
 
 - **Image galleries** inside a project's Markdown: `<div class="img-grid">` (3-up square
   crops), `<div class="hero-pair">` (2-up 3:2), or `<div class="hero-trio">`. Any image in a

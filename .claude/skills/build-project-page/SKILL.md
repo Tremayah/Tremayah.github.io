@@ -33,15 +33,20 @@ non-negotiables run through every phase:
 
 ## Trust these (repo facts — getting them wrong corrupts a page or the live site)
 
-- **`.md` is yours to author; `.txt` is his to edit.** Prose round-trips
-  through `…/Portfolio Website (git)/Plain Text/<slug>/<slug>.txt` via
-  `scripts/export-plain-text.js`. **The tag/anchor SEQUENCE is the contract** —
-  the export *rejects* structural edits made in the txt and flags them in
-  `.pending-review`. So **new structure (image blocks, layout containers) is
-  defined by editing the `.md`**; after the page exists, run the exporter once
-  to generate the canonical `.txt` for his future prose edits. Never overwrite a
-  `.txt` he may be mid-edit on — for a brand-new slug there is none, so you're
-  clear; for a rebuild, check `.txt` mtime / ask first.
+- **`.md` is the source of truth; `.txt` is a plain-prose mirror he edits.** The
+  site builds from the `.md`. `scripts/export-plain-text.js` writes a *readable*
+  `.txt` mirror — a one-line tagline, `## headings`, plain body paragraphs, and
+  read-only `[ note ]` lines marking where each photo/carousel sits — to
+  `…/Portfolio Website (git)/Plain Text/<slug>/<slug>.txt`. **There is no strict
+  syntax and no auto-import.** Raphael edits the words; his edits are folded into
+  the `.md` **by hand on the next push** (see "Applying his plain-text edits").
+  New structure (image blocks, layout) is always defined by editing the `.md`.
+- **Refresh the mirror after building/restructuring a page:**
+  `node scripts/export-plain-text.js --force` (regenerates every `.txt` from the
+  `.md`). The plain export also runs from the pre-commit hook *without* `--force`,
+  so it never clobbers a `.txt` he's edited — those are left as-is and listed in
+  `Plain Text/_PENDING-EDITS.txt`. **Only run `--force` once any pending `.txt`
+  edits are already folded into the `.md`** (otherwise you overwrite his words).
 - **The landing 3×2 grid is full** (contact + exploration, keycaps,
   progression, table-tennis-bat + the nav box). There is **no free landing
   cell.** A new project therefore goes into the *personal projects* view
@@ -119,8 +124,8 @@ Read `DESIGN.md`. Then decide the page's structure from what the material
 - **Hero:** the `cover` frontmatter image. Strongest single shot. On an article
   page the lead paragraph sits beside it as a column (don't fight the small gap
   beside the lower hero); on a flow page copy wraps it with no blank gap.
-- **Choosing image blocks** (the `.txt` tag in brackets — Phase 5 writes the
-  matching HTML, the exporter reads these tags back):
+- **Choosing image blocks** (Phase 5 writes the matching HTML; the exporter
+  renders each as a readable `[ note ]` line in the `.txt` mirror):
   - 2+ related shots to flick through (iterations, angles) → **`carousel`**
     (natural ratio, uncropped — the default). **If the set is portrait/tall it
     will dominate at full width — put it *beside text* instead:** a
@@ -210,8 +215,8 @@ border-radius, the palette, uncropped default, motion untouched.
    `writeupIds` in `src/pages/index.astro`, and make its slot a real
    `tile--photo` with `data-open="<slug>"` + `data('<slug>')` (replacing the
    inert placeholder). All three of the "trust these" conditions must hold.
-4. **Generate the canonical `.txt`:** `node scripts/export-plain-text.js` so the
-   page is editable through his Plain Text workflow afterwards.
+4. **Refresh the plain-text mirror:** `node scripts/export-plain-text.js --force`
+   so the new page shows up as an editable plain-prose `.txt` for him.
 5. **"Under construction":** a finished page can drop the `uc-badge`/`uc-notice`
    — but removing it is a *status* change (the project is genuinely done), so
    confirm with him; don't strip it just because copy now exists.
@@ -229,10 +234,12 @@ known-good moves from the **format-check** skill:
 - `npm run build` must pass.
 
 Check against DESIGN.md's hard rules specifically: **no unintended cropping**
-(every body image at its natural ratio), **no blank gap beside the hero** (copy
-fills around it), zero border-radius, palette/type correct. Screenshot desktop
-**and** ≤680px (mobile stacks the hero). If a design mockup PDF was provided,
-hand off to the **format-check** skill for the numeric+vision fidelity pass.
+(every body image at its natural ratio); the hero relationship matches the
+archetype (**flow page:** copy wraps it, no blank gap; **article page:** lead
+column beside it, next block cleared below — the small gap beside the lower hero
+is fine); zero border-radius, palette/type correct. Screenshot desktop **and**
+≤680px (mobile stacks the hero). If a design mockup PDF was provided, hand off to
+the **format-check** skill for the numeric+vision fidelity pass.
 
 ## Phase 7 — Report (accountability)
 
@@ -249,11 +256,29 @@ Mirror the table-tennis-bat report format. State plainly:
 - **Don't claim done what isn't.** Build/preview proof for what works; honest
   flags for what's deferred. Committing & pushing are his call.
 
+## Applying his plain-text edits (on push)
+
+Raphael edits the plain-prose `.txt` mirrors; those words reach the site only
+when you fold them into the `.md` by hand. On a push:
+
+1. **Find pending edits.** `node scripts/export-plain-text.js` (no `--force`)
+   prints any edited `.txt` and writes `Plain Text/_PENDING-EDITS.txt`. (The
+   export protects them — it won't overwrite an edited `.txt`.)
+2. **Fold each in.** For every flagged slug, read its `.txt` and its `.md`. The
+   prose appears in the same order in both, with `## headings` and `[ note ]`
+   lines as anchors — map each changed paragraph to its `.md` slot (a top-level
+   paragraph, a `proj-text`, an aside, the frontmatter `description` for the
+   first line, a heading for a `## …` line) and write the new wording in.
+   Verbatim-first still holds: only change what he changed. `[ note ]` lines are
+   read-only context — ignore them as text (image swaps are a separate request).
+3. **Refresh + ship.** `node scripts/export-plain-text.js --force` to re-sync the
+   mirror, then build, commit, push.
+
 ## Guardrails & cost
 
-- **Never push** — the live site is his to deploy. Never overwrite a `.txt`
-  he's editing. Never apply an uninvented photo grade. Never auto-place a
-  project on the site.
+- **Never push** — the live site is his to deploy. Never run `--force` while a
+  `.txt` has pending edits not yet folded into the `.md`. Never apply an
+  uninvented photo grade. Never auto-place a project on the site.
 - **Verbatim or flagged — no third option.** If it's on the page and it's not
   his words, the report says so.
 - Cheap phases (ingest, extract, assemble) are mostly WebFetch + edits. The
