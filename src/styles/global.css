@@ -109,6 +109,27 @@ html.view-open { overflow: hidden; }
   background: #f1f1f1;
   overflow: hidden;
 }
+/* A real, openable project tile inside the "more works" grid (e.g. Living Lamp):
+   mirrors the landing photo tile, but as a relative grid item (not absolute). */
+.more-tile--photo {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  border: none;
+  background: var(--bg);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.more-tile--photo .tile-media {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
 
 /* ── Grid ─────────────────────────────────────────── */
 .landing-grid {
@@ -620,7 +641,7 @@ html.reduce-motion *::after {
   display: flex;
   flex: none;
   white-space: nowrap;
-  animation: marquee-scroll 26s linear infinite;
+  animation: marquee-scroll 130s linear infinite; /* 0.2x speed (was 26s) */
   will-change: transform;
 }
 .writeup-bar-item {
@@ -870,14 +891,51 @@ html.reduce-motion *::after {
 }
 .project-body .qa-a {
   display: block;
-  margin-top: 0.5em;
+  margin-top: 0.55em;
   font-family: var(--body-font);
   font-weight: 400;
-  font-size: clamp(0.78rem, 1.2vw, 0.95rem);
-  line-height: 1.5;
+  font-size: clamp(0.82rem, 1.3vw, 1rem);
+  line-height: 1.45;
   letter-spacing: -0.01em;
   color: var(--fg);
   text-align: left;
+}
+.project-body .qa-cite {
+  display: block;
+  margin-top: 0.3em;
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.5rem, 0.82vw, 0.68rem);
+  letter-spacing: 0.04em;
+  color: var(--highlight);
+  text-align: left;
+}
+
+/* ── Smart Jewellery (progression) — page-scoped treatments ──────────────────
+   #1 the opening paragraph runs as a column beside the hero (a BFC, so it never
+   wraps underneath it); the next paragraph clears below the image, leaving the
+   space under it clean. #3 section headings become red-box / white-text labels,
+   like the "under construction" chip but in the title red (the bright #ff4d4d
+   stays reserved for UC). */
+.writeup[data-for="progression"] .project-body > p:first-of-type {
+  display: flow-root;
+}
+.writeup[data-for="progression"] .project-body > p:first-of-type + p {
+  clear: both;
+}
+.writeup[data-for="progression"] .project-body h2 {
+  display: inline-block;
+  background: var(--title-color);
+  color: #fff;
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.62rem, 1vw, 0.8rem);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  padding: 0.34em 0.7em;
+  margin-top: var(--gap-sm);
+  margin-bottom: 0.6rem;
 }
 
 /* Placeholder for an image that isn't in the folder yet — a clearly-marked box

@@ -1,0 +1,162 @@
+---
+/*  /lab — UNLISTED experiments page (not linked from the site).
+    A dev bar of pixel effects to test, plus nav-box restyle options to pick from.
+    Self-contained: all experimental CSS/JS lives here, nothing leaks into the
+    real site. Delete this file (src/pages/lab.astro) when you're done reviewing. */
+import '../styles/global.css';
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Lab — experiments</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://use.typekit.net" />
+  <link rel="stylesheet" href="https://use.typekit.net/var1bvf.css" />
+</head>
+<body class="lab">
+  <header>
+    <h1 class="lab-h1">LAB</h1>
+    <p class="lab-note">Unlisted — not linked from the site, just for you to test. Click a button to fire the effect on the tile. Nav-box options are lower down. Delete <code>src/pages/lab.astro</code> when you're done.</p>
+  </header>
+
+  <section class="lab-sec">
+    <h2 class="lab-h2">pixel effects</h2>
+    <div class="demo" id="demo">
+      <img class="demo-img" src="/images/keycaps/keycap-field.jpg" alt="" />
+      <span class="demo-label">RAPHAEL<br />MURRAY-BROWNE</span>
+    </div>
+    <div class="bar" id="bar">
+      <button type="button" data-fx="fizzle">fizzle</button>
+      <button type="button" data-fx="static">static burst</button>
+      <button type="button" data-fx="scan">scanline / crt</button>
+      <button type="button" data-fx="mosh">datamosh</button>
+      <button type="button" data-fx="ripple">radial ripple</button>
+      <button type="button" data-fx="shutter">pixel shutter</button>
+    </div>
+  </section>
+
+  <section class="lab-sec">
+    <h2 class="lab-h2">nav-box button options</h2>
+    <p class="lab-note">The live buttons stretch each word non-uniformly to fill the box — that squashed/​wide look is why the text reads slightly off. Four directions to react to:</p>
+    <div class="navrow">
+      <figure><div class="nb nb-current"><span>personal projects</span></div><figcaption>current — stretched to fill</figcaption></figure>
+      <figure><div class="nb nb-a"><span>personal projects</span></div><figcaption>A — clean, centred</figcaption></figure>
+      <figure><div class="nb nb-b"><span>personal<br />projects</span></div><figcaption>B — stacked, big &amp; uniform</figcaption></figure>
+      <figure><div class="nb nb-c"><span>personal<br />projects</span></div><figcaption>C — label in the corner</figcaption></figure>
+    </div>
+  </section>
+
+  <style is:inline>
+    .lab { background: var(--bg); color: var(--fg); padding: clamp(1rem, 4vw, 3rem); font-family: var(--body-font); min-height: 100dvh; }
+    .lab-h1 { font-family: 'lores-9-plus-narrow', var(--nav-font); color: var(--title-color); font-size: clamp(2rem, 6vw, 4rem); text-transform: uppercase; letter-spacing: -0.04em; line-height: 1; }
+    .lab-note { color: var(--body-color); max-width: 64ch; line-height: 1.5; margin: 0.6rem 0 1.4rem; font-size: 0.9rem; }
+    .lab-note code { background: #ececec; padding: 0 0.3em; }
+    .lab-sec { margin: 2.6rem 0; }
+    .lab-h2 { font-family: var(--nav-font); text-transform: lowercase; color: var(--body-color); font-size: 1rem; margin-bottom: 1rem; }
+
+    .demo { position: relative; width: min(560px, 92vw); aspect-ratio: 16 / 9; overflow: hidden; background: #111; }
+    .demo-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .demo-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; font-family: 'lores-9-plus-narrow', var(--nav-font); color: #fff; font-size: clamp(1.3rem, 4.5vw, 2.6rem); text-transform: uppercase; line-height: 1.05; mix-blend-mode: difference; pointer-events: none; }
+    .bar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+    .bar button { font-family: var(--nav-font); text-transform: lowercase; font-weight: 700; font-size: 0.8rem; color: #fff; background: var(--body-color); border: none; padding: 0.5em 0.9em; cursor: pointer; transition: background-color 0.15s ease; }
+    .bar button:hover { background: var(--highlight); }
+
+    .demo .px { position: absolute; inset: 0; display: grid; pointer-events: none; z-index: 5; }
+    .demo .px i { background: var(--bg); box-shadow: 0 0 0 1px var(--bg); opacity: 0; }
+    .demo .slice { position: absolute; left: 0; overflow: hidden; z-index: 7; }
+    .demo .slice img { position: absolute; left: 0; width: 100%; display: block; }
+
+    .demo.fx-scan::after { content: ''; position: absolute; inset: 0; z-index: 6; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px); animation: lab-scan 0.5s linear infinite; }
+    .demo.fx-scan { animation: lab-crt 0.09s steps(2) infinite; }
+    @keyframes lab-scan { from { background-position: 0 0; } to { background-position: 0 4px; } }
+    @keyframes lab-crt { 0% { filter: none; transform: none; } 50% { filter: saturate(1.6) contrast(1.1); transform: translateX(2px); } }
+
+    .navrow { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+    .navrow figure { margin: 0; }
+    .navrow figcaption { font-family: var(--nav-font); font-size: 0.72rem; color: var(--fg); margin-top: 0.45rem; text-transform: lowercase; }
+    .nb { width: 156px; height: 92px; background: var(--body-color); color: #fff; position: relative; overflow: hidden; display: flex; }
+    .nb span { font-family: var(--nav-font); font-weight: 700; text-transform: lowercase; color: #fff; }
+    .nb-current span { position: absolute; inset: 1.5px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.62rem; transform: scaleX(1.7) scaleY(2.3); transform-origin: center; }
+    .nb-a span { margin: auto; text-align: center; font-size: 0.95rem; line-height: 1.15; padding: 0.4em; }
+    .nb-b span { align-self: center; padding: 0 0.5rem; font-size: 1.3rem; line-height: 1.04; letter-spacing: -0.01em; }
+    .nb-c { align-items: flex-end; }
+    .nb-c span { padding: 0.5rem; font-size: 1.05rem; line-height: 1.05; text-align: left; }
+    .nb-c::before { content: ''; position: absolute; top: 0.5rem; right: 0.5rem; width: 0.5rem; height: 0.5rem; background: #fff; }
+  </style>
+
+  <script is:inline>
+    (function () {
+      var demo = document.getElementById('demo');
+      var img = demo.querySelector('.demo-img');
+      var PX = 24;
+      function overlay() {
+        var cols = Math.max(1, Math.round(demo.clientWidth / PX));
+        var rows = Math.max(1, Math.round(demo.clientHeight / PX));
+        var o = demo.querySelector('.px');
+        if (o && o.dataset.c === cols + 'x' + rows) return Array.prototype.slice.call(o.children);
+        if (o) o.remove();
+        o = document.createElement('div'); o.className = 'px'; o.dataset.c = cols + 'x' + rows;
+        o.style.gridTemplateColumns = 'repeat(' + cols + ',1fr)';
+        o.style.gridTemplateRows = 'repeat(' + rows + ',1fr)';
+        for (var i = 0; i < cols * rows; i++) o.appendChild(document.createElement('i'));
+        demo.appendChild(o);
+        return Array.prototype.slice.call(o.children);
+      }
+      function reset(cells) { cells.forEach(function (c) { c.style.opacity = '0'; c.style.background = 'var(--bg)'; }); }
+      var FX = {
+        fizzle: function () {
+          var cells = overlay(); cells.forEach(function (c) { c.style.transition = 'none'; });
+          cells.forEach(function (c) { setTimeout(function () { c.style.opacity = '1'; }, Math.random() * 240); });
+          setTimeout(function () { cells.forEach(function (c) { setTimeout(function () { c.style.opacity = '0'; }, Math.random() * 240); }); }, 380);
+        },
+        static: function () {
+          var cells = overlay(); var cols = ['var(--bg)', 'var(--body-color)', 'var(--highlight)', '#111']; var n = 0;
+          var iv = setInterval(function () {
+            cells.forEach(function (c) { if (Math.random() < 0.5) { c.style.background = cols[(Math.random() * cols.length) | 0]; c.style.opacity = Math.random() < 0.6 ? '1' : '0'; } });
+            if (++n > 13) { clearInterval(iv); reset(cells); }
+          }, 45);
+        },
+        scan: function () { demo.classList.remove('fx-scan'); void demo.offsetWidth; demo.classList.add('fx-scan'); setTimeout(function () { demo.classList.remove('fx-scan'); }, 2800); },
+        mosh: function () {
+          var N = 11, h = demo.clientHeight; var wrap = document.createElement('div');
+          wrap.style.cssText = 'position:absolute;inset:0;z-index:7;'; wrap.className = 'moshwrap';
+          for (var i = 0; i < N; i++) {
+            var s = document.createElement('div'); s.className = 'slice';
+            s.style.top = (i * h / N) + 'px'; s.style.height = (h / N) + 'px'; s.style.width = '100%';
+            var im = document.createElement('img'); im.src = img.src; im.style.top = (-i * h / N) + 'px'; im.style.height = h + 'px';
+            s.appendChild(im); wrap.appendChild(s);
+          }
+          demo.appendChild(wrap);
+          var n = 0; var iv = setInterval(function () {
+            Array.prototype.slice.call(wrap.children).forEach(function (s) { s.style.transform = 'translateX(' + ((Math.random() * 2 - 1) * 32) + 'px)'; s.style.filter = Math.random() < 0.3 ? 'hue-rotate(180deg) contrast(1.3)' : 'none'; });
+            if (++n > 9) { clearInterval(iv); wrap.remove(); }
+          }, 70);
+        },
+        ripple: function () {
+          var cells = overlay(); cells.forEach(function (c) { c.style.transition = 'none'; });
+          var o = demo.querySelector('.px'); var cols = +o.dataset.c.split('x')[0]; var rows = cells.length / cols;
+          var ox = demo.clientWidth / 2, oy = demo.clientHeight / 2, max = Math.hypot(ox, oy) || 1;
+          cells.forEach(function (c, i) {
+            var cx = ((i % cols) + 0.5) / cols * demo.clientWidth;
+            var cy = ((Math.floor(i / cols)) + 0.5) / rows * demo.clientHeight;
+            var d = Math.hypot(cx - ox, cy - oy) / max;
+            setTimeout(function () { c.style.background = Math.random() < 0.5 ? 'var(--highlight)' : 'var(--bg)'; c.style.opacity = '1'; setTimeout(function () { c.style.opacity = '0'; }, 90); }, d * 440);
+          });
+        },
+        shutter: function () {
+          var cells = overlay(); var o = demo.querySelector('.px'); var cols = +o.dataset.c.split('x')[0];
+          cells.forEach(function (c) { c.style.transition = 'none'; c.style.background = 'var(--bg)'; });
+          cells.forEach(function (c, i) { var col = i % cols; setTimeout(function () { c.style.opacity = '1'; }, col * 18); });
+          setTimeout(function () { cells.forEach(function (c, i) { var col = i % cols; setTimeout(function () { c.style.opacity = '0'; }, (cols - col) * 18); }); }, 460);
+        }
+      };
+      document.getElementById('bar').addEventListener('click', function (e) {
+        var b = e.target.closest('button'); if (b && FX[b.dataset.fx]) FX[b.dataset.fx]();
+      });
+    })();
+  </script>
+</body>
+</html>

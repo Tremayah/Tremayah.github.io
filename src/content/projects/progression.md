@@ -8,32 +8,36 @@ order: 6
 cover: "/images/progression/bracelet.png"
 ---
 
-The brief was to design "something between a smartphone and a dumbphone", with a trans-generational audience in mind. Where my earlier work had been hands-on from day one, this project was led by research — and that was the point. If I want to be a good product designer, I have to be able to find and understand the people I'm designing for.
+I was tasked with designing "something between a smartphone and a dumbphone". The lecture where we learnt of the task was heavily focussed on research and identifying user groups. This seemed like a chore, but only because I'm not yet used to research — and if I am to be a good product designer, then I must be able to identify the people I'm designing for.
 
-I interviewed people across a spread of generations — children, young adults, adults and older adults — about their screen time and, crucially, the things they felt they couldn't live without. I couldn't reach quite the range I'd hoped (it's hard to get time with the very young and the very old), but the conversations were invaluable, and paired with desk research they gave me a clear picture of what the market actually wants.
+I set out to interview a broad range of people — children, young adults, adults and older adults — across different generations and life stages. I wasn't able to get hold of nearly as many as I originally wanted, but the interviewees — a software developer, an artist and writer, and a composer — were invaluable. The age range wasn't what I wanted (I don't have many contacts among the very young or very old), and the occupations were limited to the arts. Not ideal, but working in tangent to outside research, it gave me a pretty good idea of what the market, and consumers, want.
 
 ## What I asked
 
-The interviews followed a script that moved from screen-time habits to the things people genuinely couldn't do without. A few of the questions that shaped the brief most, and what they turned up:
+The questions I asked were vital, so I worked on a script before any interviews took place. A few of them — and the answers that moved the brief most:
 
 <div class="qa">
-  <p class="qa-kicker">the questions that shaped it</p>
+  <p class="qa-kicker">asked &amp; answered</p>
   <ol class="qa-list">
     <li>
-      <span class="qa-q">"Are there any features of a phone you don't think you could live without?"</span>
-      <span class="qa-a">Every answer was different — which is what pushed the design toward a set of single-function pieces rather than one do-everything device.</span>
+      <span class="qa-q">Are there any features of a phone you don't think you could live without?</span>
+      <span class="qa-a">"Maps, some form of free international calling, and the phone itself. Those are the three things."</span>
+      <span class="qa-cite">— Dom</span>
     </li>
     <li>
-      <span class="qa-q">"What things are holding you back from permanently ditching your phone?"</span>
-      <span class="qa-a">The blockers were rarely practical; it was attachment more than utility.</span>
+      <span class="qa-q">What things are holding you back from permanently ditching your phone?</span>
+      <span class="qa-a">"Two-factor authentication — I forgot that as a reason to keep a phone. That's quite hard to ditch."</span>
+      <span class="qa-cite">— Tim</span>
     </li>
     <li>
-      <span class="qa-q">"Do you want to be able to use these features, or is it more about being available to certain people?"</span>
-      <span class="qa-a">The gap between using a phone and simply being reachable is the whole idea behind the communication ring.</span>
+      <span class="qa-q">Would you prefer for the jewellery to have no interface, or a small interface for interacting with?</span>
+      <span class="qa-a">"If I've got four pieces of jewellery I'd rather use a single interface on my wrist than have them all with their own tiny screens."</span>
+      <span class="qa-cite">— Tim</span>
     </li>
     <li>
-      <span class="qa-q">"At what age do you think children should first be allowed to have access to a smart phone?"</span>
-      <span class="qa-a">The trans-generational thread I most wanted to pull on, and the one I later let slip.</span>
+      <span class="qa-q">Do you want to be able to use these features, or is it more about being available to certain people?</span>
+      <span class="qa-a">"I'd love to just go for a walk with a clear mind, but not want to be uncontactable or get lost — those are the situations."</span>
+      <span class="qa-cite">— Dom</span>
     </li>
   </ol>
 </div>
@@ -44,20 +48,17 @@ Another thing I've found is that it is very difficult to get hold of people outs
 
 ## The idea
 
-<section class="proj-row">
-  <figure class="proj-media proj-media--a4">
-    <img loading="lazy" decoding="async" src="/images/progression/nomophobia-poster-finished-1.png" alt="Nomophobia poster — who each piece is for" />
-  </figure>
-  <div class="proj-text">The research kept circling one idea: <strong>nomophobia</strong> — the anxiety of being without a working phone, a term first coined by a UK Post Office study. Rather than fight that attachment head-on, the concept leans into it: a set of jewellery where each piece quietly takes over one specific phone function, so it's easier to leave the phone itself behind.</div>
-</section>
+Thorough online research showed surprisingly few studies about screentime and phone-related anxiety; a couple of the big ones were conducted by the UK Post Office, and another studying teens in India. The Post Office study in particular was the first to coin the term "nomophobia" — the fear or anxiety caused by not having one's smart phone either on hand, or functioning.
+
+What I had in mind was wearable technology that fills a specific function of a phone, to make it easier for people to part with theirs. I believe the market for this would be expansive, especially as time goes on and screen time continues to rise throughout generations.
 
 ## Three pieces
 
-Three products came out of it:
+The next step was to actually design the products. Three came out of it:
 
-- **A communication ring** — a subtle LED band running through the middle that glows when you send or receive a call. The dimensions are based on a ring I wear every day.
-- **An AI wristband** — the "brains" of the set: audio in and out, a minimal 16×16 display for things like a direction arrow and a distance, and a connection to the other pieces. Imagine leaving your phone behind but still scanning a restaurant's QR menu with a camera pendant and talking your order through with the band.
-- **A camera pendant** — no screen, operated by a single button on the chain, sending photos straight to a phone over Bluetooth once in range — for people whose essential is always having a camera on them.
+- **A communication ring** — I wanted a subtle LED band going through the middle that could glow when receiving or sending a call. I based the dimensions off a ring I wear every day.
+- **An AI wristband** — the "brains" of the operation: audio in and out, accessing the internet on your behalf, showing map directions on a small 16×16 display (something minimal, such as an arrow and a number), and answering any questions or queries you have. Picture leaving your phone behind but still scanning a restaurant's QR menu with the camera pendant, then discussing your order with the Large Language Model in the wristband.
+- **A camera pendant** — a camera necklace that could rival smartphone cameras, for people who consider constant access to a camera essential. No visual interface, operated by a button that connects to the chain, it sends photos via Bluetooth directly to someone's smart phone once in range.
 
 <div class="carousel">
   <img loading="lazy" decoding="async" src="/images/progression/ring.png" alt="Communication ring concept" />
@@ -65,17 +66,28 @@ Three products came out of it:
   <img loading="lazy" decoding="async" src="/images/progression/camera-pendant-2.png" alt="Camera pendant concept" />
 </div>
 
-I rendered the pieces in Blender — its material and lighting workflow is far ahead of anything else I have access to — and built two posters: a system map showing who each piece is for, and a hero shot to present the set at its best.
+I rendered each piece in Blender — its UI for rendering and materials is unmatched by anything else I have available to me.
 
 <figure class="proj-full">
   <img loading="lazy" decoding="async" src="/images/progression/camera-pendant-band.png" alt="Camera pendant with its chain laid out" />
 </figure>
 
-Finally I made final sketch models of each product. With the university workshops closed for Christmas I ordered the prints from a third party; they came back surprisingly clean off a 0.2 mm nozzle, and a coat of silver spray plus a few details finished them off.
+## Posters
+
+The last step was to present the set, with two posters: a system map showing who each piece is for, and a hero shot to show it off at its best.
+
+<section class="proj-row">
+  <figure class="proj-media proj-media--a4">
+    <img loading="lazy" decoding="async" src="/images/progression/nomophobia-poster-finished-1.png" alt="System-map poster — who each piece is designed for" />
+  </figure>
+  <div class="proj-text">The system map was the harder one. I've not much experience with Adobe Illustrator, so this poster was very educational, and I struggled with how to map something like this — in the end I went with mapping out who each product is designed for.</div>
+</section>
 
 <section class="proj-row proj-row--rev">
   <figure class="proj-media proj-media--a4">
-    <img loading="lazy" decoding="async" src="/images/progression/smart-jewellery-thing.jpg" alt="Smart jewellery hero render" />
+    <img loading="lazy" decoding="async" src="/images/progression/smart-jewellery-thing.jpg" alt="Hero-shot poster of the jewellery set" />
   </figure>
-  <div class="proj-text">Overall I'm happy with it. If I'm honest I tunnelled onto the dumbphone idea and let the trans-generational side of the brief slip — something I'd hold onto more tightly next time — but the research-led approach taught me far more than the making did.</div>
+  <div class="proj-text">The hero shot was more rushed, but I think it has just the impact it needs. I gave each of the pieces a fitting name, as well as a description of what it is and does.</div>
 </section>
+
+Overall I'm happy with how this project turned out, although I do feel I could have stuck closer to the brief. I fear I tunnelled onto the dumbphone aspect, while sidelining the trans-generational requirement — I partially combated this by including a mother and her child as part of the target audience, as well as interviewing a range of generations.

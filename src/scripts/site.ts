@@ -775,6 +775,13 @@ function init(): void {
   // Light the "more works" button while the page is scrolled down.
   initScrollSync();
 
+  // "More works" tiles live outside the stage (below the fold), so they get
+  // their own click handler to open their writeup (e.g. Living Lamp).
+  document.querySelector<HTMLElement>('[data-more-grid]')?.addEventListener('click', (e) => {
+    const tile = (e.target as Element).closest<HTMLElement>('.more-tile[data-open]');
+    if (tile?.dataset.open) openProject(tile, tile.dataset.open);
+  });
+
   // The open project's hero is sized to the top-left grid cell — recompute it
   // when the grid reflows on resize. (CV has no hero; this is then a no-op.)
   let resizeRAF = 0;

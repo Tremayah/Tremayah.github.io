@@ -21,6 +21,7 @@ const get = (id: string) => all.find((p) => p.id === id);
 // (Essays etc. stay on disk for later — see src/content/projects.)
 const writeupIds = [
   'exploration', 'keycaps', 'progression', 'table-tennis-bat', // landing projects
+  'living-lamp',                                               // more-works project
   'cv',                                                        // CV button → full page
 ];
 const writeups = (
@@ -61,11 +62,16 @@ const cells = [
 ];
 
 // "More works" tiles — revealed below the fold when the page is made scrollable.
+// The first is a real, openable project (Living Lamp); the rest are placeholders.
 // Add as many as you like; the grid flows into new rows automatically.
-const moreWorks = Array.from({ length: 6 }, (_, i) => ({
-  title: `project ${i + 6}`,
-  desc: 'Placeholder — more work to come.',
-}));
+const moreWorks = [
+  { kind: 'photo' as const, ...data('living-lamp') },
+  ...Array.from({ length: 5 }, (_, i) => ({
+    kind: 'placeholder' as const,
+    title: `project ${i + 7}`,
+    desc: 'Placeholder — more work to come.',
+  })),
+];
 
 // FormSubmit alias — keeps the real address out of the page source (manage at formsubmit.co).
 const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
@@ -209,10 +215,20 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
       scroll there and back. Add more entries above and they flow into new rows. */}
   <section class="more-grid" data-more-grid>
     {moreWorks.map((t) => (
-      <div class="more-tile" data-desc={t.desc}>
-        <span class="uc-badge">under construction</span>
-        <span class="placeholder-label">{t.title}</span>
-      </div>
+      t.kind === 'photo' ? (
+        <button class="more-tile more-tile--photo" type="button" data-open={t.id} data-desc={t.desc}>
+          <span class="uc-badge">under construction</span>
+          <span class="tile-media">
+            <img class="tile-img" src={t.cover} alt="" loading="lazy" decoding="async" />
+          </span>
+          <span class="tile-name">{t.title}</span>
+        </button>
+      ) : (
+        <div class="more-tile" data-desc={t.desc}>
+          <span class="uc-badge">under construction</span>
+          <span class="placeholder-label">{t.title}</span>
+        </div>
+      )
     ))}
   </section>
 </LandingLayout>

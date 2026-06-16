@@ -12,7 +12,18 @@ Moving into second year, I wanted to raise the standard of my work considerably 
 
 By using the keycap as a medium, I could put materiality in the foreground, treating the investigation of different materials as the whole point of the product rather than an afterthought. I drew up a set of material ambitions to chase: metal — brass, coated copper, steel, even gold; ceramic — glossy or matte, with a huge tactile range; Jesmonite — an inexpensive, eco-friendly entry point; wood — rarely seen, because of the intricate cutting a keycap demands; and glass — ambitious, but a keyboard like rows of tiny glass blocks could be one of a kind.
 
+<section class="proj-row">
+  <figure class="proj-media">
+    <img loading="lazy" decoding="async" src="/images/keycaps/keycap-render.jpg" alt="CAD render of the keycap — a rounded cube with a dished top" />
+  </figure>
+  <div class="proj-text">Before any casting, the keycap itself needed designing. I modelled it in Rhino as a rounded cube with a dished top for the finger — my own shape rather than a standard profile, while keeping the hollow underside a switch stem needs.</div>
+</section>
+
 I gathered the research into a material taxonomy laid out as a magazine in InDesign — far less technical than my first attempt, much nicer to look at, and far more time-consuming to make.
+
+<figure class="proj-full">
+  <img loading="lazy" decoding="async" src="/images/keycaps/keycap-field.jpg" alt="A render of a whole set of the porcelain keycaps" />
+</figure>
 
 The main build focused on ceramic, and specifically on the problems of casting porcelain, clear-glazed keycaps. I cut a two-part mould and worked through the casting process, drying the pieces in a hot cupboard before firing them in a kiln.
 
