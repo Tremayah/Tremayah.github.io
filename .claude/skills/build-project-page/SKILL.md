@@ -53,10 +53,15 @@ non-negotiables run through every phase:
   `tile--photo`, not an inert `tile--placeholder`). All three or it's dead.
 - **Uncropped is the default; the hero is the one exception.** Per DESIGN.md:
   body images keep their natural aspect ratio. `object-fit: cover` is sanctioned
-  *only* for the hero/cover image (it's sized to fill the top-left cell). The
-  hero's copy wraps around it — there must be **no blank gap** beside the hero;
-  the body fills the space. (This is a standing rule Raphael has corrected
-  before.)
+  *only* for the hero/cover image (it's sized to fill the top-left cell). How the
+  copy meets the hero depends on the page archetype (see Phase 3):
+  - **Flow page** (no `## headings`): copy *wraps* the hero, filling the space
+    beside **and** below it — there must be **no blank gap** beside the hero.
+    (A standing rule Raphael has corrected before.)
+  - **Article page** (has `## headings`): the lead paragraph runs as a clean
+    **column** beside the hero and the next block clears below it — a modest gap
+    beside the *lower* hero is the intended look, not a bug to "fill". This is
+    automatic via `.project-body:has(> h2)`; don't add classes or un-clear it.
 - **The build can't break the site from here.** This skill only writes a
   content `.md`, edits `index.astro`, and adds image files — all caught by
   `npm run build`. It never touches deploy config. But **committing/pushing is
@@ -102,11 +107,27 @@ one, flag it as yours.
 Read `DESIGN.md`. Then decide the page's structure from what the material
 *actually contains* — never force content into a primitive it doesn't fit.
 
-- **Hero:** the `cover` frontmatter image. Strongest single shot. Copy wraps it.
+- **Pick the archetype first** (it changes how the hero and headings behave):
+  - **Article page** — the writeup has natural sections, so it gets `## headings`.
+    Headings auto-render as red-box chips, the lead paragraph auto-runs as a
+    column beside the hero, and each heading auto-hugs the block after it. You
+    write plain `## Heading` lines; the CSS (`:has(> h2)`) does the rest. This is
+    the default for a project with a real narrative. **Living Lamp and Smart
+    Jewellery are the reference article pages — match their shape.**
+  - **Flow page** — a short piece with no real sections (table-tennis-bat,
+    keycaps). No headings; copy wraps the hero and flows as one piece.
+- **Hero:** the `cover` frontmatter image. Strongest single shot. On an article
+  page the lead paragraph sits beside it as a column (don't fight the small gap
+  beside the lower hero); on a flow page copy wraps it with no blank gap.
 - **Choosing image blocks** (the `.txt` tag in brackets — Phase 5 writes the
   matching HTML, the exporter reads these tags back):
   - 2+ related shots to flick through (iterations, angles) → **`carousel`**
-    (natural ratio, uncropped — the default).
+    (natural ratio, uncropped — the default). **If the set is portrait/tall it
+    will dominate at full width — put it *beside text* instead:** a
+    `<figure class="proj-media proj-media--carousel"><div class="carousel">…</div></figure>`
+    inside a `.proj-row` (compact slider one side, a paragraph the other). This
+    is the "make the carousel much smaller, on the left with a paragraph on the
+    right" pattern — Living Lamp's hinge/snapped-tap row is the reference.
   - 2 / 3 directly comparable shots, same subject, where matching crops *helps* →
     **`hero pair`** / **`hero trio`** (cropped to a shared ratio).
   - a uniform set where regularity beats native framing → **`img-grid`** (square).
@@ -114,9 +135,16 @@ Read `DESIGN.md`. Then decide the page's structure from what the material
   - bespoke full-bleed moments (`proj-full`, `proj-row`/`ROW`, `proj-split`/`SPLIT`,
     `proj-posters`) → only when the material clearly calls for them; used
     sparingly. `keycaps`/`exploration` are the "feature" layout reference.
+- **Section headings** (`## …`) render as red-box / white-text chips and hug the
+  block they introduce — so introduce a `.proj-row`/`.proj-full`/carousel
+  *directly* after its heading; don't insert a filler paragraph to "fix" spacing
+  (the gap is already handled), and don't hand-tune margins.
 - **Prose containers** that carry text and a position: `[CLEAR]` (starts below
   the hero), `[ASIDE LEFT]`/`[ASIDE RIGHT]` (narrow hugging paragraph). These
   are how copy flows around imagery past the hero.
+- **Pacing (DESIGN.md):** interleave media through the page, cap prose runs at
+  ~2 short paragraphs between visuals, no back-to-back media (keep a text beat
+  between two rows), and vary the text↔image relationship down the page.
 - When the material wants something no primitive covers (annotated comparisons,
   video stills, a process diagram) — **stop and flag it for Raphael** with the
   options, don't bodge it.
@@ -163,10 +191,18 @@ border-radius, the palette, uncropped default, motion untouched.
 
 1. **Write `src/content/projects/<slug>.md`:** frontmatter
    (`title`, `description`, `year`, `category`, `tags`, `order`, `cover`) +
-   body. Match the HTML structure of an existing page of the same shape
-   (`table-tennis-bat.md` for a standard carousel page; `keycaps.md` for the
-   feature layout). Use the real primitive classes (`carousel`, `proj-row`,
-   `proj-split`, `hero-pair`, …) so the exporter recognises them.
+   body. Match the HTML structure of an existing page of the same archetype:
+   - **Article page** (sectioned, the usual case) → **`living-lamp.md`** /
+     `progression.md`: `## headings` between movements, the lead paragraph plain
+     (it auto-columns beside the hero), a `proj-media--carousel` row for a
+     portrait set, `proj-row`/`proj-row--rev` to alternate sides, `proj-full`
+     for a section break.
+   - **Flow page** (no sections) → `table-tennis-bat.md` (carousel) /
+     `keycaps.md` (feature layout).
+   Use the real primitive classes (`carousel`, `proj-row`, `proj-media--carousel`,
+   `proj-split`, `hero-pair`, …) so the exporter recognises them. Keep each
+   `proj-text` a **single paragraph** (the exporter round-trips one paragraph per
+   prose slot — two `<p>` in one `proj-text` would merge on re-import).
 2. **Placement is Raphael's decision** — present the options (the landing grid
    is full): replace a landing tile, fill a *personal-projects* slot, or add a
    *more-works* tile. Don't choose for him.

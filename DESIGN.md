@@ -79,8 +79,15 @@ Standard shape for a project writeup, top to bottom:
 2. `under construction` notice, if applicable
 3. Title (large, red, uppercase, `lores-9-plus-narrow`)
 4. Description — one bold lead paragraph
-5. Body copy, wrapping the floated hero image (desktop) / hero stacked above
-   (mobile, ≤680px)
+5. Body copy beside/below the floated hero (desktop) / hero stacked above
+   (mobile, ≤680px). Two modes, picked automatically:
+   - **Flow pages** (no section headings) — copy wraps the hero, filling the
+     space beside *and* below it (no blank gap). The default.
+   - **Article pages** (body broken into `## sections`) — the lead paragraph
+     runs as a clean column beside the hero (a BFC, so it never wraps
+     underneath), and the next block clears below it. Switched on by
+     `.project-body:has(> h2)`; you don't add a class, you just write headings.
+     Smart Jewellery and Living Lamp are the reference article pages.
 6. Supporting media — pick from the primitives below based on what the
    material actually contains; don't force content into a primitive it
    doesn't fit.
@@ -88,6 +95,14 @@ Standard shape for a project writeup, top to bottom:
 ### Layout primitives (pick based on content shape)
 - `.carousel` — ≥2 related shots the reader should flick through (e.g.
   prototype iterations). Natural aspect ratio, swipeable, with dot/arrow nav.
+  Full-width it's a feature; a tall/portrait set will dominate the page (two
+  screens tall), so for those prefer the **carousel-beside-text** row below.
+- **Carousel beside text** — a `.carousel` in a row's media slot:
+  `<figure class="proj-media proj-media--carousel"><div class="carousel">…</div></figure>`
+  inside a `.proj-row` (compact slider on one side, a paragraph on the other,
+  vertically centred; stacks full-width on mobile). The right home for a
+  portrait set you want small. Living Lamp's hinge/snapped-tap row is the
+  reference.
 - `.hero-pair` / `.hero-trio` — 2 or 3 images side by side, cropped to a
   shared 3:2 ratio — use when images are genuinely comparable/same subject and
   cropping to match doesn't lose information.
@@ -107,6 +122,17 @@ Standard shape for a project writeup, top to bottom:
 When source material doesn't cleanly fit any of these (process diagrams, video
 stills, side-by-side comparisons with annotations), **flag it** rather than
 forcing it into the nearest primitive.
+
+### Section headings
+- `## Heading` renders as a **red-box / white-text chip** — the title red
+  (`--title-color`), echoing the "under construction" chip (the bright `#ff4d4d`
+  stays reserved for UC). This is the default; using headings is what turns a
+  writeup into a paced, titled "article" (see the two modes under Composition
+  grammar). Keep them short and uppercase reads naturally.
+- A heading **hugs the block it introduces**: a `.proj-row` / `.proj-full` /
+  `.carousel` / grid / hero-pair immediately after an `h2` automatically drops
+  the big top margin it would otherwise carry. Don't hand-tune the gap, and
+  don't put a stray paragraph in just to absorb it.
 
 ### Pacing & rhythm
 The page should read as a paced sequence of text and image, not a slab of prose
@@ -195,7 +221,7 @@ All fluid via `clamp()`:
 | `.writeup-title` | `clamp(1.6rem, 3.6vw, 3.2rem)` |
 | writeup marquee item | `clamp(1.1rem, 2.8vw, 2rem)` |
 | contact name | `clamp(1.6rem, 4.3vw, 3.75rem)` |
-| project `h2` | `0.75rem`, uppercase |
+| project `h2` | red-box chip, `clamp(0.62rem, 1vw, 0.8rem)`, uppercase, `--nav-font` |
 | project `h3` | `0.65rem`, uppercase |
 
 Letter-spacing: `-0.04em` (contact name), `-0.03em` (titles/marquee),
@@ -255,7 +281,9 @@ Letter-spacing: `-0.04em` (contact name), `-0.03em` (titles/marquee),
 - `.project-desc`: bold lead paragraph, body font.
 - `.project-body`: justified, body font, red text, `h2`/`h3` uppercase bold,
   links in `--accent` purple.
-- Hero floats left, body wraps around it (desktop only — stacks on mobile).
+- Hero floats left (desktop; stacks on mobile). Flow pages wrap copy around it;
+  article pages (`.project-body:has(> h2)`) run the lead paragraph as a column
+  beside it and clear the next block below.
 
 ### Z-index layers (ascending)
 `auto` (grid/body) → `2` (writeup-bar) → `3` (UC badges) → `4` (per-tile pixel

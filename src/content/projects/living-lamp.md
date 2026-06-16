@@ -27,12 +27,15 @@ While discussing the design with Mike, it was suggested I give the lamp movement
 
 The hinges were the real headache. After consulting one lecturer, two technicians, two books, a company, three different ChatGPT models and roughly ten websites — and after five pages of sketches — I settled on two cylinders rotating on a shared axle, with a bolt pressing a little rubber against the axle for friction, so the lamp holds its position while staying adjustable.
 
-<div class="carousel">
-  <img loading="lazy" decoding="async" src="/images/living-lamp/hinge.jpg" alt="The finished hinge — two cylinders on a shared axle, running on a bearing" />
-  <img loading="lazy" decoding="async" src="/images/living-lamp/snapped-tap.jpg" alt="A tap snapped off deep inside the silver-steel axle" />
-</div>
-
-Then the bump in the road. The axle was silver steel — dense, and feeling indestructible — so I threaded it with a regular steel tap. The tap snapped off deep inside, with zero chance of recovery. With no choice but to work around it, I switched to aluminium pipe for the axle, which came with the bonus of a ready-made hole.
+<section class="proj-row">
+  <figure class="proj-media proj-media--carousel">
+    <div class="carousel">
+      <img loading="lazy" decoding="async" src="/images/living-lamp/hinge.jpg" alt="The finished hinge — two cylinders on a shared axle, running on a bearing" />
+      <img loading="lazy" decoding="async" src="/images/living-lamp/snapped-tap.jpg" alt="A tap snapped off deep inside the silver-steel axle" />
+    </div>
+  </figure>
+  <div class="proj-text">Then the bump in the road. The axle was silver steel — dense, and feeling indestructible — so I threaded it with a regular steel tap. The tap snapped off deep inside, with zero chance of recovery. With no choice but to work around it, I switched to aluminium pipe for the axle, which came with the bonus of a ready-made hole.</div>
+</section>
 
 ## Five bases
 
