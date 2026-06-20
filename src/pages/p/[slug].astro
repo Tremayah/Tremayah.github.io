@@ -1,0 +1,41 @@
+---
+/*  /p/<slug>/ — a real, pre-rendered page per openable project (+ the CV).
+
+    Renders the exact same single-page app as "/", but passes openId so site.ts
+    boots straight into that project's write-up (instantly, no fizzle) and so the
+    URL is shareable/bookmarkable. The page's <title>/description/OG image are the
+    project's own, so a shared link previews that project. In-app navigation then
+    swaps the URL between "/" and "/p/<slug>/" via the History API (site.ts). */
+import LandingLayout from '../../layouts/LandingLayout.astro';
+import Landing from '../../components/Landing.astro';
+import { getCollection } from 'astro:content';
+import { OPENABLE_IDS } from '../../openable';
+
+export async function getStaticPaths() {
+  const all = await getCollection('projects');
+  return OPENABLE_IDS.map((id) => {
+    const e = all.find((p) => p.id === id);
+    const name = e?.data.title ?? id;
+    return {
+      params: { slug: id },
+      props: {
+        slug: id,
+        title: `${name} — Raphael Murray-Browne`,
+        description: e?.data.description,
+        image: e?.data.cover,
+      },
+    };
+  });
+}
+
+const { slug, title, description, image } = Astro.props as {
+  slug: string;
+  title: string;
+  description?: string;
+  image?: string;
+};
+---
+
+<LandingLayout title={title} description={description} image={image}>
+  <Landing openId={slug} />
+</LandingLayout>

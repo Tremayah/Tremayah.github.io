@@ -331,13 +331,24 @@ type AwayState = { home: false; view: 'project' | 'cv' | 'page2'; id?: string };
 const atHome = (): boolean => !(history.state && history.state.home === false);
 let navigatingHome = false; // guards against double history.back() on rapid clicks
 
+/* The real URL for an away view. Projects (and the CV) are deep-linkable at
+   /p/<id>/ — matching the pre-rendered pages in src/pages/p/[slug].astro — so the
+   address bar, bookmarks and sharing all work. The personal-projects view (page2)
+   isn't a project, so it keeps the current URL. */
+function pathFor(state: Omit<AwayState, 'home'>): string {
+  if (state.view === 'project' && state.id) return `/p/${state.id}/`;
+  if (state.view === 'cv') return '/p/cv/';
+  return location.pathname;
+}
+
 /* Record that we've navigated away from home. Push a new back-target when
    leaving home; replace it when moving between away views, so there's only ever
-   one entry to go Back through. */
+   one entry to go Back through. The URL swaps to the view's own path. */
 function pushAway(state: Omit<AwayState, 'home'>): void {
   const full: AwayState = { home: false, ...state };
-  if (atHome()) history.pushState(full, '');
-  else history.replaceState(full, '');
+  const url = pathFor(state);
+  if (atHome()) history.pushState(full, '', url);
+  else history.replaceState(full, '', url);
 }
 
 /* In-app home control → drive the Back button so popstate runs the transition. */
@@ -495,7 +506,7 @@ function unlockScroll(): void {
    whole stage fizzles and the write-up — its home bar + hero + copy — reveals
    under the static ring from the click point out, so it all fizzles in as one
    page. The marquee animation is paused during the wave (.animating) for perf. */
-async function openView(id: string, origin: Point, coverSrc: string | null): Promise<void> {
+async function openView(id: string, origin: Point, coverSrc: string | null, instant = false): Promise<void> {
   if (openId || busy || !stage) return;
   busy = true;
   try {
@@ -509,7 +520,9 @@ async function openView(id: string, origin: Point, coverSrc: string | null): Pro
       initCarousels(writeup);
       layoutProjectHero(writeup, coverSrc);
     }
-    if (reduced() || compact()) { if (writeup) clearMask(writeup); return; } // instant, no wave
+    // Instant (no wave) for reduced-motion, mobile overlay, OR a cold deep-link
+    // boot (where there's no click origin to ripple from — see init).
+    if (reduced() || compact() || instant) { if (writeup) clearMask(writeup); return; }
     stage.classList.add('animating');
     if (writeup) setMask(writeup, origin, 0, false);
     await Promise.all([
@@ -767,9 +780,19 @@ function init(): void {
     }
   });
 
-  // History: tag the home base entry, then let Back/Forward drive the home and
-  // re-open transitions. Every open/view-swap pushes one entry on top of this.
-  if (atHome()) history.replaceState({ home: true }, '');
+  // History. On "/" we tag the home base entry and let Back/Forward drive the
+  // home and re-open transitions. On a /p/<slug>/ deep-link the stage carries
+  // data-open-initial: synthesise a home base at "/" *below* this entry, so Back
+  // returns to the home grid within the app, then mark this entry as that view.
+  const openInitial = stage.dataset.openInitial;
+  if (openInitial) {
+    const path = location.pathname + location.search;
+    const isCV = openInitial === 'cv';
+    history.replaceState({ home: true }, '', '/');
+    history.pushState({ home: false, view: isCV ? 'cv' : 'project', id: isCV ? undefined : openInitial }, '', path);
+  } else if (atHome()) {
+    history.replaceState({ home: true }, '');
+  }
   window.addEventListener('popstate', onPopState);
 
   // Light the "more works" button while the page is scrolled down.
@@ -795,6 +818,19 @@ function init(): void {
       layoutProjectHero(writeup, cover);
     });
   });
+
+  // Cold deep-link (/p/<slug>/): the grid sits under the open write-up, so skip
+  // the load-in fizzle entirely — mark the grid ready, warm the stage overlay,
+  // and open that view instantly (no click origin to ripple from).
+  if (openInitial) {
+    stage.classList.add('ready');
+    ensureOverlay(stage);
+    const isCV = openInitial === 'cv';
+    const tile = document.querySelector<HTMLElement>(`[data-open="${openInitial}"]`);
+    const cover = isCV ? null : (tile?.querySelector<HTMLImageElement>('.tile-img')?.getAttribute('src') ?? null);
+    openView(openInitial, { x: stage.clientWidth / 2, y: stage.clientHeight / 2 }, cover, true);
+    return;
+  }
 
   // Load-in: cover every visible tile instantly, reveal the page, then clear
   // the pixels (reverse of the dissolve) so tiles assemble rather than flick in.
