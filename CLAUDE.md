@@ -17,13 +17,21 @@ Those are the only two addresses that exist. Don't invent others.
 
 ## What this is
 
-A **single-page** site: one `/` route, no nav/router. A 3×2 grid of tiles fills the viewport.
-The three files that matter:
+A **single-page app** with one canonical home (`/`) plus a deep-linkable page per
+openable project at `/p/<slug>/`. A 3×2 grid of tiles fills the viewport; opening a project
+swaps the URL via the History API (no real navigation — same app, write-up revealed in place).
+The files that matter:
 
-- `src/pages/index.astro` — builds the grid from the `cells` array (each cell has a page-1 and
-  a page-2 variant) and embeds every opened view's write-up, hidden. `CONTACT_EMAIL` and the
-  `writeupIds` list live up top.
-- `src/scripts/site.ts` — all behaviour (see the model below).
+- `src/components/Landing.astro` — **the whole app**: builds the grid from the `cells` array
+  (each cell has a page-1 and a page-2 variant) and embeds every openable write-up, hidden.
+  Takes an optional `openId` prop → `data-open-initial` on the stage, so a deep-link boots
+  straight into that view. `FORMSUBMIT_ALIAS` and `UNDER_CONSTRUCTION` live up top.
+- `src/pages/index.astro` — thin wrapper: `<LandingLayout><Landing /></LandingLayout>`.
+- `src/pages/p/[slug].astro` — pre-renders a real page per openable id (`getStaticPaths` over
+  `src/openable.ts`), passing `openId` + the project's own title/description/OG image.
+- `src/openable.ts` — single source of truth for the openable/deep-linkable ids.
+- `src/scripts/site.ts` — all behaviour (see the model below); `pushAway`/`pathFor` keep the
+  URL (`/` ⇄ `/p/<slug>/`) and `document.title` in step; cold deep-links open instantly.
 - `src/styles/global.css` — all styling; design tokens in `:root` (`--grid-gap`, `--grid-pad`,
   `--cap` caption-band height, `--marquee-h`, colours).
 

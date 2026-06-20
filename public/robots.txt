@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tremayah.com/sitemap.xml

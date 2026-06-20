@@ -506,11 +506,20 @@ function unlockScroll(): void {
    whole stage fizzles and the write-up — its home bar + hero + copy — reveals
    under the static ring from the click point out, so it all fizzles in as one
    page. The marquee animation is paused during the wave (.animating) for perf. */
+/* Keep the tab title in step with what's open, so History-API navigation (and a
+   cold deep-link → home) matches the per-project <title> the /p/ pages ship. */
+const SITE_TITLE = 'Raphael Murray-Browne';
+function setDocTitle(id: string | null): void {
+  const name = id ? stage?.querySelector(`.writeup[data-for="${id}"] .writeup-title`)?.textContent?.trim() : '';
+  document.title = name ? `${name} — ${SITE_TITLE}` : SITE_TITLE;
+}
+
 async function openView(id: string, origin: Point, coverSrc: string | null, instant = false): Promise<void> {
   if (openId || busy || !stage) return;
   busy = true;
   try {
     openId = id;
+    setDocTitle(id);
     stage.classList.add('is-open');
     lockScroll();
     const maxDist = maxDistFrom(origin);
@@ -574,6 +583,7 @@ async function fizzleHome(): Promise<void> {
       if (writeup) { writeup.hidden = true; clearMask(writeup); }
       if (id) { openId = null; stage!.classList.remove('is-open'); unlockScroll(); }
       if (swapPage) stage!.dataset.page = '1';
+      setDocTitle(null); // back on the home grid → site title
     };
 
     if (reduced() || compact()) { settle(); return; }
