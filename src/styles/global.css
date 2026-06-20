@@ -199,6 +199,47 @@ html.view-open { overflow: hidden; }
   text-transform: lowercase;
   color: var(--body-color);
 }
+
+/* A thin blue outline on hover/focus so the openable project tiles read as
+   clickable. Inset (negative offset) so it sits inside the tile, clear of the
+   grid gap. */
+.tile--photo:hover,
+.tile--photo:focus-visible,
+.more-tile--photo:hover,
+.more-tile--photo:focus-visible {
+  outline: 2px solid var(--highlight);
+  outline-offset: -2px;
+}
+
+/* About tile — a short bio in the landing's bottom-left cell. Static (not a
+   button); styled in the body voice, scrolls if the copy ever overflows. */
+.tile--about { cursor: default; background: var(--bg); }
+.about-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.35rem, 1vw, 0.7rem);
+  padding: clamp(0.6rem, 1.4vw, 1.1rem);
+  overflow-y: auto;
+}
+.about-head {
+  margin: 0;
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.85rem, 1.5vw, 1.25rem);
+  line-height: 1.1;
+  text-transform: lowercase;
+  color: var(--title-color);
+}
+.about-body {
+  font-family: var(--body-font);
+  font-size: clamp(0.62rem, 0.98vw, 0.9rem);
+  line-height: 1.45;
+  color: var(--body-color);
+}
+.about-body p { margin: 0 0 0.5em; }
+.about-body p:last-child { margin: 0; }
 /* Fixed caption band so the image bottom sits on the shared --cap line that the
    nav boxes and send button also align to. */
 .tile-name {
@@ -242,11 +283,12 @@ html.view-open { overflow: hidden; }
 }
 
 /* ── Nav box: the bottom-right cell is a 2×2 ────────────────────────────────
-   Top-left is a description panel (filled on project hover); the other three
-   are red section buttons — Personal Projects (swaps the project tiles), CV
-   (full page), More Works (makes the page scroll). The cell reserves the
-   caption band at its bottom (--cap) so the box grid aligns with the adjacent
-   tile's image (above its caption), rather than running the full cell height. */
+   Top-left is a description panel (filled on project hover); top-right and
+   bottom-left are red section buttons — Personal Projects (swaps the project
+   tiles) and More Works (makes the page scroll). The bottom-right is itself a
+   2×2 links quad (see .nav-quad). The cell reserves the caption band at its
+   bottom (--cap) so the box grid aligns with the adjacent tile's image (above
+   its caption), rather than running the full cell height. */
 .tile--nav {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -313,6 +355,92 @@ html.view-open { overflow: hidden; }
 html.more-open .nav-box--more {
   background: var(--highlight);
 }
+
+/* ── Links quad: the nav box's bottom-right cell ────────────────────────────
+   Itself a 2×2 of small tiles — Instagram, LinkedIn, the CV page, and one
+   spare slot (blank for now). Same red→blue treatment as the nav boxes, just
+   smaller, with white logos / a white "cv" wordmark centred in each. */
+.nav-quad {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: clamp(0.25rem, 0.7vw, 0.5rem);
+  min-width: 0;
+  min-height: 0;
+}
+.nav-mini {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  margin: 0;
+  padding: 0;
+  background: #ff4d4d;
+  color: #fff;
+  cursor: pointer;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+  transition: background-color 0.2s ease;
+}
+.nav-mini:hover,
+.nav-mini:focus-visible {
+  background: var(--highlight);
+  outline: none;
+}
+.nav-mini-icon {
+  width: 58%;
+  height: 58%;
+  display: block;
+  fill: currentColor; /* inherits the white from .nav-mini, stays white on hover */
+}
+.nav-mini-label {
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.6rem, 1.4vw, 1.05rem);
+  line-height: 1;
+  text-transform: lowercase;
+}
+/* Spare slot — dimmed and inert until it gets a home (blog? substack?). */
+.nav-mini--blank {
+  opacity: 0.4;
+  cursor: default;
+}
+.nav-mini--blank:hover {
+  background: #ff4d4d;
+}
+
+/* Scroll-hint chevron sitting in the caption band beneath the "more works" box
+   (bottom-left of the nav cell, ≈25% across). Gently bobs to suggest the page
+   scrolls; fades out once scrolled (more-open). Honours reduce-motion via the
+   global rule. */
+.more-chevron {
+  position: absolute;
+  left: 25%;
+  bottom: calc(var(--cap) * 0.25);
+  transform: translateX(-50%);
+  width: clamp(14px, 1.8vw, 22px);
+  pointer-events: none;
+  color: var(--body-color);
+  opacity: 0.7;
+  animation: chevron-bob 1.8s ease-in-out infinite;
+}
+.more-chevron svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@keyframes chevron-bob {
+  0%, 100% { transform: translate(-50%, 0); }
+  50%      { transform: translate(-50%, 30%); }
+}
+html.more-open .more-chevron { opacity: 0; }
 
 /* The nav box's top-left cell: an accessibility toggle on top, then the
    description panel filling the rest. */
@@ -756,6 +884,46 @@ html.reduce-motion *::after {
 .project-body em   { font-style: italic; }
 .project-body img  { max-width: 100%; height: auto; display: block; margin: 1.5rem 0; cursor: zoom-in; }
 
+/* ── CV page ───────────────────────────────────────────────────────────────
+   A prominent download button at the top, then the rendered CV pages (so it
+   reads on any device — no embedded PDF viewer). Scoped under .project-body to
+   beat the generic link/image rules. */
+.project-body a.cv-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  margin: 0 0 var(--gap-sm);
+  padding: 0.7em 1.2em;
+  background: var(--body-color);
+  color: #fff;
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.85rem, 1.4vw, 1.1rem);
+  line-height: 1;
+  text-transform: lowercase;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+.project-body a.cv-download:hover,
+.project-body a.cv-download:focus-visible {
+  background: var(--highlight);
+  outline: none;
+}
+.cv-download-icon {
+  width: 1.15em;
+  height: 1.15em;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.project-body img.cv-page {
+  max-width: 720px;
+  margin: 0 auto var(--gap-sm);
+  border: 1.5px solid var(--body-color);
+}
+
 /* ── Bespoke project layout (e.g. Acrylic Sandwich Lamps) ───────────────────
    A magazine-style flow: full-bleed images, image+text rows (text vertically
    centred), a split-image section, and a poster row. Margins follow the spec:
@@ -1150,8 +1318,17 @@ html.reduce-motion .carousel-track { transition: none; }
   .tile--photo { height: 68vw; }
   .tile--placeholder { height: 52vw; }
   .tile--contact { height: auto; min-height: 0; }
+  .tile--about { height: auto; min-height: 0; }
   .tile--nav { height: 88vw; padding-bottom: 0; }
   .more-tile { height: 52vw; }
+
+  /* The nav cell has no caption band on mobile and the page already scrolls as a
+     stack, so the scroll-hint chevron isn't needed. */
+  .more-chevron { display: none; }
+
+  /* CV: full-width download button + full-width pages on a phone. */
+  .project-body a.cv-download { display: flex; justify-content: center; width: 100%; padding: 0.95em 1em; }
+  .project-body img.cv-page { max-width: 100%; }
 
   /* Contact card stacks naturally: name → bio → email → message (the desktop
      side-by-side / fixed-half layout has no room on a phone). */

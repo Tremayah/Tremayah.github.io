@@ -30,9 +30,11 @@ The three files that matter:
 ## Behaviour model (current — README goes deeper)
 
 - **Grid.** Cell 0 = the contact card. Cells 1–4 = project tiles. Cell 5 = a 2×2 **nav box**
-  that persists: top-left holds an **animations on/off toggle** + a **description panel**; the
-  other three are buttons — **personal projects**, **cv**, **more works**. Their labels are
-  stretched to fill each box (an SVG with `preserveAspectRatio="none"`, see `fillNavBoxes`).
+  that persists: top-left holds an **animations on/off toggle** + a **description panel**;
+  top-right + bottom-left are buttons — **personal projects**, **more works** (their labels are
+  stretched to fill each box: an SVG with `preserveAspectRatio="none"`, see `fillNavBoxes`).
+  Bottom-right is a **links quad** (`.nav-quad`) — its own 2×2 of small `.nav-mini` tiles:
+  **Instagram**, **LinkedIn**, the **cv** page button, and one **blank** spare slot.
 - **Hover** any tile → its blurb shows in the nav description panel (no typing animation).
 - **Opening a project** (`openView`): the *whole* stage fizzles (radial wave) and the project's
   **hero image appears in the TOP-LEFT**, with the copy wrapping around it — the same layout

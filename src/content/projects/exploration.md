@@ -28,7 +28,7 @@ With the simple geometric forms, any inaccuracies were amplified, and so I decid
 
 <p class="proj-aside proj-aside--l">Corian is a synthetic stone-like material that comes in a variety of colours. It has a subtle translucency that softens its edges to the eye. While usually used in countertops, Corian has been used here for its cool touch, unusual aesthetic, and weight.</p>
 
-<p class="proj-aside proj-aside--r">I reclaimed some larch from a previous project and laser cut it into shape before using danish oil on it to seal the burn marks, a technique I was not aware of before experimentation. The orange hues of the wood give the internal light warmer reflections.</p>
+<p class="proj-aside proj-aside--r">I reclaimed some larch from a previous project and laser cut it into shape before using Danish oil on it to seal the burn marks, a technique I was not aware of before experimentation. The orange hues of the wood give the internal light warmer reflections.</p>
 
 <figure class="proj-full">
   <img loading="lazy" decoding="async" src="/images/exploration/lamp-wood.jpg" alt="The wooden (larch) lamp, lit from within" />
@@ -38,7 +38,7 @@ With the simple geometric forms, any inaccuracies were amplified, and so I decid
   <figure class="proj-media">
     <img loading="lazy" decoding="async" src="/images/exploration/lamp-metal.jpg" alt="The stainless steel lamp" />
   </figure>
-  <div class="proj-text">The metals was originally my favourite because it deviated so far from what the university resources shaped as “normal”, while still feeling premium and luxurious. The stainless steel gives a cold touch while feeling sturdy and expensive, reminiscent of high-end hi-fi equipment.</div>
+  <div class="proj-text">The metal was originally my favourite because it deviated so far from what the university resources shaped as “normal”, while still feeling premium and luxurious. The stainless steel gives a cold touch while feeling sturdy and expensive, reminiscent of high-end hi-fi equipment.</div>
 </section>
 
 <section class="proj-row proj-row--rev">
