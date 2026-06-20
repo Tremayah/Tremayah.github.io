@@ -10,7 +10,7 @@ cover: "/images/progression/bracelet.png"
 
 I was tasked with designing "something between a smartphone and a dumbphone". The lecture where we learnt of the task was heavily focussed on research and identifying user groups. This seemed like a chore, but only because I'm not yet used to research — and if I am to be a good product designer, then I must be able to identify the people I'm designing for.
 
-I set out to interview a broad range of people — children, young adults, adults and older adults — across different generations and life stages. I wasn't able to get hold of nearly as many as I originally wanted, but the interviewees — a software developer, an artist and writer, and a composer — were invaluable. The age range wasn't what I wanted (I don't have many contacts among the very young or very old), and the occupations were limited to the arts. Not ideal, but working in tangent to outside research, it gave me a pretty good idea of what the market, and consumers, want.
+I set out to interview a broad range of people — children, young adults, adults and older adults — across different generations and life stages. I wasn't able to get hold of nearly as many as I originally wanted, but the interviewees — a software developer, an artist and writer, and a composer — were invaluable. The age range wasn't what I wanted (I don't have many contacts among the very young or very old), and the occupations were limited to the arts. Not ideal, but working in tandem with outside research, it gave me a pretty good idea of what the market, and consumers, want.
 
 ## What I asked
 
@@ -48,7 +48,7 @@ Another thing I've found is that it is very difficult to get hold of people outs
 
 ## The idea
 
-Thorough online research showed surprisingly few studies about screentime and phone-related anxiety; a couple of the big ones were conducted by the UK Post Office, and another studying teens in India. The Post Office study in particular was the first to coin the term "nomophobia" — the fear or anxiety caused by not having one's smart phone either on hand, or functioning.
+Thorough online research showed surprisingly few studies about screentime and phone-related anxiety; a couple of the big ones were conducted by the UK Post Office, and another studying teens in India. The Post Office study in particular was the first to coin the term "nomophobia" — the fear or anxiety caused by not having one's smartphone either on hand, or functioning.
 
 What I had in mind was wearable technology that fills a specific function of a phone, to make it easier for people to part with theirs. I believe the market for this would be expansive, especially as time goes on and screen time continues to rise throughout generations.
 
@@ -58,7 +58,7 @@ The next step was to actually design the products. Three came out of it:
 
 - **A communication ring** — I wanted a subtle LED band going through the middle that could glow when receiving or sending a call. I based the dimensions off a ring I wear every day.
 - **An AI wristband** — the "brains" of the operation: audio in and out, accessing the internet on your behalf, showing map directions on a small 16×16 display (something minimal, such as an arrow and a number), and answering any questions or queries you have. Picture leaving your phone behind but still scanning a restaurant's QR menu with the camera pendant, then discussing your order with the Large Language Model in the wristband.
-- **A camera pendant** — a camera necklace that could rival smartphone cameras, for people who consider constant access to a camera essential. No visual interface, operated by a button that connects to the chain, it sends photos via Bluetooth directly to someone's smart phone once in range.
+- **A camera pendant** — a camera necklace that could rival smartphone cameras, for people who consider constant access to a camera essential. No visual interface, operated by a button that connects to the chain, it sends photos via Bluetooth directly to someone's smartphone once in range.
 
 <div class="carousel">
   <img loading="lazy" decoding="async" src="/images/progression/ring.png" alt="Communication ring concept" />

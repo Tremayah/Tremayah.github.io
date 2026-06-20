@@ -20,7 +20,7 @@ Acrylic sandwich lamps were the result of a university project requiring 10 prod
 
 with varying aesthetics and success.
 
-With the simple geometric forms, any inaccuracies were amplified, and so I decided to slightly round the corners to make any misalignment less obvious. The materials were lasercut or CNC milled to minimise variation.
+With the simple geometric forms, any inaccuracies were amplified, and so I decided to slightly round the corners to make any misalignment less obvious. The materials were laser cut or CNC milled to minimise variation.
 
 <figure class="proj-full">
   <img loading="lazy" decoding="async" src="/images/exploration/lamp-corian.jpg" alt="The Corian lamp, lit from within" />
@@ -70,4 +70,4 @@ With the simple geometric forms, any inaccuracies were amplified, and so I decid
   </div>
 </section>
 
-I made a series of posters and instagram posts for online presence. This was originally because I didn't know what a press release is, and thought it meant just a kind of online presence. The Y2K poster for my metal lamp is inspired by the colour palette and artstyle from the videogame “MARATHON”, which released in 2026 and has been my latest graphical obsession.
+I made a series of posters and instagram posts for online presence. This was originally because I didn't know what a press release is, and thought it meant just a kind of online presence. The Y2K poster for my metal lamp is inspired by the colour palette and artstyle from the videogame *Marathon*, which released in 2026 and has been my latest graphical obsession.

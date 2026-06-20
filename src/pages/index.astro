@@ -71,12 +71,15 @@ const cells = [
 ];
 
 // "More works" tiles — revealed below the fold when the page is made scrollable.
-// Real, openable projects only (placeholders removed). Smart Jewellery moved
-// here when the landing's bottom-left cell became the about tile. Add more
-// entries and the grid flows into new rows automatically.
+// Real, openable projects first (Living Lamp, Smart Jewellery — the latter moved
+// here when the landing's bottom-left cell became the about tile), then stub
+// placeholders for projects not yet written up (Essays, Trebuchet). The grid
+// flows into new rows automatically.
 const moreWorks = [
   { kind: 'photo' as const, ...data('living-lamp') },
   { kind: 'photo' as const, ...data('progression') },
+  { kind: 'placeholder' as const, title: 'Essays', desc: 'Written work — coming soon.' },
+  { kind: 'placeholder' as const, title: 'Trebuchet', desc: 'A laser-cut plywood trebuchet — coming soon.' },
 ];
 
 // FormSubmit alias — keeps the real address out of the page source (manage at formsubmit.co).
