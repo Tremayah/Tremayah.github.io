@@ -24,7 +24,8 @@ Write ALL findings to `.claude/CODE-REVIEW.md` BEFORE changing anything.
 Then fix in priority order, committing per fix. Keep this list updated live.
 - [x] Write findings file
 - [x] Triage P0/P1/P2
-- [x] Fix in order, commit each — applied 6 fixes (see CODE-REVIEW.md), all committed
+- [x] Fix in order, commit each — 5 fixes applied (title sync, sitemap, robots,
+      theme-color, docs), 1 deferred (focus management — see CODE-REVIEW.md)
 
 ## Notes / timings
 - Start 02:13. MacBook awake ~1h (until ~03:13).
