@@ -9,6 +9,7 @@ export const OPENABLE_IDS = [
   'table-tennis-bat', // Table Tennis Bat (landing)
   'living-lamp', // Living Lamp (more works)
   'progression', // Smart Jewellery (more works)
+  'essays', // Design Culture essays (more works)
   'topography-table', // Topography Table (personal projects)
   'cv', // CV page
 ] as const;

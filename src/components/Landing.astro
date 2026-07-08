@@ -72,7 +72,8 @@ const cells = [
 const moreWorks = [
   { kind: 'photo' as const, ...data('living-lamp') },
   { kind: 'photo' as const, ...data('progression') },
-  { kind: 'placeholder' as const, title: 'Essays', desc: 'Written work — coming soon.' },
+  // Essays has no cover image, so it opens from a text tile instead of a photo.
+  { kind: 'text' as const, ...data('essays') },
   { kind: 'placeholder' as const, title: 'Trebuchet', desc: 'A laser-cut plywood trebuchet — coming soon.' },
 ];
 
@@ -190,8 +191,9 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
                   <div class="nav-mini nav-mini--blank" aria-hidden="true"></div>
                 </div>
                 {/* A gentle bobbing chevron in the caption band under the "more
-                    works" box — a hint that the page scrolls to reveal more. */}
-                <span class="more-chevron" aria-hidden="true">
+                    works" box — a hint that the page scrolls to reveal more, and
+                    a click shortcut for it (data-action="more", same as the box). */}
+                <span class="more-chevron" data-action="more" aria-hidden="true">
                   <svg viewBox="0 0 24 12" focusable="false"><path d="M3 3 L12 10 L21 3" /></svg>
                 </span>
               </div>
@@ -277,6 +279,13 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
           <img class="tile-img" src={t.cover} alt="" loading="lazy" decoding="async" />
         </span>
         <span class="tile-name">{t.title}</span>
+      </button>
+    ) : t.kind === 'text' ? (
+      // Openable, image-less tile (e.g. Essays): a light card with the title,
+      // opening its write-up like any project.
+      <button class="more-tile more-tile--text" type="button" data-open={t.id} data-desc={t.desc}>
+        <span class="more-tile-text-label">{t.title}</span>
+        <span class="more-tile-text-hint">read →</span>
       </button>
     ) : (
       <div class="more-tile" data-desc={t.desc}>

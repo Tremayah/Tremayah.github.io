@@ -130,6 +130,43 @@ html.view-open { overflow: hidden; }
   overflow: hidden;
   background: var(--bg);
 }
+/* Openable, image-less tile (Essays): a light card carrying its title in place
+   of a cover, title bottom-left like a photo tile's caption. Fills solid red on
+   hover, echoing the write-up's title red. */
+.more-tile--text {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding: clamp(0.9rem, 2vw, 1.6rem);
+  border: none;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1.5px var(--body-color);
+  color: var(--body-color);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.more-tile--text:hover,
+.more-tile--text:focus-visible {
+  background: var(--body-color);
+  color: #fff;
+  outline: none;
+}
+.more-tile-text-label {
+  font-family: 'lores-9-plus-narrow', var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(1.6rem, 3.6vw, 3.2rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+.more-tile-text-hint {
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.7rem, 1.1vw, 0.95rem);
+  text-transform: lowercase;
+}
 
 /* ── Grid ─────────────────────────────────────────── */
 .landing-grid {
@@ -200,12 +237,10 @@ html.view-open { overflow: hidden; }
   color: var(--body-color);
 }
 
-/* A thin blue outline on hover/focus so the openable project tiles read as
-   clickable. Inset (negative offset) so it sits inside the tile, clear of the
-   grid gap. */
-.tile--photo:hover,
+/* Keyboard-focus outline on the openable project tiles (inset so it sits inside
+   the tile, clear of the grid gap). No hover outline — the tiles read as
+   clickable without the blue square on mouseover. */
 .tile--photo:focus-visible,
-.more-tile--photo:hover,
 .more-tile--photo:focus-visible {
   outline: 2px solid var(--highlight);
   outline-offset: -2px;
@@ -302,8 +337,12 @@ html.view-open { overflow: hidden; }
   overflow: hidden;
   border: none;
   margin: 0;
-  background: #ff4d4d;
-  color: #fff;
+  /* Ghost treatment (lab effect 17): light box with a coral outline + coral
+     label, plus four pixel corners that softly pulse (::before). Fills solid
+     blue with a white label on hover — the site's usual red → blue language. */
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1.5px #ff4d4d;
+  color: #ff4d4d;
   font-family: var(--nav-font);
   font-weight: 700;
   font-size: clamp(0.6rem, 1vw, 0.95rem);
@@ -315,13 +354,39 @@ html.view-open { overflow: hidden; }
   align-items: center;
   justify-content: center;
   padding: 0.4em;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+/* Four pulsing pixel corners. The lab demo hard-coded their offsets to the tile
+   size; here they're painted a fixed 5px in from each corner of the ::before, so
+   they stay put whatever the box's responsive size. */
+.nav-box::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(#ff4d4d 0 0), linear-gradient(#ff4d4d 0 0),
+    linear-gradient(#ff4d4d 0 0), linear-gradient(#ff4d4d 0 0);
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+  background-position: top left, top right, bottom left, bottom right;
+  animation: nav-corner-pulse 2.8s ease-in-out infinite;
+}
+@keyframes nav-corner-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 1; }
 }
 .nav-box:hover,
 .nav-box:focus-visible {
   background: var(--highlight);
+  box-shadow: none;
+  color: #fff;
   outline: none;
 }
+/* Filled state has no outline to decorate — hide the corners. */
+.nav-box:hover::before,
+.nav-box:focus-visible::before { opacity: 0; }
 .nav-label { display: block; }
 /* Each label is stretched to fill its box (see fillNavBoxes in site.ts): an SVG
    <text> scaled non-uniformly to the box via preserveAspectRatio="none", leaving
@@ -336,7 +401,7 @@ html.view-open { overflow: hidden; }
   pointer-events: none;
 }
 .nav-fill text {
-  fill: #fff;
+  fill: currentColor; /* follows .nav-box color: coral at rest, white on hover */
   font-family: var(--nav-font);
   font-weight: 700;
 }
@@ -350,11 +415,14 @@ html.view-open { overflow: hidden; }
   white-space: nowrap;
   border: 0;
 }
-/* "More works" is a toggle — it goes (and stays) blue while the page is in its
-   scrollable, expanded state. */
+/* "More works" is a toggle — it goes (and stays) filled blue while the page is
+   in its scrollable, expanded state (same as the hover fill). */
 html.more-open .nav-box--more {
   background: var(--highlight);
+  box-shadow: none;
+  color: #fff;
 }
+html.more-open .nav-box--more::before { opacity: 0; }
 
 /* ── Links quad: the nav box's bottom-right cell ────────────────────────────
    Itself a 2×2 of small tiles — Instagram, LinkedIn, the CV page, and one
@@ -421,7 +489,7 @@ html.more-open .nav-box--more {
   bottom: calc(var(--cap) * 0.25);
   transform: translateX(-50%);
   width: clamp(14px, 1.8vw, 22px);
-  pointer-events: none;
+  cursor: pointer; /* a shortcut for the "more works" scroll (see data-action) */
   color: var(--body-color);
   opacity: 0.7;
   animation: chevron-bob 1.8s ease-in-out infinite;
@@ -440,7 +508,7 @@ html.more-open .nav-box--more {
   0%, 100% { transform: translate(-50%, 0); }
   50%      { transform: translate(-50%, 30%); }
 }
-html.more-open .more-chevron { opacity: 0; }
+html.more-open .more-chevron { opacity: 0; pointer-events: none; }
 
 /* The nav box's top-left cell: an accessibility toggle on top, then the
    description panel filling the rest. */
@@ -456,8 +524,8 @@ html.more-open .more-chevron { opacity: 0; }
    prefers-reduced-motion at load (see site.ts). Toggling off adds
    html.reduce-motion, which neutralises transitions, keyframes and the
    pixel-fizzle timing. */
-/* Styled like the send button: a solid box with white lowercase text. Red while
-   on (resting, matching the nav boxes); blue while off, so the state reads. */
+/* Styled like the send button: a solid box with white lowercase text. Mellow
+   coral (#ff4d4d) while on (resting); blue while off, so the state reads. */
 .anim-toggle { display: flex; cursor: pointer; user-select: none; }
 .anim-switch { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .anim-toggle-box {
@@ -466,7 +534,7 @@ html.more-open .more-chevron { opacity: 0; }
   align-items: center;
   justify-content: center;
   padding: 0.32em 0.6em;
-  background: var(--body-color);
+  background: #ff4d4d; /* the mellow nav-box coral, not the deeper body red */
   color: #fff;
   font-family: var(--nav-font);
   font-weight: 700;
