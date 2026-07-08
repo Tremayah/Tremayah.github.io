@@ -77,6 +77,15 @@ const moreWorks = [
   { kind: 'placeholder' as const, title: 'Trebuchet', desc: 'A laser-cut plywood trebuchet — coming soon.' },
 ];
 
+// The welcome / "about" copy — one source of truth, rendered both as the mobile
+// welcome note under the contact form and in the desktop "about me" tile, so the
+// two presentations can never drift apart again.
+const aboutCopy = [
+  'Hello, and welcome to my portfolio!',
+  'Please do take a look at my works, and be sure to send me your thoughts in the box above.',
+  "If you'd rather not start a conversation, any messages without an email address are anonymous and one-way.",
+];
+
 // FormSubmit alias — keeps the real address out of the page source (manage at formsubmit.co).
 const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
 ---
@@ -102,9 +111,11 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
                       <span>Murray</span>
                       <span>Browne</span>
                     </h1>
-                    <div class="contact-blurb" data-focus-message>
-                      <p>Third year Product and Furniture Design student at University of Plymouth, UK.</p>
-                      <p>Come check out my works, and drop me a message below (no details required).</p>
+                    <div class="contact-info">
+                      <span>Student</span>
+                      <span>Product Design</span>
+                      <span>3rd Year</span>
+                      <span>University of Plymouth,&nbsp;UK</span>
                     </div>
                   </div>
                   <form
@@ -138,6 +149,13 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
                       </button>
                     </div>
                   </form>
+                  {/* The welcome / "about" note, shown under the form in the
+                      single-column (≤680px) view. On desktop the contact cell is a
+                      fixed half-height with no room here, so this is hidden and the
+                      same aboutCopy appears in the dedicated about tile instead. */}
+                  <div class="contact-welcome" data-focus-message>
+                    {aboutCopy.map((t) => <p>{t}</p>)}
+                  </div>
                 </div>
               </div>
             );
@@ -200,16 +218,15 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
             );
           }
           if (t.kind === 'about') {
-            // A short bio in the landing's bottom-left cell. Static (not
-            // openable); hovering still feeds the description panel. Placeholder
-            // copy — true to Raphael, for him to rewrite later.
+            // The "about" content in the landing's bottom-left cell (desktop).
+            // Shares aboutCopy with the mobile welcome note so the two never
+            // diverge; hidden on mobile (see global.css) where the welcome note
+            // already carries this copy under the contact form.
             return (
               <div class="tile tile--about" data-page={page} data-desc="A little about who I am and what I do.">
                 <div class="about-card">
-                  <h2 class="about-head">about me</h2>
                   <div class="about-body">
-                    <p>I'm Raphael — a third-year Product &amp; Furniture Design student at the University of Plymouth, on the hunt for a design-studio internship.</p>
-                    <p>I like making real things: turning sketches into objects in wood, metal, ceramics and code, and picking up whatever skill each project demands. Off the clock — surfing in Cornwall, life drawing, and philosophy.</p>
+                    {aboutCopy.map((t) => <p>{t}</p>)}
                   </div>
                 </div>
               </div>

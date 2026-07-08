@@ -26,3 +26,7 @@ pnpm-debug.log*
 # pdf-tiles skill: scratch output + test fixtures (never commit the rendered PNGs)
 /pdf-tiles/
 .claude/skills/pdf-tiles/.test/
+
+# image optimization backup (local safety net, never commit)
+/_image-originals-backup.tar.gz
+/_img-opt-staging/

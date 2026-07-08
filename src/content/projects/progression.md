@@ -5,7 +5,7 @@ year: 2025
 category: "Product Design"
 tags: ["Research", "Wearables", "CAD", "Blender", "3D Printing", "Concept Design"]
 order: 6
-cover: "/images/progression/bracelet.png"
+cover: "/images/progression/bracelet.jpg"
 ---
 
 I was tasked with designing "something between a smartphone and a dumbphone". The lecture where we learnt of the task was heavily focussed on research and identifying user groups. This seemed like a chore, but only because I'm not yet used to research — and if I am to be a good product designer, then I must be able to identify the people I'm designing for.
@@ -61,15 +61,15 @@ The next step was to actually design the products. Three came out of it:
 - **A camera pendant** — a camera necklace that could rival smartphone cameras, for people who consider constant access to a camera essential. No visual interface, operated by a button that connects to the chain, it sends photos via Bluetooth directly to someone's smartphone once in range.
 
 <div class="carousel">
-  <img loading="lazy" decoding="async" src="/images/progression/ring.png" alt="Communication ring concept" />
-  <img loading="lazy" decoding="async" src="/images/progression/ring-2.jpg" alt="Communication ring, side view" />
-  <img loading="lazy" decoding="async" src="/images/progression/camera-pendant-2.png" alt="Camera pendant concept" />
+  <img loading="lazy" decoding="async" src="/images/progression/ring.webp" alt="Communication ring concept" />
+  <img loading="lazy" decoding="async" src="/images/progression/ring-2.webp" alt="Communication ring, side view" />
+  <img loading="lazy" decoding="async" src="/images/progression/camera-pendant-2.webp" alt="Camera pendant concept" />
 </div>
 
 I rendered each piece in Blender — its UI for rendering and materials is unmatched by anything else I have available to me.
 
 <figure class="proj-full">
-  <img loading="lazy" decoding="async" src="/images/progression/camera-pendant-band.png" alt="Camera pendant with its chain laid out" />
+  <img loading="lazy" decoding="async" src="/images/progression/camera-pendant-band.webp" alt="Camera pendant with its chain laid out" />
 </figure>
 
 ## Posters
@@ -78,14 +78,14 @@ The last step was to present the set, with two posters: a system map showing who
 
 <section class="proj-row">
   <figure class="proj-media proj-media--a4">
-    <img loading="lazy" decoding="async" src="/images/progression/nomophobia-poster-finished-1.png" alt="System-map poster — who each piece is designed for" />
+    <img loading="lazy" decoding="async" src="/images/progression/nomophobia-poster-finished-1.webp" alt="System-map poster — who each piece is designed for" />
   </figure>
   <div class="proj-text">The system map was the harder one. I've not much experience with Adobe Illustrator, so this poster was very educational, and I struggled with how to map something like this — in the end I went with mapping out who each product is designed for.</div>
 </section>
 
 <section class="proj-row proj-row--rev">
   <figure class="proj-media proj-media--a4">
-    <img loading="lazy" decoding="async" src="/images/progression/smart-jewellery-thing.jpg" alt="Hero-shot poster of the jewellery set" />
+    <img loading="lazy" decoding="async" src="/images/progression/smart-jewellery-thing.webp" alt="Hero-shot poster of the jewellery set" />
   </figure>
   <div class="proj-text">The hero shot was more rushed, but I think it has just the impact it needs. I gave each of the pieces a fitting name, as well as a description of what it is and does.</div>
 </section>

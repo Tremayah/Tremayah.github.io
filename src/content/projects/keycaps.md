@@ -5,7 +5,7 @@ year: 2024
 category: "Product Design"
 tags: ["Ceramics", "CAD", "Prototyping", "Rhino", "Mould Making"]
 order: 4
-cover: "/images/keycaps/idg_20251209_132030_658.jpeg"
+cover: "/images/keycaps/idg_20251209_132030_658.jpg"
 ---
 
 Moving into second year, I wanted to raise the standard of my work considerably — to stop coasting and find the real limits of what I could make. Keycaps became the vehicle for that: small, exacting objects with an enthusiast community that obsesses over feel, sound, ergonomics and look. Part of the motivation was selfish — I wanted beautiful keycaps myself, without paying the premium that the few makers in this space charge.
@@ -14,7 +14,7 @@ By using the keycap as a medium, I could put materiality in the foreground, trea
 
 <section class="proj-row">
   <figure class="proj-media">
-    <img loading="lazy" decoding="async" src="/images/keycaps/keycap-render.jpg" alt="CAD render of the keycap — a rounded cube with a dished top" />
+    <img loading="lazy" decoding="async" src="/images/keycaps/keycap-render.webp" alt="CAD render of the keycap — a rounded cube with a dished top" />
   </figure>
   <div class="proj-text">Before any casting, the keycap itself needed designing. I modelled it in Rhino as a rounded cube with a dished top for the finger — my own shape rather than a standard profile, while keeping the hollow underside a switch stem needs.</div>
 </section>
@@ -22,23 +22,23 @@ By using the keycap as a medium, I could put materiality in the foreground, trea
 I gathered the research into a material taxonomy laid out as a magazine in InDesign — far less technical than my first attempt, much nicer to look at, and far more time-consuming to make.
 
 <figure class="proj-full">
-  <img loading="lazy" decoding="async" src="/images/keycaps/keycap-field.jpg" alt="A render of a whole set of the porcelain keycaps" />
+  <img loading="lazy" decoding="async" src="/images/keycaps/keycap-field.webp" alt="A render of a whole set of the porcelain keycaps" />
 </figure>
 
 The main build focused on ceramic, and specifically on the problems of casting porcelain, clear-glazed keycaps. I cut a two-part mould and worked through the casting process, drying the pieces in a hot cupboard before firing them in a kiln.
 
 <div class="carousel">
-  <img loading="lazy" decoding="async" src="/images/keycaps/img_3576.jpeg" alt="Two-part mould" />
-  <img loading="lazy" decoding="async" src="/images/keycaps/img_3578.jpeg" alt="Casting process" />
-  <img loading="lazy" decoding="async" src="/images/keycaps/img_3580.jpeg" alt="Cast keycaps before firing" />
+  <img loading="lazy" decoding="async" src="/images/keycaps/img_3576.webp" alt="Two-part mould" />
+  <img loading="lazy" decoding="async" src="/images/keycaps/img_3578.webp" alt="Casting process" />
+  <img loading="lazy" decoding="async" src="/images/keycaps/img_3580.webp" alt="Cast keycaps before firing" />
 </div>
 
 Wall thickness varied with how long the slip sat in the mould before pouring out — the longer it sat, the thicker the wall. That variation was deliberate: a search for the balance between interior space for the switch stem and the strength of the wall. In the end I favoured the thinnest walls that survived firing, since the thicker ones simply didn't leave enough room inside.
 
 <div class="carousel">
-  <img loading="lazy" decoding="async" src="/images/keycaps/idg_20251209_131410_990.jpeg" alt="Finished porcelain keycaps" />
-  <img loading="lazy" decoding="async" src="/images/keycaps/idg_20251209_131502_423.jpeg" alt="Finished keycaps detail" />
-  <img loading="lazy" decoding="async" src="/images/keycaps/idg_20251209_131520_977.jpeg" alt="Keycaps on a switch" />
+  <img loading="lazy" decoding="async" src="/images/keycaps/idg_20251209_131410_990.webp" alt="Finished porcelain keycaps" />
+  <img loading="lazy" decoding="async" src="/images/keycaps/idg_20251209_131502_423.webp" alt="Finished keycaps detail" />
+  <img loading="lazy" decoding="async" src="/images/keycaps/idg_20251209_131520_977.webp" alt="Keycaps on a switch" />
 </div>
 
 They came out very pretty and feel wonderful to touch. The one surprise was scale: the shrinkage in the second firing — or maybe an illusion of the glaze — left them feeling suddenly smaller than I'd expected.

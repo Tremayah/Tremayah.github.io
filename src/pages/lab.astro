@@ -25,7 +25,7 @@ import '../styles/global.css';
   <section class="lab-sec">
     <h2 class="lab-h2">pixel effects</h2>
     <div class="demo" id="demo">
-      <img class="demo-img" src="/images/keycaps/keycap-field.jpg" alt="" />
+      <img class="demo-img" src="/images/keycaps/keycap-field.webp" alt="" />
       <span class="demo-label">RAPHAEL<br />MURRAY-BROWNE</span>
     </div>
     <div class="bar" id="bar">
@@ -38,19 +38,64 @@ import '../styles/global.css';
     </div>
   </section>
 
-  <section class="lab-sec">
+  <section class="lab-sec" id="navopts">
     <h2 class="lab-h2">nav-box button options</h2>
-    <p class="lab-note">The live buttons stretch each word non-uniformly to fill the box — that squashed/​wide look is why the text reads slightly off. Four directions to react to:</p>
+    <p class="lab-note">Use the toggle to refill every box with the real labels — <code>cv</code> behaves very differently from a two-word label, so it's worth checking each option against all three. Boxes with constant motion are kept subtle; hover the interactive ones. All animation respects <code>prefers-reduced-motion</code>.</p>
+
+    <div class="labeltoggle" id="labeltoggle">
+      <span class="lt-label">fill text:</span>
+      <button type="button" data-lbl="personal projects" class="on">personal projects</button>
+      <button type="button" data-lbl="cv">cv</button>
+      <button type="button" data-lbl="more works">more works</button>
+    </div>
+
+    <p class="navsub">combinations — drift, breathe &amp; wander played together (esp. 21 + 24)</p>
     <div class="navrow">
-      <figure><div class="nb nb-current"><span>personal projects</span></div><figcaption>current — stretched to fill</figcaption></figure>
-      <figure><div class="nb nb-a"><span>personal projects</span></div><figcaption>A — clean, centred</figcaption></figure>
-      <figure><div class="nb nb-b"><span>personal<br />projects</span></div><figcaption>B — stacked, big &amp; uniform</figcaption></figure>
-      <figure><div class="nb nb-c"><span>personal<br />projects</span></div><figcaption>C — label in the corner</figcaption></figure>
+      <figure><div class="nb nb-26"><span>personal projects</span></div><figcaption>26 · (21 + 24) drift field + one bold wanderer</figcaption></figure>
+      <figure><div class="nb nb-27"><span>personal projects</span></div><figcaption>27 · (21 + 24) pixel rides the diagonal current</figcaption></figure>
+      <figure><div class="nb nb-28"><span>personal projects</span></div><figcaption>28 · (24, 21-flavoured) comet pixel with a fading trail</figcaption></figure>
+      <figure><div class="nb nb-29"><span>personal projects</span></div><figcaption>29 · (22 + 24) wanderer that breathes as it moves</figcaption></figure>
+      <figure><div class="nb nb-30"><span>personal projects</span></div><figcaption>30 · (21 + 22 + 24) full ambient field + wanderer</figcaption></figure>
+      <figure><div class="nb nb-31"><span>personal projects</span></div><figcaption>31 · (21 + 24) one dither dot, slightly enlarged, wandering</figcaption></figure>
+    </div>
+
+    <p class="navsub">new subtle riffs — built from your favourites (04, 06, 08, 09, 14, 15)</p>
+    <div class="navrow">
+      <figure><div class="nb nb-16"><span>personal projects</span></div><figcaption>16 · (04) ghost → blocky fill on hover</figcaption></figure>
+      <figure><div class="nb nb-17"><span>personal projects</span></div><figcaption>17 · (04) ghost + pulsing pixel corners</figcaption></figure>
+      <figure><div class="nb nb-18"><span>personal projects</span></div><figcaption>18 · (06) underscore cursor, slow blink</figcaption></figure>
+      <figure><div class="nb nb-19"><span>personal projects</span></div><figcaption>19 · (06) blocky wipe-in, then cursor</figcaption></figure>
+      <figure><div class="nb nb-20" data-fill="stacked"><span>personal<br />projects</span></div><figcaption>20 · (08) numeral, slow fade-pulse</figcaption></figure>
+      <figure><div class="nb nb-21"><span>personal projects</span></div><figcaption>21 · (09) dither, slow diagonal drift</figcaption></figure>
+      <figure><div class="nb nb-22"><span>personal projects</span></div><figcaption>22 · (09) dither, gentle breathe</figcaption></figure>
+      <figure><div class="nb nb-23"><span>personal projects</span></div><figcaption>23 · (14) pixel-block glitch band</figcaption></figure>
+      <figure><div class="nb nb-24"><span>personal projects</span></div><figcaption>24 · (15) one lit cell wandering</figcaption></figure>
+      <figure><div class="nb nb-25"><span>personal projects</span></div><figcaption>25 · (15) grid lights around cursor</figcaption></figure>
+    </div>
+
+    <p class="navsub">earlier options (incl. your favourites + the live reference)</p>
+    <div class="navrow">
+      <figure><div class="nb nb-current"><span>personal projects</span></div><figcaption>live now — non-uniform stretch</figcaption></figure>
+      <figure><div class="nb nb-1"><span>personal projects</span></div><figcaption>01 · solid coral, clean centred (hover → blue)</figcaption></figure>
+      <figure><div class="nb nb-2" data-fill="stacked"><span>personal<br />projects</span></div><figcaption>02 · deep red, stacked big</figcaption></figure>
+      <figure><div class="nb nb-3" data-fill="stacked"><span>personal<br />projects</span></div><figcaption>03 · corner label + pixel marker</figcaption></figure>
+      <figure><div class="nb nb-4"><span>personal projects</span></div><figcaption>04 · ghost outline (fills on hover)</figcaption></figure>
+      <figure><div class="nb nb-5"><span>personal projects</span></div><figcaption>05 · inverted light card</figcaption></figure>
+      <figure><div class="nb nb-6"><span>personal projects</span></div><figcaption>06 · terminal cursor (blinks)</figcaption></figure>
+      <figure><div class="nb nb-7"><span>personal projects</span></div><figcaption>07 · light sheen sweep</figcaption></figure>
+      <figure><div class="nb nb-8" data-fill="stacked"><span>personal<br />projects</span></div><figcaption>08 · big index numeral</figcaption></figure>
+      <figure><div class="nb nb-9"><span>personal projects</span></div><figcaption>09 · dithered pixel texture</figcaption></figure>
+      <figure><div class="nb nb-10"><span>personal projects</span></div><figcaption>10 · red → blue gradient drift</figcaption></figure>
+      <figure><div class="nb nb-11"><span>personal projects</span></div><figcaption>11 · nudging arrow</figcaption></figure>
+      <figure><div class="nb nb-12" data-fill="stacked"><span>personal<br />projects</span></div><figcaption>12 · diagonal blue wedge</figcaption></figure>
+      <figure><div class="nb nb-13" data-fill="marquee"><span class="mq"><b>personal projects</b><b>personal projects</b></span></div><figcaption>13 · scrolling marquee</figcaption></figure>
+      <figure><div class="nb nb-14" data-txt="personal projects"><span>personal projects</span></div><figcaption>14 · glitch / rgb-split</figcaption></figure>
+      <figure><div class="nb nb-15"><span>personal projects</span></div><figcaption>15 · live pixel grid</figcaption></figure>
     </div>
   </section>
 
   <style is:inline>
-    .lab { background: var(--bg); color: var(--fg); padding: clamp(1rem, 4vw, 3rem); font-family: var(--body-font); min-height: 100dvh; }
+    .lab { background: var(--bg); color: var(--fg); padding: clamp(1rem, 4vw, 3rem); padding-bottom: 55vh; font-family: var(--body-font); min-height: 100dvh; }
     .lab-h1 { font-family: 'lores-9-plus-narrow', var(--nav-font); color: var(--title-color); font-size: clamp(2rem, 6vw, 4rem); text-transform: uppercase; letter-spacing: -0.04em; line-height: 1; }
     .lab-note { color: var(--body-color); max-width: 64ch; line-height: 1.5; margin: 0.6rem 0 1.4rem; font-size: 0.9rem; }
     .lab-note code { background: #ececec; padding: 0 0.3em; }
@@ -74,20 +119,161 @@ import '../styles/global.css';
     @keyframes lab-scan { from { background-position: 0 0; } to { background-position: 0 4px; } }
     @keyframes lab-crt { 0% { filter: none; transform: none; } 50% { filter: saturate(1.6) contrast(1.1); transform: translateX(2px); } }
 
-    .navrow { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+    /* ── label toggle + section subheads ─────────────────────────────────── */
+    .labeltoggle { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0 0 1.4rem; }
+    .labeltoggle .lt-label { font-family: var(--nav-font); text-transform: lowercase; font-size: 0.8rem; color: var(--fg); margin-right: 0.2rem; }
+    .labeltoggle button { font-family: var(--nav-font); text-transform: lowercase; font-weight: 700; font-size: 0.8rem; color: #1c1c1c; background: transparent; border: 1.5px solid var(--body-color); padding: 0.4em 0.8em; cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease; }
+    .labeltoggle button:hover { background: #ffd9d9; }
+    .labeltoggle button.on { background: var(--body-color); color: #fff; }
+    .navsub { font-family: var(--nav-font); text-transform: lowercase; font-size: 0.85rem; color: var(--fg); opacity: 0.7; margin: 2.2rem 0 1rem; }
+
+    /* ── nav-box options ─────────────────────────────────────────────────── */
+    .navrow { display: grid; grid-template-columns: repeat(auto-fill, 156px); gap: 1.6rem 1.4rem; align-items: start; }
     .navrow figure { margin: 0; }
-    .navrow figcaption { font-family: var(--nav-font); font-size: 0.72rem; color: var(--fg); margin-top: 0.45rem; text-transform: lowercase; }
-    .nb { width: 156px; height: 92px; background: var(--body-color); color: #fff; position: relative; overflow: hidden; display: flex; }
-    .nb span { font-family: var(--nav-font); font-weight: 700; text-transform: lowercase; color: #fff; }
-    .nb-current span { position: absolute; inset: 1.5px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.62rem; transform: scaleX(1.7) scaleY(2.3); transform-origin: center; }
-    .nb-a span { margin: auto; text-align: center; font-size: 0.95rem; line-height: 1.15; padding: 0.4em; }
-    .nb-b span { align-self: center; padding: 0 0.5rem; font-size: 1.3rem; line-height: 1.04; letter-spacing: -0.01em; }
-    .nb-c { align-items: flex-end; }
-    .nb-c span { padding: 0.5rem; font-size: 1.05rem; line-height: 1.05; text-align: left; }
-    .nb-c::before { content: ''; position: absolute; top: 0.5rem; right: 0.5rem; width: 0.5rem; height: 0.5rem; background: #fff; }
+    .navrow figcaption { font-family: var(--nav-font); font-size: 0.7rem; color: var(--fg); margin-top: 0.45rem; text-transform: lowercase; line-height: 1.3; max-width: 156px; }
+
+    .nb { width: 156px; height: 92px; background: #ff4d4d; color: #fff; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .nb > span { font-family: var(--nav-font); font-weight: 700; text-transform: lowercase; color: #fff; font-size: 0.95rem; line-height: 1.15; padding: 0.4em; position: relative; z-index: 2; }
+
+    /* live reference — each word stretched non-uniformly to fill the box */
+    .nb-current > span { position: absolute; inset: 1.5px; display: flex; align-items: center; justify-content: center; font-size: 0.62rem; padding: 0; transform: scaleX(1.7) scaleY(2.3); transform-origin: center; }
+
+    /* 01 — solid coral, honest centred text, hover → blue like the live site */
+    .nb-1 { transition: background-color 0.2s ease; }
+    .nb-1:hover { background: #0913ff; }
+
+    /* 02 — deeper red, stacked big & uniform */
+    .nb-2 { background: #f80d0d; }
+    .nb-2 > span { font-size: 1.3rem; line-height: 1.04; letter-spacing: -0.01em; padding: 0 0.5rem; }
+
+    /* 03 — label in the corner + pixel marker */
+    .nb-3 { align-items: flex-end; justify-content: flex-start; }
+    .nb-3 > span { text-align: left; font-size: 1.05rem; line-height: 1.05; padding: 0.55rem; }
+    .nb-3::before { content: ''; position: absolute; top: 0.5rem; right: 0.5rem; width: 0.5rem; height: 0.5rem; background: #fff; }
+
+    /* 04 — ghost outline, fills coral on hover */
+    .nb-4 { background: var(--bg); box-shadow: inset 0 0 0 2px #ff4d4d; transition: background-color 0.2s ease; }
+    .nb-4 > span { color: #ff4d4d; transition: color 0.2s ease; }
+    .nb-4:hover { background: #ff4d4d; }
+    .nb-4:hover > span { color: #fff; }
+
+    /* 05 — inverted light card, red type */
+    .nb-5 { background: var(--bg); box-shadow: inset 0 0 0 1px #1c1c1c; }
+    .nb-5 > span { color: #f80d0d; }
+
+    /* 06 — terminal cursor that blinks (constant) */
+    .nb-6 > span::after { content: '▮'; margin-left: 0.15em; animation: nb-blink 1.05s steps(1) infinite; }
+    @keyframes nb-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+    /* 07 — light sheen sweeping across (constant) */
+    .nb-7::before { content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 45%; z-index: 1; background: linear-gradient(100deg, transparent, rgba(255,255,255,0.55), transparent); transform: skewX(-18deg); animation: nb-sheen 3.6s ease-in-out infinite; }
+    @keyframes nb-sheen { 0% { left: -60%; } 55%, 100% { left: 130%; } }
+
+    /* 08 — big faded index numeral behind the label (graphic) */
+    .nb-8 > span { font-size: 1.15rem; line-height: 1.05; }
+    .nb-8::before { content: '01'; position: absolute; right: 0.2rem; bottom: -0.4rem; z-index: 1; font-family: 'lores-9-plus-narrow', var(--nav-font); font-size: 3.4rem; line-height: 1; color: rgba(255,255,255,0.22); }
+
+    /* 09 — dithered dot texture (graphic, pixel vibe) */
+    .nb-9 { background-color: #ff4d4d; background-image: radial-gradient(rgba(255,255,255,0.32) 1px, transparent 1.4px); background-size: 6px 6px; }
+
+    /* 10 — red → blue gradient slowly drifting (constant) */
+    .nb-10 { background: linear-gradient(115deg, #ff4d4d 0%, #0913ff 50%, #ff4d4d 100%); background-size: 280% 100%; animation: nb-drift 9s ease-in-out infinite; }
+    @keyframes nb-drift { 0% { background-position: 0% 0; } 50% { background-position: 100% 0; } 100% { background-position: 0% 0; } }
+
+    /* 11 — arrow that nudges right (constant) */
+    .nb-11 > span { display: inline-flex; gap: 0.4em; align-items: center; }
+    .nb-11 > span::after { content: '→'; animation: nb-nudge 1.5s ease-in-out infinite; }
+    @keyframes nb-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+
+    /* 12 — diagonal blue corner wedge (graphic) */
+    .nb-12 > span { font-size: 1.2rem; line-height: 1.05; }
+    .nb-12::after { content: ''; position: absolute; right: 0; bottom: 0; width: 58px; height: 58px; z-index: 1; background: #0913ff; clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+
+    /* 13 — label scrolls like the home marquee (constant) */
+    .nb-13 { justify-content: flex-start; }
+    .nb-13 .mq { display: inline-flex; gap: 1.5rem; white-space: nowrap; padding-left: 0.5rem; animation: nb-marquee 7s linear infinite; }
+    .nb-13 .mq b { font-family: var(--nav-font); font-weight: 700; text-transform: lowercase; font-size: 1.05rem; }
+    @keyframes nb-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* 14 — subtle rgb-split glitch on the text (constant) */
+    .nb-14 > span { position: relative; z-index: 2; }
+    .nb-14::before, .nb-14::after { content: attr(data-txt); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; font-family: var(--nav-font); font-weight: 700; text-transform: lowercase; font-size: 0.95rem; line-height: 1.15; padding: 0.4em; z-index: 1; }
+    .nb-14::before { color: #0913ff; animation: nb-glitch-a 2.6s steps(1) infinite; }
+    .nb-14::after { color: #f80d0d; animation: nb-glitch-b 2.6s steps(1) infinite; }
+    @keyframes nb-glitch-a { 0%, 92%, 100% { transform: translate(0, 0); opacity: 0; } 93% { transform: translate(-2px, 1px); opacity: 0.85; } 96% { transform: translate(2px, -1px); opacity: 0.85; } }
+    @keyframes nb-glitch-b { 0%, 90%, 100% { transform: translate(0, 0); opacity: 0; } 91% { transform: translate(2px, -1px); opacity: 0.85; } 95% { transform: translate(-2px, 1px); opacity: 0.85; } }
+
+    /* 15 — faint live pixel grid with a few flickering cells (constant) */
+    .nb-15 { background-color: #ff4d4d; background-image: linear-gradient(rgba(255,255,255,0.16) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.16) 1px, transparent 1px); background-size: 13px 13px; }
+    .nb-15::before { content: ''; position: absolute; left: 26px; top: 26px; width: 13px; height: 13px; z-index: 1; background: rgba(255,255,255,0.5); box-shadow: 39px 13px rgba(255,255,255,0.4), 78px 39px rgba(255,255,255,0.45), 26px 52px rgba(255,255,255,0.35); animation: nb-cells 1.4s steps(2) infinite; }
+    @keyframes nb-cells { 0% { opacity: 0.2; } 50% { opacity: 0.85; } 100% { opacity: 0.2; } }
+
+    /* ── new subtle riffs ────────────────────────────────────────────────── */
+
+    /* 16 — (04) ghost outline that fills coral in chunky steps on hover */
+    .nb-16 { background: var(--bg); box-shadow: inset 0 0 0 2px #ff4d4d; }
+    .nb-16 > span { color: #ff4d4d; transition: color 0.1s ease 0.18s; }
+    .nb-16::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 0; z-index: 1; background: #ff4d4d; transition: height 0.45s steps(6); }
+    .nb-16:hover::before { height: 100%; }
+    .nb-16:hover > span { color: #fff; }
+
+    /* 17 — (04) ghost outline with four pixel corners that softly pulse */
+    .nb-17 { background: var(--bg); box-shadow: inset 0 0 0 1.5px #ff4d4d; }
+    .nb-17 > span { color: #ff4d4d; }
+    .nb-17::before { content: ''; position: absolute; top: 5px; left: 5px; width: 4px; height: 4px; z-index: 1; background: #ff4d4d; box-shadow: 142px 0 #ff4d4d, 0 78px #ff4d4d, 142px 78px #ff4d4d; animation: nb-pulse 2.8s ease-in-out infinite; }
+    @keyframes nb-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+    /* 18 — (06) thin underscore cursor, slower/softer blink */
+    .nb-18 > span::after { content: '_'; margin-left: 0.12em; animation: nb-blink-slow 1.8s steps(1) infinite; }
+    @keyframes nb-blink-slow { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
+
+    /* 19 — (06) a chunky block wipes in once to reveal the text, then a cursor */
+    .nb-19::before { content: ''; position: absolute; inset: 0; z-index: 3; background: #ff4d4d; transform-origin: right; animation: nb-wipe 1s steps(10) forwards; }
+    .nb-19 > span::after { content: '▮'; margin-left: 0.12em; opacity: 0; animation: nb-blink 1.05s steps(1) infinite 1.05s; }
+    @keyframes nb-wipe { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+    /* 20 — (08) big index numeral that very slowly fade-pulses */
+    .nb-20 > span { font-size: 1.15rem; line-height: 1.05; }
+    .nb-20::before { content: '01'; position: absolute; right: 0.2rem; bottom: -0.4rem; z-index: 1; font-family: 'lores-9-plus-narrow', var(--nav-font); font-size: 3.4rem; line-height: 1; color: #fff; opacity: 0.12; animation: nb-numpulse 4.5s ease-in-out infinite; }
+    @keyframes nb-numpulse { 0%, 100% { opacity: 0.1; } 50% { opacity: 0.3; } }
+
+    /* 21 — (09) dither texture that slowly drifts diagonally */
+    .nb-21 { background-color: #ff4d4d; background-image: radial-gradient(rgba(255,255,255,0.32) 1px, transparent 1.4px); background-size: 6px 6px; animation: nb-driftdots 14s linear infinite; }
+    @keyframes nb-driftdots { from { background-position: 0 0; } to { background-position: 48px 24px; } }
+
+    /* 22 — (09) dither texture that gently breathes in opacity */
+    .nb-22 { background-color: #ff4d4d; }
+    .nb-22::before { content: ''; position: absolute; inset: 0; z-index: 1; background-image: radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1.4px); background-size: 6px 6px; animation: nb-breathe 3.6s ease-in-out infinite; }
+    @keyframes nb-breathe { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.9; } }
+
+    /* 23 / 24 / 25 — JS-driven pixel grids (built in the script below) */
+    .nb-23, .nb-24, .nb-25 { background-color: #ff4d4d; }
+    .nb-24, .nb-25 { background-image: linear-gradient(rgba(255,255,255,0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.14) 1px, transparent 1px); background-size: 13px 13px; }
+
+    /* 26–30 — combinations of 21 (drift), 22 (breathe) and 24 (wander).
+       The CSS here is the ambient *field*; the bold wandering pixel is JS below. */
+    .nb-26, .nb-27 { background-color: #ff4d4d; background-image: radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1.4px); background-size: 6px 6px; animation: nb-driftdots 14s linear infinite; }
+    .nb-28 { background-color: #ff4d4d; background-image: linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px); background-size: 13px 13px; }
+    .nb-29 { background-color: #ff4d4d; background-image: radial-gradient(rgba(255,255,255,0.28) 1px, transparent 1.4px); background-size: 6px 6px; }
+    .nb-30 { background-color: #ff4d4d; }
+    .nb-30::before { content: ''; position: absolute; inset: 0; z-index: 0; background-image: radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1.4px); background-size: 6px 6px; animation: nb-driftdots 16s linear infinite, nb-breathe 4.2s ease-in-out infinite; }
+
+    /* 31 — a very slowly drifting dither field; the wanderer (JS) is a single dot
+       at the SAME 6px scale, just a touch bigger & brighter, so it reads as one
+       enlarged pixel. nb-driftdots moves whole 6px tiles, so the drift is seamless. */
+    .nb-31 { background-color: #ff4d4d; background-image: radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1.4px); background-size: 6px 6px; animation: nb-driftdots 40s linear infinite; }
+    .nb-31 .nbgrid i { transition: opacity 0.5s ease; }
+
+    .nbgrid { position: absolute; inset: 0; display: grid; pointer-events: none; z-index: 1; }
+    .nbgrid i { background: transparent; opacity: 0; transition: opacity 0.25s ease; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .nb *, .nb::before, .nb::after, .nb .mq { animation: none !important; }
+    }
   </style>
 
   <script is:inline>
+    /* Pixel-effects demo bar */
     (function () {
       var demo = document.getElementById('demo');
       var img = demo.querySelector('.demo-img');
@@ -156,6 +342,148 @@ import '../styles/global.css';
       document.getElementById('bar').addEventListener('click', function (e) {
         var b = e.target.closest('button'); if (b && FX[b.dataset.fx]) FX[b.dataset.fx]();
       });
+    })();
+
+    /* Nav-box label toggle + JS pixel riffs (23, 24, 25) */
+    (function () {
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var navOpts = document.querySelectorAll('.navrow .nb');
+
+      function setLabel(text) {
+        var words = text.split(' ');
+        navOpts.forEach(function (nb) {
+          var mode = nb.getAttribute('data-fill') || 'inline';
+          if (mode === 'marquee') {
+            var mq = nb.querySelector('.mq'); if (mq) mq.innerHTML = '<b>' + text + '</b><b>' + text + '</b>';
+          } else {
+            var span = nb.querySelector(':scope > span');
+            if (span) { if (mode === 'stacked') span.innerHTML = words.join('<br>'); else span.textContent = text; }
+          }
+          if (nb.hasAttribute('data-txt')) nb.setAttribute('data-txt', text);
+        });
+      }
+      var lt = document.getElementById('labeltoggle');
+      if (lt) lt.addEventListener('click', function (e) {
+        var b = e.target.closest('button'); if (!b) return;
+        lt.querySelectorAll('button').forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on');
+        setLabel(b.dataset.lbl);
+      });
+
+      function pixelGrid(box, cell) {
+        cell = cell || 13;
+        var cols = Math.max(1, Math.round(box.clientWidth / cell));
+        var rows = Math.max(1, Math.round(box.clientHeight / cell));
+        var g = document.createElement('div'); g.className = 'nbgrid';
+        g.style.gridTemplateColumns = 'repeat(' + cols + ',1fr)';
+        g.style.gridTemplateRows = 'repeat(' + rows + ',1fr)';
+        var cells = [];
+        for (var i = 0; i < cols * rows; i++) { var c = document.createElement('i'); g.appendChild(c); cells.push(c); }
+        box.appendChild(g);
+        return { cells: cells, cols: cols, rows: rows };
+      }
+
+      // 23 — a horizontal band of pixels occasionally glitches
+      (function () {
+        var box = document.querySelector('.nb-23'); if (!box || reduce) return;
+        var pg = pixelGrid(box); pg.cells.forEach(function (c) { c.style.transition = 'none'; });
+        var pal = ['#ff4d4d', '#0913ff', '#ffffff'];
+        (function tick() {
+          var row = (Math.random() * pg.rows) | 0; var s = row * pg.cols;
+          var band = pg.cells.slice(s, s + pg.cols);
+          band.forEach(function (c) { if (Math.random() < 0.75) { c.style.background = pal[(Math.random() * pal.length) | 0]; c.style.opacity = '0.85'; } });
+          setTimeout(function () { band.forEach(function (c) { c.style.opacity = '0'; }); }, 90);
+          setTimeout(tick, 1100 + Math.random() * 2400);
+        })();
+      })();
+
+      // 24 — one lit cell wanders the grid
+      (function () {
+        var box = document.querySelector('.nb-24'); if (!box || reduce) return;
+        var pg = pixelGrid(box); var x = (Math.random() * pg.cols) | 0, y = (Math.random() * pg.rows) | 0, prev = null;
+        (function step() {
+          var c = pg.cells[y * pg.cols + x];
+          if (prev) prev.style.opacity = '0';
+          c.style.background = '#fff'; c.style.opacity = '0.85'; prev = c;
+          var d = (Math.random() * 4) | 0;
+          if (d === 0 && x < pg.cols - 1) x++; else if (d === 1 && x > 0) x--; else if (d === 2 && y < pg.rows - 1) y++; else if (y > 0) y--; else x = (x + 1) % pg.cols;
+          setTimeout(step, 280);
+        })();
+      })();
+
+      // 25 — the grid lights up around the cursor
+      (function () {
+        var box = document.querySelector('.nb-25'); if (!box) return;
+        var pg = pixelGrid(box), R = 2;
+        box.addEventListener('mousemove', function (e) {
+          var r = box.getBoundingClientRect();
+          var cx = Math.floor((e.clientX - r.left) / r.width * pg.cols);
+          var cy = Math.floor((e.clientY - r.top) / r.height * pg.rows);
+          pg.cells.forEach(function (c, i) {
+            var x = i % pg.cols, y = (i / pg.cols) | 0, d = Math.max(Math.abs(x - cx), Math.abs(y - cy));
+            if (d <= R) { c.style.background = '#fff'; c.style.opacity = String(Math.max(0, 0.6 - d * 0.18)); } else { c.style.opacity = '0'; }
+          });
+        });
+        box.addEventListener('mouseleave', function () { pg.cells.forEach(function (c) { c.style.opacity = '0'; }); });
+      })();
+
+      // 26–30 — one bold pixel wandering over the drift/breathe field.
+      //   glow: soft halo on the focal pixel    breathe: pulse its brightness as it moves
+      //   bias: drift it toward the down-right "current"    trail: leave N fading cells behind it
+      function wander(box, opt) {
+        if (!box || reduce) return;
+        opt = opt || {};
+        var pg = pixelGrid(box);
+        var x = (Math.random() * pg.cols) | 0, y = (Math.random() * pg.rows) | 0;
+        var trail = [], prev = null, t = 0;
+        (function step() {
+          var c = pg.cells[y * pg.cols + x];
+          var op = opt.breathe ? (0.5 + 0.45 * Math.abs(Math.sin(t))) : 0.92;
+          c.style.background = '#fff'; c.style.opacity = String(op);
+          c.style.boxShadow = opt.glow ? '0 0 4px rgba(255,255,255,0.85)' : 'none';
+          if (opt.trail) {
+            trail.unshift(c);
+            for (var i = 1; i < trail.length; i++) { trail[i].style.boxShadow = 'none'; trail[i].style.opacity = String(Math.max(0, 0.5 - i * 0.13)); }
+            while (trail.length > opt.trail) { var old = trail.pop(); old.style.opacity = '0'; old.style.boxShadow = 'none'; }
+          } else if (prev && prev !== c) { prev.style.opacity = '0'; prev.style.boxShadow = 'none'; }
+          prev = c;
+          if (opt.bias && Math.random() < 0.62) {
+            if (Math.random() < 0.5 && x < pg.cols - 1) x++; else if (y < pg.rows - 1) y++; else { x = 0; y = 0; }
+          } else {
+            var d = (Math.random() * 4) | 0;
+            if (d === 0 && x < pg.cols - 1) x++; else if (d === 1 && x > 0) x--; else if (d === 2 && y < pg.rows - 1) y++; else if (y > 0) y--; else x = (x + 1) % pg.cols;
+          }
+          t += 0.6;
+          setTimeout(step, opt.speed || 280);
+        })();
+      }
+      wander(document.querySelector('.nb-26'), { glow: true, speed: 300 });
+      wander(document.querySelector('.nb-27'), { glow: true, bias: true, speed: 260 });
+      wander(document.querySelector('.nb-28'), { glow: true, trail: 5, speed: 150 });
+      wander(document.querySelector('.nb-29'), { glow: true, breathe: true, speed: 300 });
+      wander(document.querySelector('.nb-30'), { glow: true, speed: 320 });
+
+      // 31 — match the dither's own 6px lattice; the wanderer is a single dot,
+      // slightly larger (1.7px vs ~1px) and brighter, hopping slowly cell to cell.
+      // It's fenced one cell in from every edge (minX..maxX, minY..maxY) so it
+      // never touches or slips off the tile border.
+      (function () {
+        var box = document.querySelector('.nb-31'); if (!box || reduce) return;
+        var pg = pixelGrid(box, 6);
+        var m = 1, minX = m, maxX = pg.cols - 1 - m, minY = m, maxY = pg.rows - 1 - m;
+        var x = (minX + Math.random() * (maxX - minX)) | 0;
+        var y = (minY + Math.random() * (maxY - minY)) | 0;
+        var prev = null;
+        var dot = 'radial-gradient(circle, rgba(255,255,255,0.85) 0 1.7px, rgba(255,255,255,0) 2.1px)';
+        (function step() {
+          var c = pg.cells[y * pg.cols + x];
+          if (prev && prev !== c) prev.style.opacity = '0';
+          c.style.background = dot; c.style.opacity = '1'; prev = c;
+          var d = (Math.random() * 4) | 0;
+          if (d === 0 && x < maxX) x++; else if (d === 1 && x > minX) x--; else if (d === 2 && y < maxY) y++; else if (y > minY) y--; else x = x < maxX ? x + 1 : minX;
+          setTimeout(step, 520);
+        })();
+      })();
     })();
   </script>
 </body>

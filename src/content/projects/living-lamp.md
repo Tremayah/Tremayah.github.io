@@ -20,7 +20,7 @@ While discussing the design with Mike, it was suggested I give the lamp movement
 
 <section class="proj-row">
   <figure class="proj-media">
-    <img loading="lazy" decoding="async" src="/images/living-lamp/workshop.jpg" alt="The lamp arm being shaped on a metal roller in the workshop" />
+    <img loading="lazy" decoding="async" src="/images/living-lamp/workshop.webp" alt="The lamp arm being shaped on a metal roller in the workshop" />
   </figure>
   <div class="proj-text">With the electronics proven, I moved on to building the lamp proper, spending most of my time in the metal workshop cutting the aluminium bar and steel pipe. My original plan was to weld the pipe to the bar, but their different melting points made that impossible — so I threaded the holes and simply screwed the pipes in instead.</div>
 </section>
@@ -30,8 +30,8 @@ The hinges were the real headache. After consulting one lecturer, two technician
 <section class="proj-row">
   <figure class="proj-media proj-media--carousel">
     <div class="carousel">
-      <img loading="lazy" decoding="async" src="/images/living-lamp/hinge.jpg" alt="The finished hinge — two cylinders on a shared axle, running on a bearing" />
-      <img loading="lazy" decoding="async" src="/images/living-lamp/snapped-tap.jpg" alt="A tap snapped off deep inside the silver-steel axle" />
+      <img loading="lazy" decoding="async" src="/images/living-lamp/hinge.webp" alt="The finished hinge — two cylinders on a shared axle, running on a bearing" />
+      <img loading="lazy" decoding="async" src="/images/living-lamp/snapped-tap.webp" alt="A tap snapped off deep inside the silver-steel axle" />
     </div>
   </figure>
   <div class="proj-text">Then the bump in the road. The axle was silver steel — dense, and feeling indestructible — so I threaded it with a regular steel tap. The tap snapped off deep inside, with zero chance of recovery. With no choice but to work around it, I switched to aluminium pipe for the axle, which came with the bonus of a ready-made hole.</div>
@@ -41,7 +41,7 @@ The hinges were the real headache. After consulting one lecturer, two technician
 
 <section class="proj-row proj-row--rev">
   <figure class="proj-media proj-media--a4">
-    <img loading="lazy" decoding="async" src="/images/living-lamp/form-sketch.jpg" alt="A page of base-form ideas, from funky to plain" />
+    <img loading="lazy" decoding="async" src="/images/living-lamp/form-sketch.webp" alt="A page of base-form ideas, from funky to plain" />
   </figure>
   <div class="proj-text">The brief asked for five products, and making five of these lamps was never realistic — so the five became five ways to mount one lamp. I sketched everything from the funky to the plain before narrowing it down.</div>
 </section>
@@ -49,7 +49,7 @@ The hinges were the real headache. After consulting one lecturer, two technician
 A flat base would have to be impractically heavy; a wall clamp commits you to one position; the wearable base — for paramedics and the like — was a fun tangent; a rail base could run the length of a desk. In the end I went with the clamp: light, easy to set up, and small enough to actually carry around.
 
 <figure class="proj-full">
-  <img loading="lazy" decoding="async" src="/images/living-lamp/bases-sketch.jpg" alt="Five base concepts: flat, wall clamp, wearable, rail and clamp" />
+  <img loading="lazy" decoding="async" src="/images/living-lamp/bases-sketch.webp" alt="Five base concepts: flat, wall clamp, wearable, rail and clamp" />
 </figure>
 
 ## What I learnt

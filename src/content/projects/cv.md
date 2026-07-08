@@ -12,6 +12,6 @@ order: 22
   Download CV (PDF)
 </a>
 
-<img class="cv-page" loading="lazy" decoding="async" src="/images/cv/cv-page-1.png" alt="CV page one — introduction and personal statement" />
+<img class="cv-page" loading="lazy" decoding="async" src="/images/cv/cv-page-1.webp" alt="CV page one — introduction and personal statement" />
 
-<img class="cv-page" loading="lazy" decoding="async" src="/images/cv/cv-page-2.png" alt="CV page two — skills, achievements, hobbies and contact" />
+<img class="cv-page" loading="lazy" decoding="async" src="/images/cv/cv-page-2.webp" alt="CV page two — skills, achievements, hobbies and contact" />

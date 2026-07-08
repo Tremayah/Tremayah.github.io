@@ -268,13 +268,17 @@ html.view-open { overflow: hidden; }
   color: var(--title-color);
 }
 .about-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* spread paragraphs to fill the tile's height */
   font-family: var(--body-font);
-  font-size: clamp(0.62rem, 0.98vw, 0.9rem);
-  line-height: 1.45;
+  font-size: clamp(1.05rem, 1.45vw, 1.4rem);
+  line-height: 1.5;
   color: var(--body-color);
 }
-.about-body p { margin: 0 0 0.5em; }
-.about-body p:last-child { margin: 0; }
+.about-body p { margin: 0; }
 /* Fixed caption band so the image bottom sits on the shared --cap line that the
    nav boxes and send button also align to. */
 .tile-name {
@@ -582,7 +586,7 @@ html.reduce-motion *::after {
 }
 
 /* ── Contact card (the "name" tile doubles as a message box) ────────────────
-   Name + blurb share a top edge across the top; below them an optional email
+   Name + info list share a top edge across the top; below them an optional email
    field, then a message box that fills down to the cell bottom. The send button
    lives INSIDE the message box at the bottom-left, sitting in the caption band
    (--cap) so it lines up with the project titles across the row, and doubles as
@@ -591,22 +595,27 @@ html.reduce-motion *::after {
 .tile--contact {
   cursor: default;
   padding: 0;
+  /* Lets the contact name size itself against the CELL width (cqi), not the
+     viewport — see the 681–1024px rule below. Harmless elsewhere: the tile's
+     width is already set by the grid, so containment changes nothing here. */
+  container-type: inline-size;
 }
-/* Split in two like the nav box: name + blurb fill the top half, the form fills
-   the bottom half, with a gap (the "horizontal margin in the middle") between. */
+/* Split in two like the nav box: name + info list fill the top half, the form
+   fills the bottom half, with a gap (the "horizontal margin in the middle"). */
 .contact-card {
   display: flex;
   flex-direction: column;
-  gap: clamp(1.3rem, 2.5vw, 2.25rem); /* one margin between name/bio and the boxes */
+  gap: clamp(1.3rem, 2.5vw, 2.25rem); /* one margin between name/info and the boxes */
   width: 100%;
   height: 100%;
   min-height: 0;
 }
-/* Fixed top half (a stable height the name fills, so a wider name can't squeeze
-   the bio into a taller column). Both name and bio fill this height, so their
-   bottoms land on the same line. */
+/* The name + info row sizes to the name's own height (not a fixed half-card), so
+   the four info lines (justified with space-between) span exactly the name's top
+   to bottom: first line meets RAPHAEL's top, last meets BROWNE's bottom. The form
+   below takes the remaining card height. */
 .contact-head {
-  flex: 1 1 0;
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: row;
@@ -631,7 +640,10 @@ html.reduce-motion *::after {
   text-transform: uppercase;
   white-space: nowrap;
 }
-.contact-blurb {
+/* Info list beside the name (Student · Product Design · 3rd Year · …). Right-
+   aligned in a narrow column; space-between spreads the four lines so the first
+   meets the name's top and the last meets its bottom. */
+.contact-info {
   flex: 0 1 auto;
   max-width: 50%;
   display: flex;
@@ -639,26 +651,38 @@ html.reduce-motion *::after {
   justify-content: space-between; /* first line → name top, last line → name bottom */
   text-align: right;
   font-family: var(--body-font);
-  /* small enough that the copy fits the top half in its narrow column without
-     overflowing (the wide name leaves the bio only ~⅓ of the width) */
-  font-size: clamp(0.6rem, 0.92vw, 0.82rem);
+  /* sized to fill the narrow column beside the wide name without the longest
+     line ("University of Plymouth, UK") wrapping */
+  font-size: clamp(0.78rem, 1.05vw, 0.98rem);
   line-height: 1.4;
   color: var(--body-color);
 }
-.contact-blurb p { margin: 0 0 0.45em; }
-.contact-blurb p:last-child { margin-bottom: 0; }
-/* Top paragraph vertical nudge — baked at 5px (tuned by hand). */
-.contact-blurb p:first-child { transform: translateY(5px); }
-/* Name + blurb are click targets that jump focus into the message box; give
-   them a pointer + a blue hover so the affordance reads. */
-.contact-name[data-focus-message],
-.contact-blurb[data-focus-message] {
-  cursor: pointer;
-  transition: color 0.18s ease;
+/* Tablet / iPad-portrait fix (681–1024px). Between the mobile breakpoint and a
+   roomy desktop, each grid cell is narrow (≈1/3 of the viewport minus fixed
+   padding), but the contact name is sized by viewport width and won't shrink
+   below its nowrap glyph width — so name + info overflowed the cell and the
+   info list ("University of Plymouth, UK") was clipped. Here the name sizes
+   against the CELL width (cqi) instead, so it always leaves room for the info
+   column. Desktop (≥1025px) keeps the original viewport-based size untouched. */
+@media (min-width: 681px) and (max-width: 1024px) {
+  .contact-name { font-size: clamp(1.2rem, 11cqi, 2.6rem); }
 }
-.contact-name[data-focus-message]:hover,
-.contact-blurb[data-focus-message]:hover {
-  color: var(--highlight);
+
+/* Welcome note under the form — only laid out in the single-column (≤680px)
+   view (see media query); the desktop contact cell is a fixed half-height with
+   no room below the message box, so it stays hidden there. */
+.contact-welcome {
+  display: none;
+  flex-direction: column;
+  font-family: var(--body-font);
+  color: var(--body-color);
+}
+.contact-welcome p { margin: 0; }
+/* Name + welcome note are click targets that jump focus into the message box;
+   the pointer cursor carries the affordance (no blue hover colour). */
+.contact-name[data-focus-message],
+.contact-welcome[data-focus-message] {
+  cursor: pointer;
 }
 /* Bottom half: email + message box. */
 .contact-form {
@@ -1386,7 +1410,11 @@ html.reduce-motion .carousel-track { transition: none; }
   .tile--photo { height: 68vw; }
   .tile--placeholder { height: 52vw; }
   .tile--contact { height: auto; min-height: 0; }
-  .tile--about { height: auto; min-height: 0; }
+  /* The about copy already shows as the welcome note under the contact form on
+     mobile, so hide the dedicated about tile here to avoid the same words
+     appearing twice. Only on page 1 — page 2 keeps the cell for its
+     personal-projects placeholder. */
+  .stage[data-page='1'] .cell:has(.tile--about) { display: none; }
   .tile--nav { height: 88vw; padding-bottom: 0; }
   .more-tile { height: 52vw; }
 
@@ -1398,18 +1426,25 @@ html.reduce-motion .carousel-track { transition: none; }
   .project-body a.cv-download { display: flex; justify-content: center; width: 100%; padding: 0.95em 1em; }
   .project-body img.cv-page { max-width: 100%; }
 
-  /* Contact card stacks naturally: name → bio → email → message (the desktop
-     side-by-side / fixed-half layout has no room on a phone). */
-  .contact-card { height: auto; gap: 1.1rem; padding: 0.2rem 0 0.6rem; }
-  .contact-head { flex: 0 0 auto; flex-direction: column; gap: 0.8rem; }
-  .contact-name { font-size: clamp(2.2rem, 13vw, 3.4rem); margin: 0; }
-  .contact-blurb { max-width: 100%; text-align: left; justify-content: flex-start; gap: 0.6rem; }
-  .contact-blurb p:first-child { transform: none; }
-  .contact-form { flex: 0 0 auto; }
-  .contact-message { height: 130px; flex: 0 0 auto; }
-
-  /* Bump small type for legibility on a phone */
-  .contact-blurb { font-size: 0.82rem; }
+  /* Contact card (single-column view) follows the mockup: the hero-sized name
+     keeps the info list beside it (not stacked), then the email + a taller
+     message box, then the welcome note below the form. The card grows to fit
+     (height: auto), so unlike the desktop half-cell there's room for the note. */
+  /* gap = the smaller (message → welcome) spacing; the form gets an extra
+     margin-top so the name → email gap above it reads larger, as in the mockup. */
+  .contact-card { height: auto; gap: clamp(1.6rem, 5.5vw, 2.4rem); padding: 0.2rem 0 0.6rem; }
+  .contact-head { flex: 0 0 auto; }
+  .contact-name { font-size: clamp(2.4rem, 9vw, 3.6rem); } /* hero-sized; shrinks with vw so name + info still fit side-by-side */
+  .contact-info { font-size: 0.82rem; } /* clamp would bottom out too small here */
+  .contact-form { flex: 0 0 auto; gap: 0.55rem; margin-top: clamp(1.6rem, 5.5vw, 2.4rem); }
+  .contact-email, .contact-message { font-size: 0.92rem; } /* clamp bottoms out too small on a phone */
+  .contact-message { height: clamp(150px, 30vw, 200px); flex: 0 0 auto; }
+  .contact-welcome {
+    display: flex;
+    gap: 1em;
+    font-size: clamp(1.15rem, 5vw, 1.4rem);
+    line-height: 1.4;
+  }
   .nav-box { font-size: 0.8rem; }
   .anim-toggle-box { font-size: 0.7rem; }
   .nav-desc-text { font-size: 0.78rem; }

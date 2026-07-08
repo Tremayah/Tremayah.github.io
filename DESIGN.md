@@ -212,15 +212,16 @@ All fluid via `clamp()`:
 | anim toggle | `clamp(0.55rem, 0.85vw, 0.72rem)` |
 | nav box | `clamp(0.6rem, 1vw, 0.95rem)` |
 | description panel | `clamp(0.6rem, 0.95vw, 0.82rem)` |
-| contact email/message | `clamp(0.65rem, 1.05vw, 0.85rem)` |
-| contact blurb | `clamp(0.6rem, 0.92vw, 0.82rem)` |
+| contact email/message | `clamp(0.65rem, 1.05vw, 0.85rem)` (0.92rem ≤680px) |
+| contact info list (beside name) | `clamp(0.6rem, 0.92vw, 0.82rem)` (0.82rem ≤680px) |
+| contact welcome note (≤680px only) | `clamp(1.4rem, 6vw, 2.4rem)` |
 | send button | `clamp(0.85rem, 1.45vw, 1.2rem)` |
 | `.uc-notice` | `clamp(0.7rem, 1.2vw, 0.9rem)` |
 | `.project-desc` | `clamp(0.85rem, 1.5vw, 1.15rem)` |
 | `.project-body` | `clamp(0.85rem, 1.5vw, 1.1rem)` |
 | `.writeup-title` | `clamp(1.6rem, 3.6vw, 3.2rem)` |
 | writeup marquee item | `clamp(1.1rem, 2.8vw, 2rem)` |
-| contact name | `clamp(1.6rem, 4.3vw, 3.75rem)` |
+| contact name | `clamp(1.6rem, 4.3vw, 3.75rem)` (`clamp(2.4rem, 9vw, 3.6rem)` ≤680px; name + info stay side-by-side) |
 | project `h2` | red-box chip, `clamp(0.62rem, 1vw, 0.8rem)`, uppercase, `--nav-font` |
 | project `h3` | `0.65rem`, uppercase |
 
@@ -241,6 +242,10 @@ Letter-spacing: `-0.04em` (contact name), `-0.03em` (titles/marquee),
   `--gap-lg: clamp(54px, 12vw, 240px)` (used for full-bleed breakouts).
 - Single breakpoint: **680px** (mobile = `compact()`), single-column stack,
   tile heights 68vw (photo) / 52vw (placeholder) / 88vw (nav).
+- One narrow exception: a scoped **681–1024px** rule sizes the contact name
+  against the cell width (`cqi`, via `container-type` on `.tile--contact`)
+  instead of the viewport, so the name + info list don't overflow the narrow
+  grid cell on iPad-portrait widths. Desktop (≥1025px) is unaffected.
 
 ### Motion details
 - **Pixel fizzle** (`pixelate()`): `PX=22px` cells, `STAGGER=220ms` total,
