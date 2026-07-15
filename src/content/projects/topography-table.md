@@ -4,6 +4,7 @@ description: "A low table whose layered-wood top reads like a contour map, seale
 year: 2026
 category: "Furniture Design"
 tags: ["Furniture", "CAD", "Rhino", "Blender", "Rendering", "Concept Design"]
+scope: "personal"
 order: 30
 cover: "/images/topography-table/table-context.jpg"
 ---

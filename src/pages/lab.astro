@@ -1,9 +1,71 @@
 ---
 /*  /lab — UNLISTED experiments page (not linked from the site).
-    A dev bar of pixel effects to test, plus nav-box restyle options to pick from.
+    A dev bar of pixel effects to test, plus nav-box restyle options to pick from,
+    plus project-tag options for mixing university + personal projects.
     Self-contained: all experimental CSS/JS lives here, nothing leaks into the
     real site. Delete this file (src/pages/lab.astro) when you're done reviewing. */
 import '../styles/global.css';
+
+/* ── project-tag experiments ──────────────────────────────────────────────
+   Mock landing tiles (image + caption band): project name left, a
+   [university]/[personal] tag right-aligned on the same line. Each option is
+   shown as a pair — one university tile, one personal — so both colours are
+   visible. `kind` picks the tag markup in the template below. */
+const TAG_IMGS = {
+  university: [
+    { src: '/images/living-lamp/lamp.jpg', name: 'living lamp' },
+    { src: '/images/progression/bracelet.jpg', name: 'smart jewellery' },
+    { src: '/images/table-tennis-bat/img_1260.jpg', name: 'table tennis bat' },
+    { src: '/images/exploration/lamp-corian.jpg', name: 'acrylic lamps' },
+  ],
+  personal: [
+    { src: '/images/keycaps/idg_20251209_132030_658.jpg', name: 'porcelain keycaps' },
+    { src: '/images/topography-table/table-context.jpg', name: 'topography table' },
+  ],
+};
+const pairFor = (n) => [
+  { ...TAG_IMGS.university[n % 4], tag: 'university' },
+  { ...TAG_IMGS.personal[n % 2], tag: 'personal' },
+];
+const TAG_GROUPS = [
+  { title: 'tame — quiet variations on the caption line', items: [
+    { n: 1,  kind: 'plain', pre: '[', post: ']', cap: 'baseline — [tag] a step smaller than the name; blue = university, purple = personal' },
+    { n: 2,  kind: 'plain', pre: '[', post: ']', cap: 'same size as the name, regular weight, faded' },
+    { n: 3,  kind: 'plain', pre: '[', post: ']', cap: 'tiny uppercase, letterspaced; green personal' },
+    { n: 4,  kind: 'plain', pre: '(', post: ')', cap: 'round brackets in the body font; dark project names' },
+    { n: 5,  kind: 'plain', pre: '{', post: '}', cap: 'curly braces in the lores pixel font' },
+    { n: 6,  kind: 'plain', pre: '/', post: '',  cap: 'no brackets — a /slash prefix; orange personal' },
+    { n: 7,  kind: 'br',    cap: 'word in ink — only the brackets carry the colour' },
+    { n: 8,  kind: 'chip',  cap: 'solid chip — white text on the tag colour' },
+    { n: 9,  kind: 'chip',  cap: 'outline chip; green personal' },
+    { n: 10, kind: 'dot',   cap: 'no brackets — a single pixel carries the colour' },
+  ]},
+  { title: 'wilder — more graphic, still on the caption line', items: [
+    { n: 11, kind: 'plain', pre: '[', post: ']', cap: 'grey until you hover the tile — then it snaps to its colour' },
+    { n: 12, kind: 'br',    cap: 'the brackets slowly breathe apart and back' },
+    { n: 13, kind: 'plain', pre: '[', post: ']', cap: 'the whole caption ruled off in the tag colour' },
+    { n: 14, kind: 'chip',  cap: 'dithered chip — pixel texture in the tag colour' },
+    { n: 15, kind: 'cursor', cap: 'terminal tag — blinking cursor inside the bracket' },
+  ]},
+  { title: 'completely wild — format-breaking / just fun', items: [
+    { n: 16, kind: 'tt',     cap: 'shows [u] — hover the tile and it types itself out' },
+    { n: 17, kind: 'glitch', cap: 'rgb-split glitch every few seconds' },
+    { n: 18, kind: 'ribbon', cap: 'the tag leaves the caption — ribbon across the thumbnail corner' },
+    { n: 19, kind: 'scr',    cap: 'the word periodically scrambles into pixel noise and resolves' },
+    { n: 20, kind: 'flood',  cap: 'hover floods the image in the tag colour and stamps the word across it' },
+    { n: 21, kind: 'wander', cap: 'a lone pixel in the tag colour wanders the caption band' },
+    { n: 22, kind: 'inv',    cap: 'pixel critter — a tiny invader in the tag colour stands guard' },
+  ]},
+];
+/* a mixed 3×2 landing grid so the idea can be judged in context */
+const TAG_MINI = [
+  { ...TAG_IMGS.personal[0], tag: 'personal' },
+  { ...TAG_IMGS.university[0], tag: 'university' },
+  { ...TAG_IMGS.personal[1], tag: 'personal' },
+  { ...TAG_IMGS.university[1], tag: 'university' },
+  { ...TAG_IMGS.university[2], tag: 'university' },
+  { ...TAG_IMGS.university[3], tag: 'university' },
+];
 ---
 <!doctype html>
 <html lang="en">
@@ -19,8 +81,256 @@ import '../styles/global.css';
 <body class="lab">
   <header>
     <h1 class="lab-h1">LAB</h1>
-    <p class="lab-note">Unlisted — not linked from the site, just for you to test. Click a button to fire the effect on the tile. Nav-box options are lower down. Delete <code>src/pages/lab.astro</code> when you're done.</p>
+    <p class="lab-note">Unlisted — not linked from the site, just for you to test. Newest at the top: project-tag options for mixing university + personal projects on the landing. Pixel effects and nav-box options are lower down. Delete <code>src/pages/lab.astro</code> when you're done.</p>
   </header>
+
+  <section class="lab-sec" id="tagopts">
+    <h2 class="lab-h2">project tags — university vs personal</h2>
+    <p class="lab-note">A tag sits right-aligned on the caption line, next to the project name. Every option is shown twice — one university tile, one personal — so you can compare the two colours. Groups run tame → wilder → completely wild. Hover the tiles on <code>11</code>, <code>16</code> and <code>20</code>. All motion respects <code>prefers-reduced-motion</code>.</p>
+
+    <p class="navsub">in context — a mixed landing grid, wearing option 01</p>
+    <div class="taggrid">
+      {TAG_MINI.map((t) => (
+        <div class="pt v1" data-tag={t.tag}>
+          <span class="pt-media"><img src={t.src} alt="" loading="lazy" decoding="async" /></span>
+          <span class="pt-cap"><span class="pt-name">{t.name}</span><span class="pt-tag">[{t.tag}]</span></span>
+        </div>
+      ))}
+    </div>
+
+    {TAG_GROUPS.map((g) => (
+      <>
+        <p class="navsub">{g.title}</p>
+        <div class="tagrow">
+          {g.items.map((v) => (
+            <figure>
+              <div class="tagpair">
+                {pairFor(v.n).map((t) => (
+                  <div class={`pt v${v.n}`} data-tag={t.tag} data-word={v.kind === 'tt' ? t.tag : undefined}>
+                    <span class="pt-media" data-word={v.kind === 'flood' ? t.tag : undefined}>
+                      <img src={t.src} alt="" loading="lazy" decoding="async" />
+                      {v.kind === 'ribbon' && <span class="pt-tag">{t.tag}</span>}
+                    </span>
+                    <span class="pt-cap">
+                      <span class="pt-name">{t.name}</span>
+                      {v.kind === 'plain' && <span class="pt-tag">{v.pre}{t.tag}{v.post}</span>}
+                      {v.kind === 'br' && <span class="pt-tag"><span class="br">[</span>{t.tag}<span class="br">]</span></span>}
+                      {v.kind === 'chip' && <span class="pt-tag">{t.tag}</span>}
+                      {v.kind === 'dot' && <span class="pt-tag"><i class="dot"></i>{t.tag}</span>}
+                      {v.kind === 'cursor' && <span class="pt-tag">[{t.tag}<span class="cur">▮</span>]</span>}
+                      {v.kind === 'tt' && <span class="pt-tag">[<b class="tt">u</b>]</span>}
+                      {v.kind === 'glitch' && <span class="pt-tag" data-txt={`[${t.tag}]`}>[{t.tag}]</span>}
+                      {v.kind === 'scr' && <span class="pt-tag">[<b class="scr">{t.tag}</b>]</span>}
+                      {(v.kind === 'flood' || v.kind === 'wander') && <span class="pt-tag">[{t.tag}]</span>}
+                      {v.kind === 'inv' && <span class="pt-tag"><span class="inv"><i class="f1"></i><i class="f2"></i></span>{t.tag}</span>}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <figcaption>{String(v.n).padStart(2, '0')} · {v.cap}</figcaption>
+            </figure>
+          ))}
+        </div>
+      </>
+    ))}
+
+    <style is:inline>
+      /* ── project-tag experiments (self-contained; delete with the section) ── */
+      .tagrow { display: grid; grid-template-columns: repeat(auto-fill, 424px); gap: 2.2rem 1.8rem; align-items: start; }
+      .tagrow figure { margin: 0; }
+      .tagrow figcaption { font-family: var(--nav-font); font-size: 0.7rem; color: var(--fg); margin-top: 0.45rem; text-transform: lowercase; line-height: 1.3; max-width: 424px; }
+      .tagpair { display: flex; gap: 1rem; }
+      .taggrid { display: grid; grid-template-columns: repeat(3, 204px); gap: 1rem; margin-bottom: 0.6rem; }
+
+      /* the mock tile — mirrors .tile--photo: media on top, caption band below */
+      .pt { width: 204px; display: flex; flex-direction: column; position: relative; }
+      .pt[data-tag='university'] { --tagc: #0913ff; }
+      .pt[data-tag='personal'] { --tagc: #5200ff; }
+      .pt-media { position: relative; display: block; height: 128px; overflow: hidden; background: #111; }
+      .pt-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .pt-cap { position: relative; min-height: 1.85rem; padding-top: 0.4rem; display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; font-family: var(--nav-font); font-weight: 700; font-size: 0.95rem; line-height: 1.1; text-transform: lowercase; color: var(--body-color); }
+      .pt-name { min-width: 0; }
+      .pt-tag { white-space: nowrap; color: var(--tagc); }
+
+      /* 01 — baseline */
+      .v1 .pt-tag { font-size: 0.72em; }
+
+      /* 02 — full size, regular weight, faded */
+      .v2 .pt-tag { font-size: 1em; font-weight: 400; opacity: 0.75; }
+
+      /* 03 — tiny uppercase, letterspaced; green personal */
+      .v3 .pt-tag { font-size: 0.55em; text-transform: uppercase; letter-spacing: 0.08em; }
+      .pt.v3[data-tag='personal'] { --tagc: #00a244; }
+
+      /* 04 — round brackets, body font, dark project name */
+      .v4 .pt-name { color: #1c1c1c; }
+      .v4 .pt-tag { font-family: var(--body-font); font-weight: 400; font-size: 0.85em; }
+
+      /* 05 — curly braces in the lores pixel font */
+      .v5 .pt-tag { font-family: 'lores-9-plus-narrow', var(--nav-font); font-weight: 400; font-size: 0.9em; letter-spacing: 0.03em; }
+
+      /* 06 — slash prefix, orange personal */
+      .v6 .pt-tag { font-size: 0.7em; }
+      .pt.v6[data-tag='personal'] { --tagc: #ff8a00; }
+
+      /* 07 — only the brackets carry the colour */
+      .v7 .pt-tag { color: #1c1c1c; font-weight: 400; font-size: 0.7em; }
+      .v7 .pt-tag .br { color: var(--tagc); font-weight: 700; }
+
+      /* 08 — solid chip */
+      .v8 .pt-tag { background: var(--tagc); color: #fff; font-size: 0.55em; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.3em 0.55em; }
+
+      /* 09 — outline chip; green personal */
+      .v9 .pt-tag { box-shadow: inset 0 0 0 1.5px var(--tagc); font-size: 0.58em; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.28em 0.55em; }
+      .pt.v9[data-tag='personal'] { --tagc: #00a244; }
+
+      /* 10 — a single pixel carries the colour */
+      .v10 .pt-tag { color: #6f6f6f; font-weight: 400; font-size: 0.7em; display: inline-flex; align-items: center; gap: 0.45em; }
+      .v10 .pt-tag .dot { width: 0.55em; height: 0.55em; background: var(--tagc); flex: none; }
+
+      /* 11 — grey until the tile is hovered */
+      .v11 .pt-tag { font-size: 0.72em; color: #bdbdbd; transition: color 0.16s steps(3); }
+      .v11:hover .pt-tag { color: var(--tagc); }
+
+      /* 12 — breathing brackets */
+      .v12 .pt-tag { font-size: 0.72em; }
+      .v12 .pt-tag .br { display: inline-block; animation: tag-breathe-l 3.4s steps(2) infinite; }
+      .v12 .pt-tag .br:last-child { animation-name: tag-breathe-r; }
+      @keyframes tag-breathe-l { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-3px); } }
+      @keyframes tag-breathe-r { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
+
+      /* 13 — caption ruled off in the tag colour */
+      .v13 .pt-cap { border-bottom: 3px solid var(--tagc); padding-bottom: 0.35rem; }
+      .v13 .pt-tag { font-size: 0.66em; }
+
+      /* 14 — dithered chip */
+      .v14 .pt-tag { background-color: var(--tagc); background-image: radial-gradient(rgba(255,255,255,0.38) 1px, transparent 1.3px); background-size: 5px 5px; color: #fff; font-size: 0.55em; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.32em 0.6em; }
+
+      /* 15 — terminal cursor inside the bracket. (tag-blink is a local copy of
+         the nav-box section's nb-blink, so this section stays self-contained
+         and survives that section being deleted.) */
+      .v15 .pt-tag { font-size: 0.7em; }
+      .v15 .pt-tag .cur { animation: tag-blink 1.05s steps(1) infinite; }
+      @keyframes tag-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+      /* 16 — [u] types itself out on hover (JS below) */
+      .v16 .pt-tag { font-size: 0.72em; }
+
+      /* 17 — rgb-split glitch. (Local copies of the nav-box section's
+         nb-glitch keyframes, for the same self-containment reason as 15.) */
+      .v17 .pt-tag { position: relative; font-size: 0.72em; }
+      .v17 .pt-tag::before, .v17 .pt-tag::after { content: attr(data-txt); position: absolute; inset: 0; opacity: 0; }
+      .v17 .pt-tag::before { color: #f80d0d; animation: tag-glitch-a 3.1s steps(1) infinite; }
+      .v17 .pt-tag::after { color: #0913ff; animation: tag-glitch-b 3.1s steps(1) infinite; }
+      @keyframes tag-glitch-a { 0%, 92%, 100% { transform: translate(0, 0); opacity: 0; } 93% { transform: translate(-2px, 1px); opacity: 0.85; } 96% { transform: translate(2px, -1px); opacity: 0.85; } }
+      @keyframes tag-glitch-b { 0%, 90%, 100% { transform: translate(0, 0); opacity: 0; } 91% { transform: translate(2px, -1px); opacity: 0.85; } 95% { transform: translate(-2px, 1px); opacity: 0.85; } }
+
+      /* 18 — ribbon across the thumbnail corner */
+      .v18 .pt-media .pt-tag { position: absolute; top: 18px; right: -42px; width: 150px; transform: rotate(45deg); background: var(--tagc); color: #fff; text-align: center; font-family: var(--nav-font); font-weight: 700; font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.35em 0; z-index: 2; }
+
+      /* 19 — periodic pixel-noise scramble (JS below) */
+      .v19 .pt-tag { font-size: 0.72em; }
+
+      /* 20 — hover floods the image in the tag colour */
+      .v20 .pt-media::after { content: ''; position: absolute; inset: 0; z-index: 1; background: var(--tagc); opacity: 0; transition: opacity 0.16s steps(4); }
+      .v20 .pt-media::before { content: attr(data-word); position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; font-family: 'lores-9-plus-narrow', var(--nav-font); font-size: 1.9rem; text-transform: uppercase; letter-spacing: 0.02em; color: #fff; opacity: 0; transition: opacity 0.1s steps(2); }
+      .v20:hover .pt-media::after { opacity: 0.88; }
+      .v20:hover .pt-media::before { opacity: 1; transition-delay: 0.07s; }
+      .v20 .pt-tag { font-size: 0.72em; }
+
+      /* 21 — a lone pixel wanders the caption band (JS below) */
+      .v21 .pt-cap { overflow: hidden; }
+      .v21 .pt-name, .v21 .pt-tag { position: relative; z-index: 1; }
+      .v21 .pt-tag { font-size: 0.72em; }
+      .v21 .cappx { position: absolute; left: 0; top: 0; width: 5px; height: 5px; background: var(--tagc); opacity: 0.85; z-index: 0; transition: transform 0.3s steps(2); }
+
+      /* 22 — two-frame pixel invader, drawn in box-shadow cells */
+      .v22 .pt-tag { display: inline-flex; align-items: center; gap: 0.5em; font-size: 0.7em; }
+      .v22 .inv { position: relative; width: 21px; height: 15px; flex: none; }
+      .v22 .inv i { position: absolute; top: 0; left: 0; width: 3px; height: 3px; }
+      .v22 .inv .f1 { box-shadow: 3px 0 var(--tagc), 15px 0 var(--tagc), 6px 3px var(--tagc), 9px 3px var(--tagc), 12px 3px var(--tagc), 3px 6px var(--tagc), 6px 6px var(--tagc), 9px 6px var(--tagc), 12px 6px var(--tagc), 15px 6px var(--tagc), 0 9px var(--tagc), 6px 9px var(--tagc), 9px 9px var(--tagc), 12px 9px var(--tagc), 18px 9px var(--tagc), 6px 12px var(--tagc), 12px 12px var(--tagc); animation: tag-blink 1.1s steps(1) infinite; }
+      .v22 .inv .f2 { box-shadow: 3px 0 var(--tagc), 15px 0 var(--tagc), 6px 3px var(--tagc), 9px 3px var(--tagc), 12px 3px var(--tagc), 3px 6px var(--tagc), 6px 6px var(--tagc), 9px 6px var(--tagc), 12px 6px var(--tagc), 15px 6px var(--tagc), 0 9px var(--tagc), 6px 9px var(--tagc), 9px 9px var(--tagc), 12px 9px var(--tagc), 18px 9px var(--tagc), 3px 12px var(--tagc), 15px 12px var(--tagc); opacity: 0; animation: tag-blink-inv 1.1s steps(1) infinite; }
+      @keyframes tag-blink-inv { 0%, 49% { opacity: 0; } 50%, 100% { opacity: 1; } }
+
+      @media (prefers-reduced-motion: reduce) {
+        .pt *, .pt::before, .pt::after, .pt-media::before, .pt-media::after { animation: none !important; transition: none !important; }
+      }
+    </style>
+
+    <script is:inline>
+      /* Project-tag experiments: typewriter (16), scramble (19), wanderer (21) */
+      (function () {
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // The page is long, so the periodic effects (19, 21) idle while their
+        // tile is scrolled off-screen instead of burning layout work unseen.
+        var seen = new WeakMap();
+        var io = 'IntersectionObserver' in window
+          ? new IntersectionObserver(function (entries) {
+              entries.forEach(function (en) { seen.set(en.target, en.isIntersecting); });
+            })
+          : null;
+        function watch(el) { if (io) io.observe(el); }
+        function onScreen(el) { return !io || seen.get(el) !== false; }
+
+        // 16 — [u] until hover, then the word types itself out
+        document.querySelectorAll('.pt.v16').forEach(function (pt) {
+          var b = pt.querySelector('.tt'); if (!b) return;
+          var word = pt.getAttribute('data-word') || '';
+          if (reduce) { b.textContent = word; return; }
+          b.textContent = word.charAt(0);
+          var iv = null;
+          pt.addEventListener('mouseenter', function () {
+            clearInterval(iv); var i = 1;
+            iv = setInterval(function () {
+              i++; b.textContent = word.slice(0, i);
+              if (i >= word.length) clearInterval(iv);
+            }, 45);
+          });
+          pt.addEventListener('mouseleave', function () { clearInterval(iv); b.textContent = word.charAt(0); });
+        });
+
+        // 19 — every few seconds the word scrambles, then resolves left → right
+        var SCR = 'abcdefghjkmnpqrstuvwxyz<>/+=*#';
+        document.querySelectorAll('.pt.v19 .scr').forEach(function (el) {
+          if (reduce) return;
+          var word = el.textContent;
+          watch(el);
+          (function cycle() {
+            setTimeout(function () {
+              if (!onScreen(el)) { cycle(); return; } // skip the burst while hidden
+              var n = 0, total = word.length + 4;
+              var iv = setInterval(function () {
+                n++;
+                if (n >= total) { clearInterval(iv); el.textContent = word; cycle(); return; }
+                var out = '';
+                for (var i = 0; i < word.length; i++) out += i < n - 3 ? word.charAt(i) : SCR.charAt((Math.random() * SCR.length) | 0);
+                el.textContent = out;
+              }, 55);
+            }, 2400 + Math.random() * 2800);
+          })();
+        });
+
+        // 21 — a lone pixel random-walks the caption band on an 8px lattice
+        document.querySelectorAll('.pt.v21').forEach(function (pt) {
+          if (reduce) return;
+          var cap = pt.querySelector('.pt-cap');
+          var px = document.createElement('i'); px.className = 'cappx'; cap.appendChild(px);
+          watch(cap);
+          var C = 8;
+          var cols = Math.max(2, Math.floor(cap.clientWidth / C) - 1);
+          var rows = Math.max(2, Math.floor(cap.clientHeight / C) - 1);
+          var x = (Math.random() * cols) | 0, y = (Math.random() * rows) | 0;
+          setInterval(function () {
+            if (!onScreen(cap)) return; // idle while scrolled out of view
+            var d = (Math.random() * 4) | 0;
+            if (d === 0 && x < cols - 1) x++; else if (d === 1 && x > 0) x--; else if (d === 2 && y < rows - 1) y++; else if (y > 0) y--; else x = (x + 1) % cols;
+            px.style.transform = 'translate(' + x * C + 'px,' + y * C + 'px)';
+          }, 320);
+        });
+      })();
+    </script>
+  </section>
 
   <section class="lab-sec">
     <h2 class="lab-h2">pixel effects</h2>

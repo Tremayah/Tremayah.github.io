@@ -8,7 +8,6 @@
      • opening a project — everything fizzles, the hero lands top-left and the
        copy wraps around it; a sticky scrolling-name home bar tops the page
      • closing (click the home bar, anywhere off a link/image, or Escape)
-     • the "personal projects" radial view swap (page 1 ⇄ page 2)
      • "more works": free page scroll, with the nav button lit while scrolled
      • the hover description panel, the animations toggle, the nav-label fill,
        the contact form's AJAX submit, carousels and the lightbox
@@ -177,8 +176,6 @@ function closeLightbox(): void {
    Hovering any tile with a data-desc shows that blurb in the shared panel —
    no animation, the text just swaps. Leaving restores the default hint. */
 function initDescPanel(): void {
-  // The nav box renders on both pages, so there can be more than one panel —
-  // update them all, and only the visible one shows.
   const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-desc-panel] .nav-desc-text'));
   if (panels.length === 0) return;
   const hint = (panels[0].textContent ?? '').trim();
@@ -190,9 +187,8 @@ function initDescPanel(): void {
 }
 
 /* ── Animations on/off toggle (accessibility) ─────────────────────────────
-   Defaults to honouring prefers-reduced-motion. Both nav pages carry a switch;
-   they're kept in sync and drive html.reduce-motion, which the fizzle functions
-   and CSS both respect. */
+   Defaults to honouring prefers-reduced-motion. The switch drives
+   html.reduce-motion, which the fizzle functions and CSS both respect. */
 function initAnimToggle(): void {
   const switches = Array.from(document.querySelectorAll<HTMLInputElement>('[data-anim-switch]'));
   if (switches.length === 0) return;
@@ -210,8 +206,7 @@ function initAnimToggle(): void {
    preserveAspectRatio="none", so setting the viewBox to the text's own bounding
    box makes it scale non-uniformly to fill the box — leaving only the thin
    margin from .nav-fill's inset. Measured after fonts load; the SVG then
-   re-scales itself on resize with no further work. The two nav pages share
-   identical labels, so a hidden twin (0×0 bbox) reuses its visible match. */
+   re-scales itself on resize with no further work. */
 function fillNavBoxes(): void {
   const NS = 'http://www.w3.org/2000/svg';
   document.querySelectorAll<HTMLElement>('.nav-box').forEach((box) => {
@@ -245,8 +240,8 @@ function fillNavBoxes(): void {
       const key = t.textContent ?? '';
       if (cache[key]) return;
       let bb: DOMRect;
-      // Older Firefox throws on getBBox() for non-rendered elements (the
-      // hidden page-2 twin labels) — treat that as a 0×0 box and move on.
+      // Older Firefox throws on getBBox() for a non-rendered element — treat
+      // that as a 0×0 box and move on.
       try { bb = t.getBBox(); } catch { return; }
       if (bb.width > 0 && bb.height > 0) {
         // a hair of padding so glyph extremes aren't clipped by the tight viewBox
@@ -279,8 +274,7 @@ function gridCells(): HTMLElement[] {
 }
 
 function visibleTiles(): HTMLElement[] {
-  const page = stage!.dataset.page ?? '1';
-  return Array.from(stage!.querySelectorAll<HTMLElement>(`.tile[data-page="${page}"]`));
+  return Array.from(stage!.querySelectorAll<HTMLElement>('.landing-grid .tile'));
 }
 
 /* Float the project's hero image into the TOP-LEFT of the writeup body and wrap
@@ -316,8 +310,8 @@ function layoutProjectHero(writeup: HTMLElement, coverSrc: string | null): void 
 
 /* ── Browser history ──────────────────────────────────────────────────────
    The site is one page, but every "page change" a visitor would expect to undo
-   with the Back button gets a real history entry: opening a project, opening
-   the CV, switching to the personal-projects view. The site isn't deep, so we
+   with the Back button gets a real history entry: opening a project or the CV.
+   The site isn't deep, so we
    keep AT MOST ONE entry above the home base — Back therefore always returns to
    the home page, never to an intermediate view. (Forward re-opens the last
    view.) The home base entry is tagged {home:true}; any open view is
@@ -327,17 +321,18 @@ function layoutProjectHero(writeup: HTMLElement, coverSrc: string | null): void 
    view button back) don't animate directly — they call history.back(), so the
    popstate handler runs the one home transition. That keeps history in sync and
    makes "go home" look identical however it's triggered. */
-type AwayState = { home: false; view: 'project' | 'cv' | 'page2'; id?: string };
+type AwayState = { home: false; view: 'project' | 'cv'; id?: string };
 const atHome = (): boolean => !(history.state && history.state.home === false);
 let navigatingHome = false; // guards against double history.back() on rapid clicks
 
 /* The real URL for an away view. Projects (and the CV) are deep-linkable at
    /p/<id>/ — matching the pre-rendered pages in src/pages/p/[slug].astro — so the
-   address bar, bookmarks and sharing all work. The personal-projects view (page2)
-   isn't a project, so it keeps the current URL. */
+   address bar, bookmarks and sharing all work. */
 function pathFor(state: Omit<AwayState, 'home'>): string {
   if (state.view === 'project' && state.id) return `/p/${state.id}/`;
   if (state.view === 'cv') return '/p/cv/';
+  // Unreachable for real pushes (every away view is covered above); keeps the
+  // URL unchanged rather than guessing if a malformed state ever slips in.
   return location.pathname;
 }
 
@@ -364,11 +359,17 @@ function restoreView(state: AwayState): void {
   if (busy || !stage) return;
   const origin: Point = { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
   if (state.view === 'cv') openView('cv', origin, null);
-  else if (state.view === 'page2') setView('2', origin);
   else if (state.view === 'project' && state.id) {
-    const tile = stage.querySelector<HTMLElement>(`.tile[data-open="${state.id}"]`);
+    // Whole-document lookup (same as the deep-link boot): the tile may be a
+    // .more-tile in the below-the-fold grid, outside the stage.
+    const tile = document.querySelector<HTMLElement>(`[data-open="${state.id}"]`);
     const cover = tile?.querySelector<HTMLImageElement>('.tile-img')?.getAttribute('src') ?? null;
     openView(state.id, origin, cover);
+  } else {
+    // Unrecognised away state — e.g. an entry persisted by an older build
+    // (like the removed personal-projects view). Nothing to restore; the home
+    // grid is showing, so re-mark the entry as home to keep history in step.
+    history.replaceState({ home: true }, '', '/');
   }
 }
 
@@ -561,28 +562,27 @@ function openCV(origin: Point): Promise<void> {
   return openView('cv', origin, null);
 }
 
-/* Return to the home page (page 1, nothing open) with a NON-radial fizzle — a
-   uniform pixel "static" that washes over the whole stage, distinct from the
-   radial ripple that opens a view. This is the one transition the Back button
-   (and every in-app home control) runs, whatever the current view: it closes an
-   open write-up and/or swaps the grid back to page 1, switching the content
-   while the stage is fully covered by static so nothing flashes. */
+/* Return to the home page (nothing open) with a NON-radial fizzle — a uniform
+   pixel "static" that washes over the whole stage, distinct from the radial
+   ripple that opens a view. This is the one transition the Back button (and
+   every in-app home control) runs: it closes the open write-up, switching the
+   content while the stage is fully covered by static so nothing flashes. */
 async function fizzleHome(): Promise<void> {
   if (!stage || busy) return;
   const id = openId;
-  const swapPage = stage.dataset.page !== '1';
-  if (!id && !swapPage) return; // already home
+  if (!id) return; // already home
 
   busy = true;
   try {
-    const writeup = id ? stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`) : null;
+    const writeup = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
 
     // Apply the home end-state (run behind the static cover, or instantly when
     // animations are off / on mobile's full-screen overlay).
     const settle = (): void => {
       if (writeup) { writeup.hidden = true; clearMask(writeup); }
-      if (id) { openId = null; stage!.classList.remove('is-open'); unlockScroll(); }
-      if (swapPage) stage!.dataset.page = '1';
+      openId = null;
+      stage!.classList.remove('is-open');
+      unlockScroll();
       setDocTitle(null); // back on the home grid → site title
     };
 
@@ -647,59 +647,6 @@ function initContactForm(form: HTMLFormElement): void {
   });
 }
 
-/* ── View swap (radial) ────────────────────────────────────────────────────
-   "Personal projects" swaps cells 0–4 between page 1 (the landing) and page 2
-   (placeholder project tiles), as a radial wave from the clicked button: the
-   stage static ring expands outward, and each cell switches its tile to the new
-   page just as the ring covers it, so the new set is revealed from the click
-   point out — same look as opening a project, but swapping the whole grid. The
-   nav box (tile--persist) doesn't swap. */
-async function setView(page: '1' | '2', origin: Point): Promise<void> {
-  if (!stage || busy || openId || stage.dataset.page === page) return;
-  busy = true;
-  try {
-    const prev = stage.dataset.page ?? '1';
-    if (reduced() || compact()) { stage.dataset.page = page; return; } // instant swap via CSS
-    const sr = stage.getBoundingClientRect();
-    const maxDist = maxDistFrom(origin);
-    stage.classList.add('animating');
-
-    const swaps = gridCells()
-      .map((cell) => ({
-        cell,
-        leaving: cell.querySelector<HTMLElement>(`.tile[data-page="${prev}"]`),
-        entering: cell.querySelector<HTMLElement>(`.tile[data-page="${page}"]`),
-      }))
-      .filter((s): s is { cell: HTMLElement; leaving: HTMLElement; entering: HTMLElement } =>
-        !!s.leaving && !!s.entering && !s.entering.classList.contains('tile--persist'));
-
-    // Switch each cell's visible tile when the wavefront reaches its centre + half
-    // the ring's hold, i.e. while it's fully covered by static, so nothing flashes.
-    swaps.forEach((s) => {
-      const r = s.cell.getBoundingClientRect();
-      const cx = r.left + r.width / 2 - sr.left;
-      const cy = r.top + r.height / 2 - sr.top;
-      const tc = Math.max(0, (Math.hypot(cx - origin.x, cy - origin.y) / maxDist) * SPREAD);
-      setTimeout(() => {
-        s.leaving.style.display = 'none';
-        s.entering.style.display = 'flex';
-      }, tc + HOLD / 2);
-    });
-
-    await runStageWave(origin);
-
-    stage.dataset.page = page;
-    // Hand visibility back to the CSS page-toggle now that data-page matches.
-    swaps.forEach((s) => {
-      s.leaving.style.removeProperty('display');
-      s.entering.style.removeProperty('display');
-    });
-  } finally {
-    stage.classList.remove('animating');
-    busy = false;
-  }
-}
-
 /* ── "More works" ───────────────────────────────────────────────────────────
    The homepage scrolls freely; scrolling down reveals the extra .more-grid tiles
    and lights the "more works" button (html.more-open, driven by scroll position
@@ -741,19 +688,10 @@ function onStageClick(e: MouseEvent): void {
     return;
   }
 
-  // Nav-box section buttons (the 2×2 cell): toggle the personal-projects view,
-  // open the CV, or expand "more works".
+  // Nav-box section buttons: open the CV, or expand "more works".
   const actionEl = target.closest<HTMLElement>('[data-action]');
   if (actionEl) {
     const action = actionEl.dataset.action;
-    if (action === 'view') {
-      // The one view button doubles as a toggle: into the view (a history entry),
-      // then back home (via the Back button, so history stays in sync).
-      const view = (actionEl.dataset.view as '1' | '2') ?? '2';
-      if (stage!.dataset.page === view) goHomeViaHistory();
-      else if (!busy) { pushAway({ view: 'page2' }); setView(view, originOf(actionEl)); }
-      return;
-    }
     if (action === 'cv') { openCV(originOf(actionEl)); return; }
     if (action === 'more') { toggleMore(); return; }
   }
@@ -800,7 +738,9 @@ function init(): void {
     const isCV = openInitial === 'cv';
     history.replaceState({ home: true }, '', '/');
     history.pushState({ home: false, view: isCV ? 'cv' : 'project', id: isCV ? undefined : openInitial }, '', path);
-  } else if (atHome()) {
+  } else {
+    // Booting onto the home grid: stamp this entry as the home base even if a
+    // stale away state (e.g. an older build's removed view) was persisted on it.
     history.replaceState({ home: true }, '');
   }
   window.addEventListener('popstate', onPopState);

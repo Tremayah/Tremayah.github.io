@@ -23,7 +23,7 @@ swaps the URL via the History API (no real navigation — same app, write-up rev
 The files that matter:
 
 - `src/components/Landing.astro` — **the whole app**: builds the grid from the `cells` array
-  (each cell has a page-1 and a page-2 variant) and embeds every openable write-up, hidden.
+  (one tile per cell) and embeds every openable write-up, hidden.
   Takes an optional `openId` prop → `data-open-initial` on the stage, so a deep-link boots
   straight into that view. `FORMSUBMIT_ALIAS` and `UNDER_CONSTRUCTION` live up top.
 - `src/pages/index.astro` — thin wrapper: `<LandingLayout><Landing /></LandingLayout>`.
@@ -37,12 +37,15 @@ The files that matter:
 
 ## Behaviour model (current — README goes deeper)
 
-- **Grid.** Cell 0 = the contact card. Cells 1–4 = project tiles. Cell 5 = a 2×2 **nav box**
-  that persists: top-left holds an **animations on/off toggle** + a **description panel**;
-  top-right + bottom-left are buttons — **personal projects**, **more works** (their labels are
-  stretched to fill each box: an SVG with `preserveAspectRatio="none"`, see `fillNavBoxes`).
+- **Grid.** Cell 0 = the contact card. Cells 1, 2 and 4 = project tiles; cell 3 = the about
+  tile. Cell 5 = a 2×2 **nav box**: the top row (both columns) holds an **animations on/off
+  toggle** + a **description panel**; bottom-left is the **more works** button (its label
+  stretched to fill the box: an SVG with `preserveAspectRatio="none"`, see `fillNavBoxes`).
   Bottom-right is a **links quad** (`.nav-quad`) — its own 2×2 of small `.nav-mini` tiles:
   **Instagram**, **LinkedIn**, the **cv** page button, and one **blank** spare slot.
+- **Tags.** Every project caption carries a chip on its right — blue **university** / orange
+  **personal**, from the `scope` frontmatter field (defaults to university). Both kinds share
+  the one landing page; there is no separate personal-projects view.
 - **Hover** any tile → its blurb shows in the nav description panel (no typing animation).
 - **Opening a project** (`openView`): the *whole* stage fizzles (radial wave) and the project's
   **hero image appears in the TOP-LEFT**, with the copy wrapping around it — the same layout
@@ -50,11 +53,10 @@ The files that matter:
   **home bar** at the top (the scrolling name); click it (or anywhere off a link/image) to go
   home. **cv** opens the same way but full-page (no hero). The clicked tile does **not** persist
   any more (no "sliced title").
-- **personal projects** radial-swaps cells 0–4 between page 1 (home) and page 2 (placeholder
-  project tiles) via `setView`; click it again to come back.
 - **more works** = the homepage scrolls; scrolling down reveals extra `.more-grid` tiles below
   and lights the "more works" button. The button is a shortcut (scroll down / back to top).
-- **Robustness:** one `busy` lock serialises every transition (open/close/swap) so spam-clicking
+  Topography Table (the personal project) lives here alongside the university work.
+- **Robustness:** one `busy` lock serialises every transition (open/close) so spam-clicking
   can't overlap waves. Animations honour `prefers-reduced-motion` and the toggle
   (`html.reduce-motion` → instant, no wave). On narrow screens (`≤680px`) the grid becomes a
   single-column scroller and an opened view is a full-screen overlay (`compact()` → instant).

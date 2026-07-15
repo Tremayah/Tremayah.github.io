@@ -22,6 +22,12 @@
   /* Interaction blue — title click/glitch, more-works active state, image-hover overlay. */
   --highlight: #0913ff;
 
+  /* Project-tag chips (university vs personal) on the caption line. University
+     reuses the interaction blue; personal is a burnt orange that still holds
+     white chip text. */
+  --tag-university: var(--highlight);
+  --tag-personal:   #d9600a;
+
   /* Shared grid geometry — the open-state writeup mirrors the landing grid's
      padding exactly, so both reference the same tokens. */
   --grid-gap: clamp(0.5rem, 1.5vw, 1.25rem);
@@ -186,7 +192,7 @@ html.view-open { overflow: hidden; }
 }
 
 /* ── Tiles ────────────────────────────────────────── */
-/* Each cell stacks a page-1 and a page-2 tile; only the active page shows. */
+/* One tile per cell, filling it. */
 .tile {
   position: absolute;
   inset: 0;
@@ -201,10 +207,6 @@ html.view-open { overflow: hidden; }
   text-align: left;
   cursor: pointer;
   overflow: hidden;
-}
-.stage[data-page='1'] .tile[data-page='2'],
-.stage[data-page='2'] .tile[data-page='1'] {
-  display: none;
 }
 
 /* Photo tile: image fills, title sits beneath */
@@ -221,14 +223,8 @@ html.view-open { overflow: hidden; }
   object-fit: cover;
   display: block;
 }
-/* Placeholder project tile (personal-projects view): a plain block with a
-   centred label, standing in until real projects fill these slots. */
-.tile--placeholder {
-  align-items: center;
-  justify-content: center;
-  background: #f1f1f1;
-  cursor: default;
-}
+/* Placeholder tile label — the "more works" stubs (e.g. Trebuchet) reuse this
+   centred label while they wait for a real write-up. */
 .placeholder-label {
   font-family: var(--nav-font);
   font-weight: 700;
@@ -290,6 +286,44 @@ html.view-open { overflow: hidden; }
   line-height: 1.1;
   color: var(--body-color);
   text-transform: lowercase;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+/* The title takes the room the tag doesn't; if a name is ever long enough to
+   collide it shrinks and ellipses rather than shoving the tag off the line. */
+.tile-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Project-tag chip: a solid block with a white uppercase label on the tag
+   colour, right-aligned on the caption line — blue = university, orange =
+   personal. Lets both kinds of project share one page and still read apart. */
+.tile-tag {
+  flex: none;
+  align-self: center;
+  font-size: 0.52em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--tag-color, var(--tag-university));
+  padding: 0.4em 0.6em;
+  white-space: nowrap;
+}
+.tile-tag[data-tag='university'] { --tag-color: var(--tag-university); }
+.tile-tag[data-tag='personal']   { --tag-color: var(--tag-personal); }
+/* Corner variant for the image-less text tile (Essays): it has no caption band,
+   so pin the chip top-left, clear of the bottom-aligned title + hint. */
+.tile-tag--corner {
+  position: absolute;
+  top: clamp(0.9rem, 2vw, 1.6rem);
+  left: clamp(0.9rem, 2vw, 1.6rem);
+  align-self: auto;
 }
 
 /* "Under construction" ribbon — a top banner overlaid on any tile/section
@@ -315,19 +349,13 @@ html.view-open { overflow: hidden; }
   color: #fff;
   pointer-events: none;
 }
-/* Smaller variant for the cramped nav-box buttons. */
-.uc-badge--small {
-  font-size: clamp(0.45rem, 0.7vw, 0.6rem);
-  line-height: 1.5;
-}
-
 /* ── Nav box: the bottom-right cell is a 2×2 ────────────────────────────────
-   Top-left is a description panel (filled on project hover); top-right and
-   bottom-left are red section buttons — Personal Projects (swaps the project
-   tiles) and More Works (makes the page scroll). The bottom-right is itself a
-   2×2 links quad (see .nav-quad). The cell reserves the caption band at its
-   bottom (--cap) so the box grid aligns with the adjacent tile's image (above
-   its caption), rather than running the full cell height. */
+   The top row is the description panel (filled on project hover), with the
+   accessibility toggle above it. The bottom row is the red "more works" section
+   button (makes the page scroll) beside the 2×2 links quad (see .nav-quad). The
+   cell reserves the caption band at its bottom (--cap) so the box grid aligns
+   with the adjacent tile's image (above its caption), rather than running the
+   full cell height. */
 .tile--nav {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -514,9 +542,12 @@ html.more-open .nav-box--more::before { opacity: 0; }
 }
 html.more-open .more-chevron { opacity: 0; pointer-events: none; }
 
-/* The nav box's top-left cell: an accessibility toggle on top, then the
-   description panel filling the rest. */
+/* The nav box's top row: an accessibility toggle on top, then the description
+   panel filling the rest. Spans both columns (the "personal projects" button
+   that used to sit top-right is gone), so the hover blurb gets the full width;
+   "more works" + the links quad share the bottom row. */
 .nav-corner {
+  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   gap: clamp(0.3rem, 0.8vw, 0.5rem);
@@ -1408,13 +1439,11 @@ html.reduce-motion .carousel-track { transition: none; }
   .tile { position: relative; inset: auto; }
 
   .tile--photo { height: 68vw; }
-  .tile--placeholder { height: 52vw; }
   .tile--contact { height: auto; min-height: 0; }
   /* The about copy already shows as the welcome note under the contact form on
      mobile, so hide the dedicated about tile here to avoid the same words
-     appearing twice. Only on page 1 — page 2 keeps the cell for its
-     personal-projects placeholder. */
-  .stage[data-page='1'] .cell:has(.tile--about) { display: none; }
+     appearing twice. */
+  .cell:has(.tile--about) { display: none; }
   .tile--nav { height: 88vw; padding-bottom: 0; }
   .more-tile { height: 52vw; }
 

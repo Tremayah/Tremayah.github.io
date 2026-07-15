@@ -10,19 +10,21 @@ redirects there too.
 A **single-page** site — the whole experience lives at `/`. A 3×2 grid of tiles fills the
 viewport, with no nav or routing.
 
-- **Cell 0** is the contact card; **cells 1–4** are project tiles; **cell 5** is a 2×2 **nav
-  box** that persists across views: an *animations on/off* toggle and a *description panel* in
-  the top-left, then **personal projects**, **cv** and **more works** buttons.
+- **Cell 0** is the contact card; **cells 1, 2 and 4** are project tiles — each caption carries
+  a tag chip on its right, blue *university* / orange *personal*, read from the project's
+  `scope` frontmatter; **cell 3** is the about tile; **cell 5** is a 2×2 **nav box**: an
+  *animations on/off* toggle and a *description panel* across the top, with the **more works**
+  button and a links quad (Instagram, LinkedIn, **cv**) below.
 - **Hovering** a tile shows its blurb in the description panel.
 - **Clicking a project** fizzles the whole grid with a glitchy radial "corruption" wave and
   reveals the write-up in its place. Every project opens to the **same layout**: its hero image
   lands in the **top-left tile** and the copy wraps around it, with a sticky scrolling-name
   **home bar** along the top. Click the bar (or anywhere off a link/image, or press Escape) to
   fizzle back home. The dissolve-out and the write-up's fizzle-in happen at once — one motion.
-- **personal projects** swaps cells 0–4 to a second set of project tiles (a radial wave from the
-  button); click it again to return. **cv** opens a full-page CV the same way. **more works**
-  lets the page scroll down to reveal more tiles below the fold (and lights up to show it's a
-  toggle / scroll shortcut).
+- **cv** opens a full-page CV the same way as a project. **more works** lets the page scroll
+  down to reveal more tiles below the fold (and lights up to show it's a toggle / scroll
+  shortcut). University and personal projects share the one grid, told apart by the caption
+  tags.
 - An **animations** toggle (top-left of the nav box) honours `prefers-reduced-motion` and, when
   off, makes every transition instant. On narrow screens (≤ 680px) the grid becomes a
   single-column scroller and an opened project is a full-screen overlay.
@@ -36,17 +38,18 @@ src/
                          mounts site.ts. No nav, no marquee, no router — the
                          whole site is this one page.
   pages/
-    index.astro          "/" — builds the 3×2 tile grid from the `cells` array
-                         (each cell has a page-1 and page-2 variant) and embeds
-                         every opened view's write-up, hidden. Also holds the
-                         contact card and the 2×2 nav box.
+    index.astro          "/" — a thin wrapper around components/Landing.astro,
+                         which builds the 3×2 tile grid from the `cells` array
+                         (one tile per cell) and embeds every opened view's
+                         write-up, hidden. Also holds the contact card and the
+                         2×2 nav box.
   styles/
     global.css           All styling, in one place (tokens in :root).
   scripts/
     site.ts              All behaviour: the radial fizzle (`runStageWave` static
                          ring + `animateMask` reveal), opening a project with its
                          hero in the top-left (`openView` / `layoutProjectHero`),
-                         the `setView` view-swap, scroll-driven "more works", the
+                         scroll-driven "more works", the
                          hover description panel, the animations toggle, the
                          nav-label fill (`fillNavBoxes`), the contact form's AJAX
                          submit, carousels and the lightbox. A single `busy` lock
@@ -59,16 +62,15 @@ src/
 ### Adding a project
 
 Drop a new `.md` file into `src/content/projects/`. Frontmatter fields: `title`,
-`description`, `year`, `category`, `tags`, `order` (controls position in the grid — lower
+`description`, `year`, `category`, `tags`, `scope` (`"personal"` for personal work — drives
+the caption tag chip; omit for university), `order` (controls position in the grid — lower
 numbers first), and `cover` (the tile/article image). **Projects without a `cover` are
 hidden from the landing grid** — handy for stubs that aren't ready yet.
 
 To actually put a project on the grid, give it a slot in the `cells` array near the top of
-`src/pages/index.astro` and add its id to the `writeupIds` list (only openable views + the CV
-need their write-up embedded). Each cell holds a **page-1** tile and a **page-2** tile: page 1
-is the landing (contact card + four projects), page 2 is the **personal projects** view
-(currently placeholder tiles). The bottom-right nav cell persists across both. The extra tiles
-revealed by **more works** are the `moreWorks` array, rendered into `.more-grid` below the fold.
+`src/components/Landing.astro` (one tile per cell) or add it to the `moreWorks` array
+(rendered into `.more-grid` below the fold), and add its id to `src/openable.ts` so its
+write-up is embedded and deep-linkable.
 
 Projects also mirror to a `Plain Text/<slug>/<slug>.txt` folder on each commit (see
 `scripts/export-plain-text.js`) — Raphael drops reference images into those folders and edits
@@ -94,14 +96,13 @@ then reference its CSS family name. (Run `list_kit_fonts` / check the kit to see
 
 ### Contact form
 
-The top-left tile (page 1) is a contact card: a `lores-9-plus-narrow` name, a short blurb, and
+The top-left tile is a contact card: a `lores-9-plus-narrow` name, a short blurb, and
 a message box. Clicking the name or blurb jumps focus into the message field. The form posts
 directly to [FormSubmit](https://formsubmit.co)'s AJAX endpoint (`https://formsubmit.co/ajax/<email>`),
 so the page never navigates away. The **send button lives inside the message box and doubles as
 the status display** (`initContactForm` in `site.ts`): red "send" → blue working dots → blue
 "sent"/"error" → fades back to "send"/"retry". The destination address is set via
-`CONTACT_EMAIL` near the top of `index.astro`. (On the *personal projects* view / page 2 this
-cell becomes a project tile like the others.)
+`CONTACT_EMAIL` near the top of `index.astro`.
 
 > **First send needs activation:** FormSubmit emails a one-time confirmation link to
 > `CONTACT_EMAIL` the very first time the form is submitted. Until someone clicks that link,

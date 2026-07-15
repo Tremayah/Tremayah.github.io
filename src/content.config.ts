@@ -9,6 +9,9 @@ const projects = defineCollection({
     year: z.number(),
     category: z.string(),
     tags: z.array(z.string()).optional().default([]),
+    // University work vs personal project — drives the caption-band tag chip
+    // on the landing/more-works tiles. Omit for university work.
+    scope: z.enum(['university', 'personal']).optional().default('university'),
     order: z.number().optional().default(99),
     // Landing-page tile image. Projects without a cover are hidden from the
     // landing grid and the nav (e.g. placeholder stubs).

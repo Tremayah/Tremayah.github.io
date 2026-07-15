@@ -33,7 +33,15 @@ const writeups = (
 
 const data = (id: string) => {
   const e = get(id);
-  return { id, title: e?.data.title ?? id, cover: e?.data.cover, desc: e?.data.description ?? '' };
+  return {
+    id,
+    title: e?.data.title ?? id,
+    cover: e?.data.cover,
+    desc: e?.data.description ?? '',
+    // The caption-band tag chip (university vs personal) — set per project in
+    // its frontmatter (`scope`), so both kinds share one landing page.
+    scope: e?.data.scope ?? 'university',
+  };
 };
 
 // Projects whose write-up is still a stub keep the "under construction"
@@ -42,36 +50,28 @@ const data = (id: string) => {
 const UNDER_CONSTRUCTION = new Set(['topography-table']);
 const isUC = (id: string): boolean => UNDER_CONSTRUCTION.has(id);
 
-// A placeholder project tile (used by the "personal projects" view, real ones
-// to come). `n` just numbers them.
-const ph = (n: number) => ({
-  kind: 'placeholder' as const,
-  title: `project ${n}`,
-  desc: 'Placeholder — a personal project will live here.',
-});
-
-// Cell 5 (the nav box) persists across views. The "personal projects" button
-// swaps cells 0–4 between page 1 = the landing (contact card, projects, an
-// about tile) and page 2 = the personal-projects set (Topography Table +
-// placeholders — see site.ts setView). The contact card lives in cell 0 only on
-// the landing; on page 2 that cell shows the Topography Table tile.
+// The 3×2 landing grid, one tile per cell: the contact card (cell 0), the
+// persistent nav box (cell 5), three project tiles and the about card. Personal
+// and university projects now live together on this one page, told apart by the
+// tag on each caption; there's no separate "personal projects" view any more.
 const cells = [
-  { p1: { kind: 'name' },                               p2: { kind: 'photo', ...data('topography-table') } },
-  { p1: { kind: 'photo', ...data('exploration') },      p2: ph(2) },
-  { p1: { kind: 'photo', ...data('keycaps') },          p2: ph(3) },
-  { p1: { kind: 'about' },                              p2: ph(4) },
-  { p1: { kind: 'photo', ...data('table-tennis-bat') }, p2: ph(5) },
-  { p1: { kind: 'nav' },                                p2: { kind: 'nav' } },
+  { kind: 'name' as const },
+  { kind: 'photo' as const, ...data('exploration') },
+  { kind: 'photo' as const, ...data('keycaps') },
+  { kind: 'about' as const },
+  { kind: 'photo' as const, ...data('table-tennis-bat') },
+  { kind: 'nav' as const },
 ];
 
 // "More works" tiles — revealed below the fold when the page is made scrollable.
-// Real, openable projects first (Living Lamp, Smart Jewellery — the latter moved
-// here when the landing's bottom-left cell became the about tile), then stub
-// placeholders for projects not yet written up (Essays, Trebuchet). The grid
-// flows into new rows automatically.
+// The openable photo projects first (Living Lamp, Smart Jewellery, and the
+// Topography Table — the personal project, moved here off its old page-2 view),
+// then the Essays text tile and a stub for the not-yet-written-up Trebuchet. The
+// grid flows into new rows automatically.
 const moreWorks = [
   { kind: 'photo' as const, ...data('living-lamp') },
   { kind: 'photo' as const, ...data('progression') },
+  { kind: 'photo' as const, ...data('topography-table') },
   // Essays has no cover image, so it opens from a text tile instead of a photo.
   { kind: 'text' as const, ...data('essays') },
   { kind: 'placeholder' as const, title: 'Trebuchet', desc: 'A laser-cut plywood trebuchet — coming soon.' },
@@ -90,12 +90,11 @@ const aboutCopy = [
 const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
 ---
 
-<div class="stage" data-page="1" data-open-initial={openId ?? undefined}>
+<div class="stage" data-open-initial={openId ?? undefined}>
   <ul class="landing-grid">
-    {cells.map((cell) => (
+    {cells.map((t) => (
       <li class="cell">
-        {[cell.p1, cell.p2].map((t, i) => {
-          const page = i + 1;
+        {(() => {
           if (t.kind === 'name') {
             // Not a <button> — it holds real form controls, which can't legally
             // nest inside an interactive element. The name + blurb are click
@@ -103,7 +102,7 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
             // box. The send button lives INSIDE the message box and doubles as
             // the status display. (Lives in cell 0 on the landing only.)
             return (
-              <div class="tile tile--contact" data-page={page}>
+              <div class="tile tile--contact">
                 <div class="contact-card">
                   <div class="contact-head">
                     <h1 class="contact-name" data-focus-message>
@@ -166,7 +165,7 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
             // top-right + bottom-left are section buttons; the bottom-right
             // is a links quad (its own 2×2 — see .nav-quad below).
             return (
-              <div class="tile tile--nav tile--persist" data-page={page}>
+              <div class="tile tile--nav">
                 <div class="nav-corner">
                   <label class="anim-toggle" title="Toggle animations">
                     <input type="checkbox" class="anim-switch" data-anim-switch checked />
@@ -174,7 +173,6 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
                   </label>
                   <div class="nav-desc" data-desc-panel><span class="nav-desc-text"></span></div>
                 </div>
-                <button class="nav-box" type="button" data-action="view" data-view="2" data-desc="A collection of my personal design projects."><span class="nav-label">personal projects</span><span class="uc-badge uc-badge--small">under construction</span></button>
                 <button class="nav-box nav-box--more" type="button" data-action="more" data-desc="Scroll down to see more of my work."><span class="nav-label">more works</span></button>
                 {/* Links quad: Instagram, LinkedIn, the CV page, and one spare
                     slot (blank for now). Same red→blue treatment, smaller. */}
@@ -223,7 +221,7 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
             // diverge; hidden on mobile (see global.css) where the welcome note
             // already carries this copy under the contact form.
             return (
-              <div class="tile tile--about" data-page={page} data-desc="A little about who I am and what I do.">
+              <div class="tile tile--about" data-desc="A little about who I am and what I do.">
                 <div class="about-card">
                   <div class="about-body">
                     {aboutCopy.map((t) => <p>{t}</p>)}
@@ -232,27 +230,17 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
               </div>
             );
           }
-          if (t.kind === 'placeholder') {
-            // Placeholder project tile (personal-projects view). Inert for now;
-            // hovering still feeds its blurb to the description panel.
-            return (
-              <div class="tile tile--placeholder" data-page={page} data-desc={t.desc}>
-                <span class="uc-badge">under construction</span>
-                <span class="placeholder-label">{t.title}</span>
-              </div>
-            );
-          }
           // photo tile
           return (
-            <button class="tile tile--photo" data-page={page} data-open={t.id} data-desc={t.desc} type="button">
+            <button class="tile tile--photo" data-open={t.id} data-desc={t.desc} type="button">
               {isUC(t.id) && <span class="uc-badge">under construction</span>}
               <span class="tile-media">
-                <img class="tile-img" src={t.cover} alt="" loading={page === 1 ? 'eager' : 'lazy'} decoding="async" />
+                <img class="tile-img" src={t.cover} alt="" loading="eager" decoding="async" />
               </span>
-              <span class="tile-name">{t.title}</span>
+              <span class="tile-name"><span class="tile-title">{t.title}</span><span class="tile-tag" data-tag={t.scope}>{t.scope}</span></span>
             </button>
           );
-        })}
+        })()}
       </li>
     ))}
   </ul>
@@ -295,12 +283,14 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
         <span class="tile-media">
           <img class="tile-img" src={t.cover} alt="" loading="lazy" decoding="async" />
         </span>
-        <span class="tile-name">{t.title}</span>
+        <span class="tile-name"><span class="tile-title">{t.title}</span><span class="tile-tag" data-tag={t.scope}>{t.scope}</span></span>
       </button>
     ) : t.kind === 'text' ? (
       // Openable, image-less tile (e.g. Essays): a light card with the title,
-      // opening its write-up like any project.
+      // opening its write-up like any project. The tag sits top-left, clear of
+      // the bottom-aligned title/hint.
       <button class="more-tile more-tile--text" type="button" data-open={t.id} data-desc={t.desc}>
+        <span class="tile-tag tile-tag--corner" data-tag={t.scope}>{t.scope}</span>
         <span class="more-tile-text-label">{t.title}</span>
         <span class="more-tile-text-hint">read →</span>
       </button>
