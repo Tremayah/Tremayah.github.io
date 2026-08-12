@@ -46,35 +46,37 @@ const data = (id: string) => {
 
 // Projects whose write-up is still a stub keep the "under construction"
 // badge/notice; everything else is treated as finished (no badge). Removing an
-// id from here is a status change (the project is genuinely done).
-const UNDER_CONSTRUCTION = new Set(['topography-table']);
+// id from here is a status change (the project is genuinely done). Currently
+// empty — Topography Table came off the list June 2026.
+const UNDER_CONSTRUCTION = new Set<string>([]);
 const isUC = (id: string): boolean => UNDER_CONSTRUCTION.has(id);
 
 // The 3×2 landing grid, one tile per cell: the contact card (cell 0), the
 // persistent nav box (cell 5), three project tiles and the about card. Personal
 // and university projects now live together on this one page, told apart by the
 // tag on each caption; there's no separate "personal projects" view any more.
+// Reading order (top-left to bottom-right, continuing into "more works" below)
+// is: Sandwich Lamps, Smart Jewellery, Topography Table, Living Lamp, Porcelain
+// Keycaps, Table Tennis Bat, Trebuchet.
 const cells = [
   { kind: 'name' as const },
   { kind: 'photo' as const, ...data('exploration') },
-  { kind: 'photo' as const, ...data('keycaps') },
+  { kind: 'photo' as const, ...data('progression') },
   { kind: 'about' as const },
-  { kind: 'photo' as const, ...data('table-tennis-bat') },
+  { kind: 'photo' as const, ...data('topography-table') },
   { kind: 'nav' as const },
 ];
 
 // "More works" tiles — revealed below the fold when the page is made scrollable.
-// The openable photo projects first (Living Lamp, Smart Jewellery, and the
-// Topography Table — the personal project, moved here off its old page-2 view),
-// then the Essays text tile and a stub for the not-yet-written-up Trebuchet. The
-// grid flows into new rows automatically.
+// Continues the reading order from the main grid above; the Essays text tile
+// (not part of that ordered set) trails at the very end.
 const moreWorks = [
   { kind: 'photo' as const, ...data('living-lamp') },
-  { kind: 'photo' as const, ...data('progression') },
-  { kind: 'photo' as const, ...data('topography-table') },
+  { kind: 'photo' as const, ...data('keycaps') },
+  { kind: 'photo' as const, ...data('table-tennis-bat') },
+  { kind: 'placeholder' as const, title: 'Trebuchet', desc: 'A laser-cut plywood trebuchet — coming soon.' },
   // Essays has no cover image, so it opens from a text tile instead of a photo.
   { kind: 'text' as const, ...data('essays') },
-  { kind: 'placeholder' as const, title: 'Trebuchet', desc: 'A laser-cut plywood trebuchet — coming soon.' },
 ];
 
 // The welcome / "about" copy — one source of truth, rendered both as the mobile
@@ -147,6 +149,7 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
                         <span class="contact-submit-dots" aria-hidden="true"><i></i><i></i><i></i></span>
                       </button>
                     </div>
+                    <p class="contact-caption">Messages sent without an email address are one-way and anonymous.</p>
                   </form>
                   {/* The welcome / "about" note, shown under the form in the
                       single-column (≤680px) view. On desktop the contact cell is a
@@ -302,3 +305,20 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
     )
   ))}
 </section>
+
+{/* Trailing nav box — repeats the description panel (and a "back to top"
+    shortcut) below the "more works" grid. The persistent nav box up top scrolls
+    out of view once you're down here, so hovering a tile has nowhere visible to
+    show its blurb; this trails the project list instead. Reuses the same
+    data-desc-panel / data-action wiring as the main nav box (site.ts already
+    treats both as one group), so no script changes are needed. Doesn't need to
+    match the 2×2 grid up top yet — just a bar for now. */}
+<div class="trailing-nav">
+  <div class="nav-desc" data-desc-panel><span class="nav-desc-text"></span></div>
+  <button
+    class="nav-box nav-box--more"
+    type="button"
+    data-action="more"
+    data-desc="Back to the top of the page."
+  ><span class="nav-label">back to top</span></button>
+</div>

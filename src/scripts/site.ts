@@ -755,6 +755,12 @@ function init(): void {
     if (tile?.dataset.open) openProject(tile, tile.dataset.open);
   });
 
+  // The trailing nav box (below "more works") is also outside the stage, so its
+  // "back to top" shortcut needs its own click handler too.
+  document.querySelector<HTMLElement>('.trailing-nav')?.addEventListener('click', (e) => {
+    if ((e.target as Element).closest('[data-action="more"]')) toggleMore();
+  });
+
   // The open project's hero is sized to the top-left grid cell — recompute it
   // when the grid reflows on resize. (CV has no hero; this is then a no-op.)
   let resizeRAF = 0;

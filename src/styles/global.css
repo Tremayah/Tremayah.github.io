@@ -605,6 +605,22 @@ html.more-open .more-chevron { opacity: 0; pointer-events: none; }
   color: var(--highlight);
 }
 
+/* ── Trailing nav box — below the "more works" grid ─────────────────────────
+   A second description panel + a "back to top" shortcut, repeated at the foot
+   of the project list. The main nav box (top of the page) is long scrolled out
+   of view by the time you're down here, so hovering a "more works" tile has
+   nowhere visible to show its blurb without this. Just a bar for now — it
+   doesn't need to match the 2×2 grid up top. */
+.trailing-nav {
+  display: flex;
+  align-items: stretch;
+  gap: var(--grid-gap);
+  padding: 0 var(--grid-pad) var(--grid-pad);
+  height: clamp(4rem, 8vw, 6rem);
+}
+.trailing-nav .nav-desc { flex: 1 1 auto; }
+.trailing-nav .nav-box { flex: 0 0 clamp(7rem, 16vw, 11rem); }
+
 /* Reduced motion: neutralise transitions + keyframes site-wide (the pixel
    fizzle is short-circuited in JS). */
 html.reduce-motion *,
@@ -810,6 +826,17 @@ html.reduce-motion *::after {
 .contact-submit-dots i:nth-child(2) { animation-delay: 0.18s; }
 .contact-submit-dots i:nth-child(3) { animation-delay: 0.36s; }
 @keyframes send-dot { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+
+/* Small print under the message box, explaining the anonymous/one-way case. */
+.contact-caption {
+  flex: 0 0 auto;
+  margin: 0;
+  font-family: var(--body-font);
+  font-size: clamp(0.58rem, 0.8vw, 0.7rem);
+  line-height: 1.35;
+  color: var(--body-color);
+  opacity: 0.65;
+}
 
 /* ── Pixel dissolve overlay (built per tile by site.ts) ─────────────────────
    A grid of background-coloured cells laid over a tile. Cells snap in (cover)
@@ -1483,6 +1510,11 @@ html.reduce-motion .carousel-track { transition: none; }
     grid-template-columns: 1fr;
     grid-auto-rows: 52vw;
   }
+
+  /* Trailing nav box: stacks instead of sitting side-by-side on a narrow phone. */
+  .trailing-nav { flex-direction: column; height: auto; gap: 0.6rem; }
+  .trailing-nav .nav-desc { min-height: 3.4rem; }
+  .trailing-nav .nav-box { flex: 0 0 auto; height: 2.6rem; }
 
   /* Opened project / CV: full-screen overlay above the stacked page. */
   .writeup { position: fixed; z-index: 100; }

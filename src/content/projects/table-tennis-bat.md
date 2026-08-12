@@ -8,7 +8,7 @@ order: 9
 cover: "/images/table-tennis-bat/img_1260.jpg"
 ---
 
-The aim of this first project was to create a table tennis bat, with no concern for practicality or usefulness.
+The aim of this project — my first at university — was to create a table tennis bat, with no concern for practicality or usefulness.
 
 I took the vague brief as an opportunity to experiment with the link between the user and a tool. When a rake is used by a monkey to collect a reward from behind a barrier, the area associated with their hand lights up, as if it has become an extension of its body.
 
