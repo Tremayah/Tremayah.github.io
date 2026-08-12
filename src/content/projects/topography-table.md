@@ -16,5 +16,3 @@ I modelled the table in Rhino and rendered it in Blender, dropping it into a liv
 <figure class="proj-full">
   <img loading="lazy" decoding="async" src="/images/topography-table/table-top.webp" alt="Bird's-eye view of the table — the layered-wood top reading as topographic contours under a clear surface" />
 </figure>
-
-This one is still in progress — more to come as it develops from render into a real, built piece.
