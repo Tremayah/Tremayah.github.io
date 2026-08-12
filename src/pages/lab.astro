@@ -81,8 +81,293 @@ const TAG_MINI = [
 <body class="lab">
   <header>
     <h1 class="lab-h1">LAB</h1>
-    <p class="lab-note">Unlisted — not linked from the site, just for you to test. Newest at the top: project-tag options for mixing university + personal projects on the landing. Pixel effects and nav-box options are lower down. Delete <code>src/pages/lab.astro</code> when you're done.</p>
+    <p class="lab-note">Unlisted — not linked from the site, just for you to test. Newest at the top: options for a more obvious animations toggle (every one is clickable). Project-tag options, pixel effects and nav-box options are lower down. Delete <code>src/pages/lab.astro</code> when you're done.</p>
   </header>
+
+  <section class="lab-sec" id="animopts">
+    <h2 class="lab-h2">animations toggle — more obvious options</h2>
+    <p class="lab-note">The live toggle is a small coral bar reading <code>animations</code> that turns blue when off — nothing says which colour means what, and it reads more like a label than a control. Twenty alternatives below, grouped by what carries the state: words, colour &amp; switch furniture, or the toggle demonstrating itself. <strong>Every box is clickable — click to feel the response.</strong> The last group is sized for the spare bottom-right slot in the links quad. All motion respects <code>prefers-reduced-motion</code>.</p>
+
+    <p class="navsub">the live toggle, for reference</p>
+    <div class="atrow">
+      <figure>
+        <button type="button" class="at atbar at-0" data-on="1" aria-pressed="true"><span class="at-word">animations</span></button>
+        <figcaption>live now — coral = on, blue = off; reads as a label, colours unexplained</figcaption>
+      </figure>
+    </div>
+
+    <p class="navsub">say it in words</p>
+    <div class="atrow">
+      <figure>
+        <button type="button" class="at atbar at-1" data-on="1" aria-pressed="true"><span class="at-word">animations: <b class="st" data-txt-on="on" data-txt-off="off">on</b></span></button>
+        <figcaption>01 · the words carry it — label reads on / off, colours stay site-standard</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atbar at-2" data-on="1" aria-pressed="true"><span class="at-word">animations</span><span class="seg"><b class="s-on">on</b><b class="s-off">off</b></span></button>
+        <figcaption>02 · segmented on | off — the active half is filled</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atbar at-4" data-on="1" aria-pressed="true"><span class="at-word"><b class="st" data-txt-on="[x]" data-txt-off="[ ]">[x]</b> animations</span></button>
+        <figcaption>03 · terminal checkbox — [x] ticked when on</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atbar at-5" data-on="1" aria-pressed="true"><span class="at-word">animations</span></button>
+        <figcaption>04 · struck through when off — the word itself is disabled</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atbar at-7" data-on="1" aria-pressed="true"><span class="at-word st" data-txt-on="animations" data-txt-off="animations off">animations</span></button>
+        <figcaption>05 · off goes loud — inverts to a bordered "animations off"</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atbar at-14" data-on="1" aria-pressed="true"><span class="at-word st" data-txt-on="animations are on" data-txt-off="animations are off">animations are on</span></button>
+        <figcaption>06 · hover previews the action — "turn animations off?" before you click</figcaption>
+      </figure>
+    </div>
+
+    <p class="navsub">colour language &amp; switch furniture</p>
+    <div class="atrow">
+      <figure>
+        <button type="button" class="at atbar at-6" data-on="1" aria-pressed="true"><span class="at-word">animations</span></button>
+        <figcaption>07 · traffic-light colour — green means on, grey means off</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atbar at-3" data-on="1" aria-pressed="true"><span class="at-word">animations</span><span class="track"><i class="knob"></i></span></button>
+        <figcaption>08 · pixel slider — knob right + green track = on</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atbar at-11" data-on="1" aria-pressed="true"><i class="led"></i><span class="at-word">animations</span></button>
+        <figcaption>09 · led pixel — pulsing green = on, dead red = off (neutral dark bar)</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atbar at-13" data-on="1" aria-pressed="true"><span class="at-word">animations</span><span class="pp"></span></button>
+        <figcaption>10 · play / pause glyph carries the state — no colour code at all</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atbar at-12" data-on="1" aria-pressed="true"><span class="at-word">animations</span></button>
+        <figcaption>11 · blocky wipe — blue floods across in chunky steps when switching off</figcaption>
+      </figure>
+    </div>
+
+    <p class="navsub">self-demonstrating — it only moves while it's on</p>
+    <div class="atrow">
+      <figure>
+        <button type="button" class="at atbar at-8" data-on="1" aria-pressed="true"><span class="at-word">animations<b class="cur">▮</b></span></button>
+        <figcaption>12 · the cursor blinks while on; freezes solid when off</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atbar at-9" data-on="1" aria-pressed="true"><span class="at-word">animations</span></button>
+        <figcaption>13 · the label bobs while on; freezes and dims when off</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atbar at-10" data-on="1" aria-pressed="true"><span class="at-word">animations</span></button>
+        <figcaption>14 · dither texture drifts while on; pauses (and blues) when off</figcaption>
+      </figure>
+    </div>
+
+    <p class="navsub">mini navbox variants — for the spare corner slot in the links quad</p>
+    <div class="atrow atrow--mini">
+      <figure>
+        <button type="button" class="at atmini at-15" data-on="1" aria-pressed="true"><span class="at-word">fx</span></button>
+        <figcaption>15 · fx tile — lit coral when on, ghost grey when off</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atmini at-16" data-on="1" aria-pressed="true"><span class="minv"><i class="f1"></i><i class="f2"></i></span></button>
+        <figcaption>16 · the invader dances while on, freezes grey when off</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atmini at-17" data-on="1" aria-pressed="true"><span class="pp pp-lg"></span></button>
+        <figcaption>17 · play / pause glyph only</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atmini at-18" data-on="1" aria-pressed="true"><span class="orb"><i></i></span></button>
+        <figcaption>18 · orbiting pixel spins while on, stops when off</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atmini at-19" data-on="1" aria-pressed="true"><span class="cb"><span class="tick"></span></span><b class="cbl">anim</b></button>
+        <figcaption>19 · pixel checkbox with a tick + anim label</figcaption>
+      </figure>
+      <figure>
+        <button type="button" class="at atmini at-20" data-on="1" aria-pressed="true"><span class="at-word">anim</span><i class="cnr"></i></button>
+        <figcaption>20 · anim tile with an led corner pixel</figcaption>
+      </figure>
+    </div>
+
+    <p class="navsub">in context — the links quad, wearing 16 in the spare slot</p>
+    <div class="atquad">
+      <span class="atq">ig</span>
+      <span class="atq">in</span>
+      <span class="atq">cv</span>
+      <button type="button" class="at atmini at-16" data-on="1" aria-pressed="true"><span class="minv"><i class="f1"></i><i class="f2"></i></span></button>
+    </div>
+
+    <style is:inline>
+      /* ── animations-toggle experiments (self-contained; delete with the section) ── */
+      .atrow { display: grid; grid-template-columns: repeat(auto-fill, 220px); gap: 1.6rem 1.4rem; align-items: start; }
+      .atrow figure { margin: 0; }
+      .atrow figcaption { font-family: var(--nav-font); font-size: 0.7rem; color: var(--fg); margin-top: 0.45rem; text-transform: lowercase; line-height: 1.3; max-width: 220px; }
+      .atrow--mini { grid-template-columns: repeat(auto-fill, 150px); }
+      .atrow--mini figcaption { max-width: 140px; }
+
+      .at { border: none; margin: 0; padding: 0; cursor: pointer; user-select: none; font: inherit; position: relative; overflow: hidden; }
+      .at:focus-visible { outline: 2px solid var(--highlight); outline-offset: 2px; }
+      .atbar { width: 220px; height: 34px; display: flex; align-items: center; justify-content: center; gap: 0.5em; background: #ff4d4d; color: #fff; }
+      .atmini { width: 74px; height: 74px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25em; background: #ff4d4d; color: #fff; }
+      .at .at-word { font-family: var(--nav-font); font-weight: 700; font-size: 0.78rem; text-transform: lowercase; line-height: 1; position: relative; z-index: 1; }
+      .atmini .at-word { font-size: 1.05rem; }
+
+      /* 00 — the live toggle: coral↔blue, label only */
+      .at-0[data-on='0'] { background: var(--highlight); }
+
+      /* 01 — label spells the state; site colours kept */
+      .at-1[data-on='0'] { background: var(--highlight); }
+
+      /* 02 — segmented on|off, active half filled */
+      .at-2 { background: var(--bg); box-shadow: inset 0 0 0 1.5px #ff4d4d; color: #ff4d4d; justify-content: space-between; padding-left: 0.7em; }
+      .at-2 .seg { display: flex; align-self: stretch; }
+      .at-2 .seg b { display: flex; align-items: center; padding: 0 0.6em; font-family: var(--nav-font); font-weight: 700; font-size: 0.78rem; text-transform: lowercase; }
+      .at-2[data-on='1'] .s-on { background: #ff4d4d; color: #fff; }
+      .at-2[data-on='1'] .s-off { opacity: 0.4; }
+      .at-2[data-on='0'] { box-shadow: inset 0 0 0 1.5px var(--highlight); color: var(--highlight); }
+      .at-2[data-on='0'] .s-off { background: var(--highlight); color: #fff; }
+      .at-2[data-on='0'] .s-on { opacity: 0.4; }
+
+      /* 03 (at-4) — terminal checkbox */
+      .at-4 { background: var(--bg); box-shadow: inset 0 0 0 1.5px #ff4d4d; color: #ff4d4d; }
+      .at-4[data-on='0'] { box-shadow: inset 0 0 0 1.5px #8a8a8a; color: #8a8a8a; }
+
+      /* 04 (at-5) — strike-through when off */
+      .at-5[data-on='0'] { background: #9a9a9a; }
+      .at-5[data-on='0'] .at-word { text-decoration: line-through 0.14em; opacity: 0.85; }
+
+      /* 05 (at-7) — off inverts loud */
+      .at-7[data-on='0'] { background: var(--bg); color: #1c1c1c; box-shadow: inset 0 0 0 2px #1c1c1c; }
+
+      /* 06 (at-14) — hover previews the verb (JS below) */
+      .at-14[data-on='0'] { background: var(--highlight); }
+
+      /* 07 (at-6) — traffic-light green/grey */
+      .at-6 { background: #00a244; }
+      .at-6[data-on='0'] { background: #4a4a4a; }
+
+      /* 08 (at-3) — pixel slider with a stepped knob */
+      .at-3 { background: var(--bg); box-shadow: inset 0 0 0 1.5px #1c1c1c; color: #1c1c1c; justify-content: space-between; padding: 0 0.7em; }
+      .at-3 .track { position: relative; width: 32px; height: 16px; background: #00a244; transition: background-color 0.2s ease; flex: none; }
+      .at-3 .knob { position: absolute; top: 3px; left: 3px; width: 10px; height: 10px; background: #fff; transform: translateX(16px); transition: transform 0.25s steps(3); }
+      .at-3[data-on='0'] .track { background: #9a9a9a; }
+      .at-3[data-on='0'] .knob { transform: translateX(0); }
+
+      /* 09 (at-11) — led pixel on a neutral dark bar */
+      .at-11 { background: #1c1c1c; }
+      .at-11 .led { width: 7px; height: 7px; background: #2bff5e; animation: at-led 1.6s ease-in-out infinite; flex: none; }
+      .at-11[data-on='0'] .led { background: #c01515; animation: none; }
+
+      /* 10 (at-13) — play/pause glyph, shared with mini 17 */
+      .at-13 { background: #1c1c1c; }
+      .at .pp { position: relative; width: 12px; height: 12px; flex: none; background: #fff; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+      .at .pp::before, .at .pp::after { content: ''; position: absolute; top: 0; bottom: 0; width: 4px; background: #fff; }
+      .at .pp::before { left: 1px; }
+      .at .pp::after { right: 1px; }
+      .at[data-on='0'] .pp { clip-path: none; background: transparent; }
+      .at .pp-lg { width: 22px; height: 22px; }
+      .at .pp-lg::before, .at .pp-lg::after { width: 7px; }
+
+      /* 11 (at-12) — blocky wipe on switch */
+      .at-12::before { content: ''; position: absolute; inset: 0; z-index: 0; background: var(--highlight); transform: scaleX(0); transform-origin: left; transition: transform 0.45s steps(7); }
+      .at-12[data-on='0']::before { transform: scaleX(1); }
+
+      /* 12 (at-8) — blinking cursor is the proof of life */
+      .at-8 .cur { margin-left: 0.12em; animation: at-blink 1.05s steps(1) infinite; }
+      .at-8[data-on='0'] { background: var(--highlight); }
+      .at-8[data-on='0'] .cur { animation: none; }
+
+      /* 13 (at-9) — the label itself bobs while on */
+      .at-9 .at-word { animation: at-bob 1.6s steps(2) infinite; }
+      .at-9[data-on='0'] { background: var(--highlight); }
+      .at-9[data-on='0'] .at-word { animation: none; opacity: 0.8; }
+
+      /* 14 (at-10) — drifting dither pauses when off */
+      .at-10 { background-color: #ff4d4d; background-image: radial-gradient(rgba(255,255,255,0.32) 1px, transparent 1.4px); background-size: 6px 6px; animation: at-drift 12s linear infinite; }
+      .at-10[data-on='0'] { background-color: var(--highlight); animation-play-state: paused; }
+
+      /* 15 — fx tile lit/ghost */
+      .at-15[data-on='0'] { background: var(--bg); color: #9a9a9a; box-shadow: inset 0 0 0 1.5px #9a9a9a; }
+
+      /* 16 — two-frame invader (currentColor box-shadow cells) */
+      .at-16[data-on='0'] { background: #b5b5b5; color: #5c5c5c; }
+      .minv { position: relative; width: 21px; height: 15px; }
+      .minv i { position: absolute; top: 0; left: 0; width: 3px; height: 3px; background: transparent; }
+      .minv .f1 { box-shadow: 3px 0, 15px 0, 6px 3px, 9px 3px, 12px 3px, 3px 6px, 6px 6px, 9px 6px, 12px 6px, 15px 6px, 0 9px, 6px 9px, 9px 9px, 12px 9px, 18px 9px, 6px 12px, 12px 12px; animation: at-blink 1.1s steps(1) infinite; }
+      .minv .f2 { box-shadow: 3px 0, 15px 0, 6px 3px, 9px 3px, 12px 3px, 3px 6px, 6px 6px, 9px 6px, 12px 6px, 15px 6px, 0 9px, 6px 9px, 9px 9px, 12px 9px, 18px 9px, 3px 12px, 15px 12px; opacity: 0; animation: at-blinkinv 1.1s steps(1) infinite; }
+      .at[data-on='0'] .minv i { animation: none; }
+
+      /* 17 — play/pause mini: coral/blue */
+      .at-17[data-on='0'] { background: var(--highlight); }
+
+      /* 18 — orbiting pixel, 8 stepped positions */
+      .at-18[data-on='0'] { background: #b5b5b5; }
+      .orb { position: relative; width: 24px; height: 24px; animation: at-spin 1.8s steps(8) infinite; flex: none; }
+      .orb i { position: absolute; top: 1px; left: 50%; margin-left: -2.5px; width: 5px; height: 5px; background: #fff; }
+      .at-18[data-on='0'] .orb { animation: none; }
+
+      /* 19 — pixel checkbox (tick drawn in currentColor cells) */
+      .at-19 { background: var(--bg); box-shadow: inset 0 0 0 1.5px #ff4d4d; color: #ff4d4d; }
+      .at-19 .cb { position: relative; width: 30px; height: 26px; }
+      .at-19 .tick { position: absolute; top: 2px; left: 3px; width: 3px; height: 3px; background: transparent; box-shadow: 0 12px, 3px 15px, 6px 18px, 9px 15px, 12px 12px, 15px 9px, 18px 6px, 21px 3px; }
+      .at-19 .cbl { font-family: var(--nav-font); font-weight: 700; font-size: 0.55rem; text-transform: lowercase; }
+      .at-19[data-on='0'] { box-shadow: inset 0 0 0 1.5px #9a9a9a; color: #9a9a9a; }
+      .at-19[data-on='0'] .tick { opacity: 0; }
+
+      /* 20 — anim tile with led corner pixel */
+      .at-20 .cnr { position: absolute; top: 5px; right: 5px; width: 5px; height: 5px; background: #2bff5e; animation: at-led 1.6s ease-in-out infinite; }
+      .at-20[data-on='0'] { background: #4a4a4a; }
+      .at-20[data-on='0'] .cnr { background: #c01515; animation: none; }
+
+      /* in-context quad */
+      .atquad { display: grid; grid-template-columns: 74px 74px; gap: 5px; }
+      .atq { width: 74px; height: 74px; background: #ff4d4d; color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--nav-font); font-weight: 700; font-size: 0.9rem; text-transform: lowercase; }
+
+      @keyframes at-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+      @keyframes at-blinkinv { 0%, 49% { opacity: 0; } 50%, 100% { opacity: 1; } }
+      @keyframes at-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+      @keyframes at-drift { from { background-position: 0 0; } to { background-position: 48px 24px; } }
+      @keyframes at-led { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+      @keyframes at-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+      @media (prefers-reduced-motion: reduce) {
+        .at, .at *, .at::before, .at::after { animation: none !important; }
+      }
+    </style>
+
+    <script is:inline>
+      /* Animations-toggle experiments: every .at flips its data-on on click;
+         .st elements swap their text (data-txt-on / data-txt-off). 06 (at-14)
+         additionally previews the verb on hover. */
+      (function () {
+        var sec = document.getElementById('animopts');
+        function stateText(at) {
+          var on = at.getAttribute('data-on') === '1';
+          at.querySelectorAll('.st').forEach(function (s) {
+            s.textContent = s.getAttribute(on ? 'data-txt-on' : 'data-txt-off');
+          });
+        }
+        sec.addEventListener('click', function (e) {
+          var at = e.target.closest('.at'); if (!at) return;
+          var on = at.getAttribute('data-on') === '1' ? '0' : '1';
+          at.setAttribute('data-on', on);
+          at.setAttribute('aria-pressed', on === '1' ? 'true' : 'false');
+          stateText(at);
+        });
+        var v14 = sec.querySelector('.at-14');
+        if (v14) {
+          var w = v14.querySelector('.st');
+          v14.addEventListener('mouseenter', function () {
+            w.textContent = v14.getAttribute('data-on') === '1' ? 'turn animations off?' : 'turn animations on?';
+          });
+          v14.addEventListener('mouseleave', function () { stateText(v14); });
+        }
+      })();
+    </script>
+  </section>
 
   <section class="lab-sec" id="tagopts">
     <h2 class="lab-h2">project tags — university vs personal</h2>
