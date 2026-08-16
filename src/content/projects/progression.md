@@ -4,6 +4,7 @@ description: "Designing 'something between a smartphone and a dumbphone' — a s
 year: 2025
 category: "Product Design"
 tags: ["Research", "Wearables", "CAD", "Blender", "3D Printing", "Concept Design"]
+stage: "concept"
 order: 6
 cover: "/images/progression/bracelet.jpg"
 ---

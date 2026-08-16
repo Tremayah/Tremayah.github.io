@@ -41,6 +41,9 @@ const data = (id: string) => {
     // The caption-band tag chip (university vs personal) — set per project in
     // its frontmatter (`scope`), so both kinds share one landing page.
     scope: e?.data.scope ?? 'university',
+    // The second chip, left of the scope one: how far the project got
+    // (concept / prototype / product). Optional — undefined renders no chip.
+    stage: e?.data.stage,
   };
 };
 
@@ -74,7 +77,10 @@ const moreWorks = [
   { kind: 'photo' as const, ...data('living-lamp') },
   { kind: 'photo' as const, ...data('keycaps') },
   { kind: 'photo' as const, ...data('table-tennis-bat') },
-  { kind: 'placeholder' as const, title: 'Trebuchet', desc: 'A laser-cut plywood trebuchet — coming soon.' },
+  // No write-up yet, so this one is hard-coded rather than read from the
+  // collection — including its stage chip. (trebuchet.md carries the same
+  // `stage: product` for when it becomes a real tile.)
+  { kind: 'placeholder' as const, title: 'Trebuchet', stage: 'product' as const, desc: 'A laser-cut plywood trebuchet — coming soon.' },
   // Essays has no cover image, so it opens from a text tile instead of a photo.
   { kind: 'text' as const, ...data('essays') },
 ];
@@ -240,7 +246,11 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
               <span class="tile-media">
                 <img class="tile-img" src={t.cover} alt="" loading="eager" decoding="async" />
               </span>
-              <span class="tile-name"><span class="tile-title">{t.title}</span><span class="tile-tag" data-tag={t.scope}>{t.scope}</span></span>
+              <span class="tile-name">
+                <span class="tile-title">{t.title}</span>
+                {t.stage && <span class="tile-tag" data-stage={t.stage}>{t.stage}</span>}
+                <span class="tile-tag" data-tag={t.scope}>{t.scope}</span>
+              </span>
             </button>
           );
         })()}
@@ -286,7 +296,11 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
         <span class="tile-media">
           <img class="tile-img" src={t.cover} alt="" loading="lazy" decoding="async" />
         </span>
-        <span class="tile-name"><span class="tile-title">{t.title}</span><span class="tile-tag" data-tag={t.scope}>{t.scope}</span></span>
+        <span class="tile-name">
+          <span class="tile-title">{t.title}</span>
+          {t.stage && <span class="tile-tag" data-stage={t.stage}>{t.stage}</span>}
+          <span class="tile-tag" data-tag={t.scope}>{t.scope}</span>
+        </span>
       </button>
     ) : t.kind === 'text' ? (
       // Openable, image-less tile (e.g. Essays): a light card with the title,
@@ -298,9 +312,16 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
         <span class="more-tile-text-hint">read →</span>
       </button>
     ) : (
-      <div class="more-tile" data-desc={t.desc}>
+      // Not-yet-written-up stub (Trebuchet): laid out like a photo tile, but
+      // with an empty grey panel where the cover would go, so its caption band
+      // (title + stage chip) sits on the same line as every tile beside it.
+      <div class="more-tile more-tile--placeholder" data-desc={t.desc}>
         <span class="uc-badge">under construction</span>
-        <span class="placeholder-label">{t.title}</span>
+        <span class="tile-media"></span>
+        <span class="tile-name">
+          <span class="tile-title">{t.title}</span>
+          {t.stage && <span class="tile-tag" data-stage={t.stage}>{t.stage}</span>}
+        </span>
       </div>
     )
   ))}

@@ -5,6 +5,7 @@ year: 2026
 category: "Furniture Design"
 tags: ["Furniture", "CAD", "Rhino", "Blender", "Rendering", "Concept Design"]
 scope: "personal"
+stage: "concept"
 order: 30
 cover: "/images/topography-table/table-context.jpg"
 ---

@@ -4,6 +4,7 @@ description: "Breaking down the distance between users and tools"
 year: 2024
 category: "Product Design"
 tags: ["3D Printing", "Ergonomics", "CAD", "Prototyping"]
+stage: "prototype"
 order: 9
 cover: "/images/table-tennis-bat/img_1260.jpg"
 ---

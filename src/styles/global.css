@@ -28,6 +28,15 @@
   --tag-university: var(--highlight);
   --tag-personal:   #d9600a;
 
+  /* Stage chips (how far a project got) — the second, left-hand chip on the
+     caption line. Hues are spaced well clear of the scope chips either side of
+     them (green 127° · teal 180° · blue 238° · plum 313° · orange 25°) so five
+     tags stay tellable apart at chip size, and each holds white text at least
+     as well as the personal orange does. */
+  --tag-concept:   #96237d;
+  --tag-prototype: #0d7a7a;
+  --tag-product:   #1f6b28;
+
   /* Shared grid geometry — the open-state writeup mirrors the landing grid's
      padding exactly, so both reference the same tokens. */
   --grid-gap: clamp(0.5rem, 1.5vw, 1.25rem);
@@ -136,6 +145,20 @@ html.view-open { overflow: hidden; }
   overflow: hidden;
   background: var(--bg);
 }
+/* Not-yet-written-up stub (Trebuchet): the same column layout as a photo tile,
+   but the media slot is an empty grey panel instead of a cover — so its caption
+   band lands on the shared --cap line with the real tiles beside it. */
+.more-tile--placeholder {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  background: var(--bg);
+}
+.more-tile--placeholder .tile-media {
+  flex: 1;
+  min-height: 0;
+  background: #f1f1f1;
+}
 /* Openable, image-less tile (Essays): a light card carrying its title in place
    of a cover, title bottom-left like a photo tile's caption. Fills solid red on
    hover, echoing the write-up's title red. */
@@ -223,16 +246,6 @@ html.view-open { overflow: hidden; }
   object-fit: cover;
   display: block;
 }
-/* Placeholder tile label — the "more works" stubs (e.g. Trebuchet) reuse this
-   centred label while they wait for a real write-up. */
-.placeholder-label {
-  font-family: var(--nav-font);
-  font-weight: 700;
-  font-size: clamp(0.75rem, 1.3vw, 1.1rem);
-  text-transform: lowercase;
-  color: var(--body-color);
-}
-
 /* Keyboard-focus outline on the openable project tiles (inset so it sits inside
    the tile, clear of the grid gap). No hover outline — the tiles read as
    clickable without the blue square on mouseover. */
@@ -291,9 +304,12 @@ html.view-open { overflow: hidden; }
   justify-content: space-between;
   gap: 0.5rem;
 }
-/* The title takes the room the tag doesn't; if a name is ever long enough to
-   collide it shrinks and ellipses rather than shoving the tag off the line. */
+/* The title takes the room the tags don't; if a name is ever long enough to
+   collide it shrinks and ellipses rather than shoving them off the line. It
+   grows to absorb the slack so the stage + scope chips stay grouped together on
+   the right, rather than being spread apart by the band's space-between. */
 .tile-title {
+  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -317,6 +333,10 @@ html.view-open { overflow: hidden; }
 }
 .tile-tag[data-tag='university'] { --tag-color: var(--tag-university); }
 .tile-tag[data-tag='personal']   { --tag-color: var(--tag-personal); }
+/* Stage chip — same block, sitting immediately left of the scope chip. */
+.tile-tag[data-stage='concept']   { --tag-color: var(--tag-concept); }
+.tile-tag[data-stage='prototype'] { --tag-color: var(--tag-prototype); }
+.tile-tag[data-stage='product']   { --tag-color: var(--tag-product); }
 /* Corner variant for the image-less text tile (Essays): it has no caption band,
    so pin the chip top-left, clear of the bottom-aligned title + hint. */
 .tile-tag--corner {

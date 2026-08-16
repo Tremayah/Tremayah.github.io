@@ -4,6 +4,7 @@ description: "A lamp that — just like its owner — moves, responds, and evolv
 year: 2025
 category: "Product Design"
 tags: ["Arduino", "Metalwork", "Electronics", "Fusion 360", "Prototyping"]
+stage: "prototype"
 order: 1
 cover: "/images/living-lamp/lamp.jpg"
 ---

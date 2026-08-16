@@ -4,6 +4,7 @@ description: "A batch-production lighting study — translucent acrylic layered 
 year: 2026
 category: "Product Design"
 tags: ["Batch Production", "Lighting", "Acrylic", "Woodwork", "Metalwork", "Corian", "Laser Cutting"]
+stage: "product"
 order: 5
 cover: "/images/exploration/lamp-corian.jpg"
 ---

@@ -4,6 +4,7 @@ description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiu
 year: 2025
 category: "Product Design"
 tags: []
+stage: "product"
 order: 2
 ---
 

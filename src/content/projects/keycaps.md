@@ -4,6 +4,7 @@ description: "Using the keycap as a medium to put materiality first — and cast
 year: 2024
 category: "Product Design"
 tags: ["Ceramics", "CAD", "Prototyping", "Rhino", "Mould Making"]
+stage: "prototype"
 order: 4
 cover: "/images/keycaps/idg_20251209_132030_658.jpg"
 ---
