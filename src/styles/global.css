@@ -29,13 +29,17 @@
   --tag-personal:   #d9600a;
 
   /* Stage chips (how far a project got) — the second, left-hand chip on the
-     caption line. Hues are spaced well clear of the scope chips either side of
-     them (green 127° · teal 180° · blue 238° · plum 313° · orange 25°) so five
-     tags stay tellable apart at chip size, and each holds white text at least
-     as well as the personal orange does. */
-  --tag-concept:   #96237d;
-  --tag-prototype: #0d7a7a;
-  --tag-product:   #1f6b28;
+     caption line. Product reuses the brand red, the way university reuses the
+     interaction blue, so the "finished" tag carries the site's own colour.
+     Across the five tags the hues run red 0° · orange 25° · teal 180° ·
+     blue 238° · purple 311°; each holds white text at least as well as the
+     personal orange already does. NOTE the tightest pair is product red
+     against personal orange — they never share a tile today (Topography Table
+     is the only personal project and it's a concept), but tagging a personal
+     project as product would sit those two side by side. */
+  --tag-concept:   #c718a8;
+  --tag-prototype: #068a8a;
+  --tag-product:   var(--title-color);
 
   /* Shared grid geometry — the open-state writeup mirrors the landing grid's
      padding exactly, so both reference the same tokens. */
