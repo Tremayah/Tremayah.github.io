@@ -12,20 +12,21 @@ viewport, with no nav or routing.
 
 - **Cell 0** is the contact card; **cells 1, 2 and 4** are project tiles — each caption carries
   a tag chip on its right, blue *university* / orange *personal*, read from the project's
-  `scope` frontmatter; **cell 3** is the about tile; **cell 5** is a 2×2 **nav box**: an
-  *animations on/off* toggle and a *description panel* across the top, with the **more works**
-  button and a links quad (Instagram, LinkedIn, **cv**) below.
-- **Hovering** a tile shows its blurb in the description panel.
+  `scope` frontmatter; **cell 3** is the about tile; **cell 5** is a 2×2 **nav box**: a
+  *description panel* across the top, with the **Essays** card and a links quad (Instagram,
+  LinkedIn, **cv**, and the *animations on/off* toggle) below.
+- **Hovering** a tile shows its blurb in the description panel, which empties again when the
+  pointer leaves. The panel is **pinned** to the screen on desktop, so it still has somewhere
+  to show a blurb once you've scrolled down to the tiles below the fold.
 - **Clicking a project** fizzles the whole grid with a glitchy radial "corruption" wave and
   reveals the write-up in its place. Every project opens to the **same layout**: its hero image
   lands in the **top-left tile** and the copy wraps around it, with a sticky scrolling-name
   **home bar** along the top. Click the bar (or anywhere off a link/image, or press Escape) to
   fizzle back home. The dissolve-out and the write-up's fizzle-in happen at once — one motion.
-- **cv** opens a full-page CV the same way as a project. **more works** lets the page scroll
-  down to reveal more tiles below the fold (and lights up to show it's a toggle / scroll
-  shortcut). University and personal projects share the one grid, told apart by the caption
-  tags.
-- An **animations** toggle (top-left of the nav box) honours `prefers-reduced-motion` and, when
+- **cv** opens a full-page CV the same way as a project. The page scrolls freely to reveal more
+  tiles below the fold — no buttons at either end. University and personal projects share the
+  one grid, told apart by the caption tags.
+- An **animations** toggle (the links quad's fourth tile) honours `prefers-reduced-motion` and, when
   off, makes every transition instant. On narrow screens (≤ 680px) the grid becomes a
   single-column scroller and an opened project is a full-screen overlay.
 
@@ -49,9 +50,9 @@ src/
     site.ts              All behaviour: the radial fizzle (`runStageWave` static
                          ring + `animateMask` reveal), opening a project with its
                          hero in the top-left (`openView` / `layoutProjectHero`),
-                         scroll-driven "more works", the
-                         hover description panel, the animations toggle, the
-                         nav-label fill (`fillNavBoxes`), the contact form's AJAX
+                         scroll-driven "more works", the hover description panel
+                         and its pinning (`initDescPanel` / `initStickyDesc`),
+                         the animations toggle, the contact form's AJAX
                          submit, carousels and the lightbox. A single `busy` lock
                          serialises transitions so rapid clicks can't overlap.
   content/

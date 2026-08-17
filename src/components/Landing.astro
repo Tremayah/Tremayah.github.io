@@ -127,7 +127,7 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
               <div class="tile tile--contact">
                 <div class="contact-card">
                   <div class="contact-head">
-                    <h1 class="contact-name" data-focus-message>
+                    <h1 class="contact-name" data-focus-message data-desc="Hello!">
                       <span>Raphael</span>
                       <span>Murray</span>
                       <span>Browne</span>
@@ -162,8 +162,14 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
                       placeholder="Email address (optional)"
                       autocomplete="email"
                     />
-                    <div class="contact-message-wrap">
+                    <div
+                      class="contact-message-wrap"
+                      data-desc="Tell me what you think! Message me privately and directly. Any messages sent without an email address are anonymous and one way."
+                    >
                       <textarea class="contact-message" name="message" placeholder="Message" rows={3} required></textarea>
+                      {/* The label reads "send anonymously" while there's a message
+                          but no email address — site.ts keeps it in step, and the
+                          button widens to fit (see .contact-submit). */}
                       <button class="contact-submit" type="submit" data-state="idle">
                         <span class="contact-submit-label">send</span>
                         <span class="contact-submit-dots" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -190,14 +196,26 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
             // 2×2 — see .nav-quad below).
             return (
               <div class="tile tile--nav">
-                <div class="nav-desc" data-desc-panel><span class="nav-desc-text"></span></div>
+                {/* Holds the description panel's space in the grid. The panel
+                    itself is pinned (position: fixed) over this slot on desktop
+                    so it stays on screen while the page scrolls down to "more
+                    works" — see initStickyDesc in site.ts. */}
+                <div class="nav-desc-slot" aria-hidden="true"></div>
+                <div
+                  class="nav-desc"
+                  data-desc-panel
+                  data-desc="Hover over a project to read a short summary of it."
+                ><span class="nav-desc-text"></span></div>
                 {/* The Essays card, in the slot the "more works" button used to
                     hold. Keeps the treatment the Essays tile always had — light
                     card, red rule, big display title bottom-left, filling solid
                     red on hover — just sized to this smaller box (see
                     .nav-essays, which scales its type to the box with cqi). It
-                    opens like any project: data-open, handled by site.ts. */}
-                <button class="nav-essays" type="button" data-open="essays" data-desc={essays.desc}>
+                    opens like any project: data-open, handled by site.ts. Its
+                    hover blurb is written here rather than taken from the
+                    frontmatter description — that one is the essays' own
+                    subtitle, too long and too specific for a one-line hint. */}
+                <button class="nav-essays" type="button" data-open="essays" data-desc="A collection of essays I've written.">
                   <span class="nav-essays-label">{essays.title}</span>
                   <span class="nav-essays-hint">read →</span>
                 </button>
@@ -238,11 +256,13 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
                       and site.ts's existing wiring works unchanged; the label
                       around it is the tile you actually click. The invader is
                       lab effect 16 — it dances while animations are on and
-                      freezes to a grey ghost when they're off. */}
+                      freezes to a grey ghost when they're off. site.ts appends
+                      the current setting to the blurb below, so the description
+                      panel spells out which way the switch is thrown. */}
                   <label
                     class="nav-mini nav-mini--anim"
                     title="Toggle animations"
-                    data-desc="Animations on or off — the invader dances while they're running."
+                    data-desc="Toggle page change animations."
                   >
                     <input type="checkbox" class="anim-switch" data-anim-switch checked />
                     <span class="anim-invader" aria-hidden="true"><i class="f1"></i><i class="f2"></i></span>
@@ -315,9 +335,10 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
 </div>
 
 {/* "More works" — extra tiles below the fold, revealed by scrolling the page
-    down. (The nav-box shortcut button is gone; the trailing "back to top" bar
-    below is the way back up.) Add more entries above and they flow into new
-    rows. */}
+    down. No shortcut buttons either end: the page just scrolls, and the
+    description panel stays pinned on screen (see initStickyDesc in site.ts) so
+    these tiles have somewhere to show their blurbs. Add more entries above and
+    they flow into new rows. */}
 <section class="more-grid" data-more-grid>
   {moreWorks.map((t) => (
     t.kind === 'photo' ? (
@@ -347,20 +368,3 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
     )
   ))}
 </section>
-
-{/* Trailing nav box — repeats the description panel (and a "back to top"
-    shortcut) below the "more works" grid. The persistent nav box up top scrolls
-    out of view once you're down here, so hovering a tile has nowhere visible to
-    show its blurb; this trails the project list instead. Reuses the same
-    data-desc-panel / data-action wiring as the main nav box (site.ts already
-    treats both as one group), so no script changes are needed. Doesn't need to
-    match the 2×2 grid up top yet — just a bar for now. */}
-<div class="trailing-nav">
-  <div class="nav-desc" data-desc-panel><span class="nav-desc-text"></span></div>
-  <button
-    class="nav-box nav-box--more"
-    type="button"
-    data-action="more"
-    data-desc="Back to the top of the page."
-  ><span class="nav-label">back to top</span></button>
-</div>

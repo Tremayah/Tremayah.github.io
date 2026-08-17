@@ -38,23 +38,28 @@ The files that matter:
 ## Behaviour model (current — README goes deeper)
 
 - **Grid.** Cell 0 = the contact card. Cells 1, 2 and 4 = project tiles; cell 3 = the about
-  tile. Cell 5 = a 2×2 **nav box**: the top row (both columns) holds an **animations on/off
-  toggle** + a **description panel**; bottom-left is the **more works** button (its label
-  stretched to fill the box: an SVG with `preserveAspectRatio="none"`, see `fillNavBoxes`).
-  Bottom-right is a **links quad** (`.nav-quad`) — its own 2×2 of small `.nav-mini` tiles:
-  **Instagram**, **LinkedIn**, the **cv** page button, and one **blank** spare slot.
+  tile. Cell 5 = a 2×2 **nav box**: the top row (both columns) is the **description panel**;
+  bottom-left is the **Essays** card (`.nav-essays`, opens like a project). Bottom-right is a
+  **links quad** (`.nav-quad`) — its own 2×2 of small `.nav-mini` tiles: **Instagram**,
+  **LinkedIn**, the **cv** page button, and the **animations on/off toggle**.
 - **Tags.** Every project caption carries a chip on its right — blue **university** / orange
   **personal**, from the `scope` frontmatter field (defaults to university). Both kinds share
   the one landing page; there is no separate personal-projects view.
-- **Hover** any tile → its blurb shows in the nav description panel (no typing animation).
+- **Hover** anything carrying a `data-desc` → its blurb shows in the nav description panel (no
+  typing animation), and the panel empties again when the pointer leaves. A blurb may carry a
+  blank line (`\n\n`) to break itself in two; the animations toggle's blurb names its own
+  current state. The panel is **pinned** on desktop — `initStickyDesc` fixes it over the slot
+  it already occupies (`.nav-desc-slot` holds the space in the grid) so it stays on screen for
+  the tiles below the fold. Not `position: sticky`: the stage is `overflow: hidden`, which
+  would be its scrollport and never scrolls.
 - **Opening a project** (`openView`): the *whole* stage fizzles (radial wave) and the project's
   **hero image appears in the TOP-LEFT**, with the copy wrapping around it — the same layout
   for every project, regardless of which tile was clicked. The opened write-up carries a sticky
   **home bar** at the top (the scrolling name); click it (or anywhere off a link/image) to go
   home. **cv** opens the same way but full-page (no hero). The clicked tile does **not** persist
   any more (no "sliced title").
-- **more works** = the homepage scrolls; scrolling down reveals extra `.more-grid` tiles below
-  and lights the "more works" button. The button is a shortcut (scroll down / back to top).
+- **more works** = the homepage scrolls; scrolling down reveals extra `.more-grid` tiles below.
+  No buttons either end — the page just scrolls, and the pinned description panel follows.
   Topography Table (the personal project) lives here alongside the university work.
 - **Robustness:** one `busy` lock serialises every transition (open/close) so spam-clicking
   can't overlap waves. Animations honour `prefers-reduced-motion` and the toggle

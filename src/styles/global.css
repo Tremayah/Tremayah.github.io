@@ -91,6 +91,11 @@ html.view-open { overflow: hidden; }
   /* Own stacking context so the open-state layers order predictably:
      full-stage fizzle (8) > writeup (6) > grid. */
   isolation: isolate;
+  /* ...and the whole stack sits above the "more works" tiles below it. Those
+     are position: relative too, so without this they'd paint over anything of
+     the stage's that reaches them — the pinned description panel, and (on
+     mobile, where it's a fixed full-screen overlay) an open write-up. */
+  z-index: 1;
 }
 /* Hidden until site.ts has covered the tiles with pixels, so they assemble
    from the background rather than flicking in. (no-JS still shows the grid.)
@@ -106,9 +111,9 @@ html.view-open { overflow: hidden; }
 }
 
 /* The page is freely scrollable on the homepage — scrolling down reveals the
-   "more works" tiles below. There's no nav shortcut button any more (the Essays
-   card took that slot); html.more-open still tracks scroll position in site.ts
-   and lights the trailing "back to top" bar. */
+   "more works" tiles below. No shortcut buttons at either end: the description
+   panel is pinned on screen (see .nav-desc.is-pinned), so there's nothing left
+   down there that has to be scrolled back up to. */
 
 /* The extra tiles, laid out like the landing grid (3 columns, rows the same
    height as a landing row) so they read as "more of the same" once scrolled to.
@@ -343,8 +348,9 @@ html.view-open { overflow: hidden; }
 }
 /* ── Nav box: the bottom-right cell is a 2×2 ────────────────────────────────
    The top row is the description panel, spanning both columns (filled on
-   project hover). The bottom row is the Essays card beside the 2×2 links quad
-   (see .nav-quad), whose fourth slot holds the animations toggle. The cell
+   project hover, and pinned to the screen from there — see .nav-desc). The
+   bottom row is the Essays card beside the 2×2 links quad (see .nav-quad),
+   whose fourth slot holds the animations toggle. The cell
    reserves the caption band at its bottom (--cap) so the box grid aligns with
    the adjacent tile's image (above its caption), rather than running the full
    cell height. */
@@ -356,101 +362,9 @@ html.view-open { overflow: hidden; }
   padding: 0 0 var(--cap);
   background: transparent;
 }
-.nav-box {
-  position: relative;
-  overflow: hidden;
-  border: none;
-  margin: 0;
-  /* Ghost treatment (lab effect 17): light box with a coral outline + coral
-     label, plus four pixel corners that softly pulse (::before). Fills solid
-     blue with a white label on hover — the site's usual red → blue language. */
-  background: var(--bg);
-  box-shadow: inset 0 0 0 1.5px #ff4d4d;
-  color: #ff4d4d;
-  font-family: var(--nav-font);
-  font-weight: 700;
-  font-size: clamp(0.6rem, 1vw, 0.95rem);
-  line-height: 1.1;
-  text-transform: lowercase;
-  text-align: center;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.4em;
-  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-/* Four pulsing pixel corners. The lab demo hard-coded their offsets to the tile
-   size; here they're painted a fixed 5px in from each corner of the ::before, so
-   they stay put whatever the box's responsive size. */
-.nav-box::before {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  z-index: 1;
-  pointer-events: none;
-  background-image:
-    linear-gradient(#ff4d4d 0 0), linear-gradient(#ff4d4d 0 0),
-    linear-gradient(#ff4d4d 0 0), linear-gradient(#ff4d4d 0 0);
-  background-size: 4px 4px;
-  background-repeat: no-repeat;
-  background-position: top left, top right, bottom left, bottom right;
-  animation: nav-corner-pulse 2.8s ease-in-out infinite;
-}
-@keyframes nav-corner-pulse {
-  0%, 100% { opacity: 0.35; }
-  50%      { opacity: 1; }
-}
-.nav-box:hover,
-.nav-box:focus-visible {
-  background: var(--highlight);
-  box-shadow: none;
-  color: #fff;
-  outline: none;
-}
-/* Filled state has no outline to decorate — hide the corners. */
-.nav-box:hover::before,
-.nav-box:focus-visible::before { opacity: 0; }
-.nav-label { display: block; }
-/* Each label is stretched to fill its box (see fillNavBoxes in site.ts): an SVG
-   <text> scaled non-uniformly to the box via preserveAspectRatio="none", leaving
-   a thin margin (= the message-box border width). */
-.nav-fill {
-  position: absolute;
-  top: 1.5px;
-  left: 1.5px;
-  width: calc(100% - 3px);   /* explicit size: an SVG is a replaced element, so */
-  height: calc(100% - 3px);  /* `inset` alone falls back to its intrinsic size  */
-  display: block;
-  pointer-events: none;
-}
-.nav-fill text {
-  fill: currentColor; /* follows .nav-box color: coral at rest, white on hover */
-  font-family: var(--nav-font);
-  font-weight: 700;
-}
-/* Visually hidden, kept for screen readers (the SVG fill is aria-hidden). */
-.sr-only {
-  position: absolute;
-  width: 1px; height: 1px;
-  padding: 0; margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
-/* "More works" is a toggle — it goes (and stays) filled blue while the page is
-   in its scrollable, expanded state (same as the hover fill). */
-html.more-open .nav-box--more {
-  background: var(--highlight);
-  box-shadow: none;
-  color: #fff;
-}
-html.more-open .nav-box--more::before { opacity: 0; }
-
 /* ── Essays card: the nav box's bottom-left cell ────────────────────────────
-   Took over the slot the "more works" button held. Deliberately NOT a .nav-box
-   — it keeps the treatment the Essays tile carried in the "more works" grid: a
+   Took over the slot the "more works" button held — it keeps the treatment the
+   Essays tile carried in the "more works" grid: a
    light card with a red rule, the title set large and bottom-left in the
    display face, filling solid red on hover (the write-up's own title red, not
    the nav coral).
@@ -635,12 +549,25 @@ html.more-open .nav-box--more::before { opacity: 0; }
 
 /* Description panel — a white box with a red border (matching the message box).
    Shows the hovered project's / nav item's blurb in blue; no animation, the
-   text just swaps. It fills the nav box's whole top row: the animations toggle
-   that used to sit above it has moved into the links quad, so the blurb gets
-   the full half-cell. (It's also sticky — the last blurb stays put when the
-   pointer leaves, see initDescPanel in site.ts — so this space isn't blank most
-   of the time.) */
-.tile--nav > .nav-desc { grid-column: 1 / -1; }
+   text just swaps, and it empties again when the pointer leaves. It fills the
+   nav box's whole top row.
+
+   On desktop it's PINNED: site.ts fixes it over the slot it already occupies
+   (.nav-desc-slot, which holds the space in the grid) so it stays put on screen
+   while the page scrolls down to "more works" — those tiles need somewhere to
+   show their blurbs, and this is the only place there is. Fixed rather than
+   sticky because the stage is `overflow: hidden`, which would be sticky's
+   scrollport, and it never scrolls. Left/top/width/height come from the slot's
+   measured box (inline, see initStickyDesc), so at the top of the page nothing
+   moves and there's nothing to see. */
+.tile--nav > .nav-desc-slot,
+.tile--nav > .nav-desc { grid-area: 1 / 1 / 2 / -1; }
+/* The panel leaves the grid flow when pinned, so the row below is placed
+   explicitly rather than left to auto-placement (which would ride up into the
+   empty first row). */
+.nav-essays { grid-row: 2; }
+.nav-quad { grid-row: 2; }
+.nav-desc-slot { pointer-events: none; }
 .nav-desc {
   display: flex;
   align-items: flex-start;
@@ -653,28 +580,17 @@ html.more-open .nav-box--more::before { opacity: 0; }
   cursor: default;
   min-height: 0;
 }
+.nav-desc.is-pinned { position: fixed; }
 .nav-desc-text {
   font-family: var(--body-font);
   font-size: clamp(0.6rem, 0.95vw, 0.82rem);
   line-height: 1.4;
   color: var(--highlight);
+  /* Blurbs can carry a blank line (a double newline in the data-desc) to break
+     themselves in two — the animations toggle uses it to state what it does,
+     then how it's currently set. */
+  white-space: pre-line;
 }
-
-/* ── Trailing nav box — below the "more works" grid ─────────────────────────
-   A second description panel + a "back to top" shortcut, repeated at the foot
-   of the project list. The main nav box (top of the page) is long scrolled out
-   of view by the time you're down here, so hovering a "more works" tile has
-   nowhere visible to show its blurb without this. Just a bar for now — it
-   doesn't need to match the 2×2 grid up top. */
-.trailing-nav {
-  display: flex;
-  align-items: stretch;
-  gap: var(--grid-gap);
-  padding: 0 var(--grid-pad) var(--grid-pad);
-  height: clamp(4rem, 8vw, 6rem);
-}
-.trailing-nav .nav-desc { flex: 1 1 auto; }
-.trailing-nav .nav-box { flex: 0 0 clamp(7rem, 16vw, 11rem); }
 
 /* Reduced motion: neutralise transitions + keyframes site-wide (the pixel
    fizzle is short-circuited in JS). */
@@ -844,7 +760,10 @@ html.reduce-motion *::after {
   right: 0;
   bottom: 0;
   height: var(--cap);
-  min-width: 0; /* bigger word in a smaller box — the box hugs the text */
+  /* The box hugs its label, so it widens on its own when the label grows to
+     "send anonymously" (message written, no email address — see site.ts). */
+  min-width: 0;
+  white-space: nowrap;
   border: none;
   background: var(--body-color);
   color: #fff;
@@ -1555,7 +1474,6 @@ html.reduce-motion .carousel-track { transition: none; }
     font-size: clamp(1.15rem, 5vw, 1.4rem);
     line-height: 1.4;
   }
-  .nav-box { font-size: 0.8rem; }
   .anim-label { font-size: 0.7rem; }
   .nav-desc-text { font-size: 0.78rem; }
 
@@ -1564,11 +1482,6 @@ html.reduce-motion .carousel-track { transition: none; }
     grid-template-columns: 1fr;
     grid-auto-rows: 52vw;
   }
-
-  /* Trailing nav box: stacks instead of sitting side-by-side on a narrow phone. */
-  .trailing-nav { flex-direction: column; height: auto; gap: 0.6rem; }
-  .trailing-nav .nav-desc { min-height: 3.4rem; }
-  .trailing-nav .nav-box { flex: 0 0 auto; height: 2.6rem; }
 
   /* Opened project / CV: full-screen overlay above the stacked page. */
   .writeup { position: fixed; z-index: 100; }

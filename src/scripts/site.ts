@@ -8,10 +8,10 @@
      • opening a project — everything fizzles, the hero lands top-left and the
        copy wraps around it; a sticky scrolling-name home bar tops the page
      • closing (click the home bar, anywhere off a link/image, or Escape)
-     • "more works": free page scroll (the trailing "back to top" bar is the
-       only remaining toggle button, lit while scrolled)
-     • the hover description panel, the animations toggle, the nav-label fill,
-       the contact form's AJAX submit, carousels and the lightbox
+     • "more works": free page scroll (no buttons — the page just scrolls)
+     • the hover description panel (pinned on screen so it serves the tiles
+       below the fold too), the animations toggle, the contact form's AJAX
+       submit, carousels and the lightbox
    ========================================================================== */
 
 /* ── Pixel dissolve / reveal ──────────────────────────────────────────────
@@ -174,96 +174,112 @@ function closeLightbox(): void {
 }
 
 /* ── Description panel (nav box, top row) ─────────────────────────────────
-   Hovering any tile with a data-desc shows that blurb in the shared panel —
-   no animation, the text just swaps. Sticky: the last blurb stays put once the
-   pointer leaves, rather than blanking. The panel is a big box now that it has
-   the nav cell's whole top row, and emptying it every time the mouse crosses a
-   gap left it blank most of the time. */
+   Hovering anything with a data-desc shows that blurb in the panel — no
+   animation, the text just swaps — and the panel empties again when the pointer
+   leaves, so it only ever describes what's under the cursor right now.
+   A blurb may carry a blank line (\n\n): .nav-desc-text is `white-space:
+   pre-line`, so it renders as a paragraph gap rather than a literal newline. */
+let descPanels: HTMLElement[] = [];
+let descSource: HTMLElement | null = null; // whose blurb is currently showing
+
+function setDesc(text: string): void {
+  descPanels.forEach((p) => { p.textContent = text; });
+}
+const descOf = (el: HTMLElement | null | undefined): string => el?.dataset.desc?.trim() ?? '';
+
 function initDescPanel(): void {
-  const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-desc-panel] .nav-desc-text'));
-  if (panels.length === 0) return;
-  const set = (text: string): void => panels.forEach((p) => { p.textContent = text; });
+  descPanels = Array.from(document.querySelectorAll<HTMLElement>('[data-desc-panel] .nav-desc-text'));
+  if (descPanels.length === 0) return;
   document.querySelectorAll<HTMLElement>('[data-desc]').forEach((el) => {
     el.addEventListener('mouseenter', () => {
-      const desc = el.dataset.desc?.trim();
-      if (desc) set(desc); // an empty data-desc leaves the last blurb alone
+      descSource = el;
+      setDesc(descOf(el));
+    });
+    el.addEventListener('mouseleave', () => {
+      if (descSource !== el) return; // some inner blurb already took over
+      // Leaving a nested blurb hands back to the one that encloses it (none
+      // today, but that's the behaviour you'd want the moment there is one);
+      // leaving the outermost empties the panel.
+      const outer = el.parentElement?.closest<HTMLElement>('[data-desc]') ?? null;
+      descSource = outer;
+      setDesc(descOf(outer));
     });
   });
+}
+
+/* Re-read a blurb that changed while it was on screen (the animations toggle
+   rewrites its own — see below). No-op if it isn't the one showing. */
+function refreshDesc(el: HTMLElement): void {
+  if (descSource === el) setDesc(descOf(el));
 }
 
 /* ── Animations on/off toggle (accessibility) ─────────────────────────────
    Defaults to honouring prefers-reduced-motion. The switch drives
    html.reduce-motion, which the fizzle functions and CSS both respect. */
+/* The toggle's blurb: what it does, then — after a blank line — which way it's
+   currently thrown, so the state is spelled out in words and not left entirely
+   to the tile's red/grey. */
+const animDesc = (on: boolean): string =>
+  `Toggle page change animations.\n\nAnimations are currently ${on ? 'ON' : 'OFF'}.`;
+
 function initAnimToggle(): void {
   const switches = Array.from(document.querySelectorAll<HTMLInputElement>('[data-anim-switch]'));
   if (switches.length === 0) return;
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const apply = (on: boolean): void => {
     document.documentElement.classList.toggle('reduce-motion', !on);
-    switches.forEach((s) => { s.checked = on; });
+    switches.forEach((s) => {
+      s.checked = on;
+      // Clicking the switch means the pointer is on its tile, so the panel is
+      // showing this blurb: rewrite it and refresh it in place.
+      const tile = s.closest<HTMLElement>('[data-desc]');
+      if (!tile) return;
+      tile.dataset.desc = animDesc(on);
+      refreshDesc(tile);
+    });
   };
   apply(!prefersReduced);
   switches.forEach((s) => s.addEventListener('change', () => apply(s.checked)));
 }
 
-/* ── Stretch nav-box labels to fill their boxes ───────────────────────────────
-   Each label becomes an SVG <text> (one word per line) drawn with
-   preserveAspectRatio="none", so setting the viewBox to the text's own bounding
-   box makes it scale non-uniformly to fill the box — leaving only the thin
-   margin from .nav-fill's inset. Measured after fonts load; the SVG then
-   re-scales itself on resize with no further work. */
-function fillNavBoxes(): void {
-  const NS = 'http://www.w3.org/2000/svg';
-  document.querySelectorAll<HTMLElement>('.nav-box').forEach((box) => {
-    const label = box.querySelector<HTMLElement>('.nav-label');
-    if (!label || box.querySelector('.nav-fill')) return;
-    const words = (label.textContent ?? '').trim().split(/\s+/);
-    const svg = document.createElementNS(NS, 'svg');
-    svg.setAttribute('class', 'nav-fill');
-    svg.setAttribute('preserveAspectRatio', 'none');
-    svg.setAttribute('aria-hidden', 'true');
-    const text = document.createElementNS(NS, 'text');
-    text.setAttribute('text-anchor', 'middle');
-    words.forEach((w, i) => {
-      const tspan = document.createElementNS(NS, 'tspan');
-      tspan.setAttribute('x', '0');
-      tspan.setAttribute('dy', i === 0 ? '0.85em' : '0.95em');
-      tspan.textContent = w;
-      text.appendChild(tspan);
-    });
-    svg.appendChild(text);
-    box.appendChild(svg);
-    label.classList.add('sr-only'); // keep for screen readers
-  });
+/* ── Pinning the description panel ────────────────────────────────────────
+   The panel is the only place a blurb appears, and half the projects live in
+   the "more works" grid below the fold — so it has to stay on screen as the
+   page scrolls. `position: sticky` can't do it: the stage is `overflow:
+   hidden`, which makes the stage the panel's scrollport, and that never
+   scrolls. So the panel is taken out of the nav grid and fixed over the slot it
+   already occupies (.nav-desc-slot holds the space). It doesn't travel or
+   re-dock — it simply never moves, and the page scrolls under it.
 
-  const apply = (): void => {
-    const cache: Record<string, string> = {};
-    const svgs = Array.from(document.querySelectorAll<SVGSVGElement>('.nav-fill'));
-    svgs.forEach((svg) => {
-      const t = svg.querySelector('text');
-      if (!t) return;
-      const key = t.textContent ?? '';
-      if (cache[key]) return;
-      let bb: DOMRect;
-      // Older Firefox throws on getBBox() for a non-rendered element — treat
-      // that as a 0×0 box and move on.
-      try { bb = t.getBBox(); } catch { return; }
-      if (bb.width > 0 && bb.height > 0) {
-        // a hair of padding so glyph extremes aren't clipped by the tight viewBox
-        const px = bb.width * 0.02;
-        const py = bb.height * 0.06;
-        cache[key] = `${bb.x - px} ${bb.y - py} ${bb.width + 2 * px} ${bb.height + 2 * py}`;
-      }
-    });
-    svgs.forEach((svg) => {
-      const t = svg.querySelector('text');
-      const vb = t && cache[t.textContent ?? ''];
-      if (vb) svg.setAttribute('viewBox', vb);
-    });
+   Not on mobile: there's no hover on a touch screen, so a box floating over the
+   page would be in the way for nothing. */
+function initStickyDesc(): void {
+  const panel = document.querySelector<HTMLElement>('.tile--nav > .nav-desc');
+  const slot = document.querySelector<HTMLElement>('.nav-desc-slot');
+  if (!panel || !slot) return;
+  const place = (): void => {
+    if (compact()) {
+      panel.classList.remove('is-pinned');
+      panel.style.cssText = '';
+      return;
+    }
+    // The slot stays in the grid, so it can be measured at any scroll position;
+    // + scrollY converts its viewport box to the page box, which is where the
+    // panel should sit on screen (the stage starts at the top of the document).
+    const r = slot.getBoundingClientRect();
+    panel.classList.add('is-pinned');
+    panel.style.left = `${r.left}px`;
+    panel.style.top = `${r.top + window.scrollY}px`;
+    panel.style.width = `${r.width}px`;
+    panel.style.height = `${r.height}px`;
   };
-
-  apply();
-  if (document.fonts?.ready) document.fonts.ready.then(apply);
+  place();
+  window.addEventListener('resize', place);
+  // The slot stays in the grid and so tracks every layout change the panel has
+  // to follow — including a page that loads in a hidden or zero-width viewport
+  // and only gets its real size later, which a resize listener alone can miss.
+  // (place() only ever touches the panel, so this can't re-trigger itself.)
+  new ResizeObserver(place).observe(slot);
 }
 
 /* ── Open / close state ───────────────────────────────────────────────────
@@ -500,7 +516,6 @@ let busy = false;
    close. On mobile the write-up is a fixed overlay, so the page keeps its
    scroll position and closing returns the visitor to the tile they tapped. */
 function lockScroll(): void {
-  document.documentElement.classList.remove('more-open');
   document.documentElement.classList.add('view-open');
   if (!compact()) window.scrollTo(0, 0);
 }
@@ -634,6 +649,21 @@ function initContactForm(form: HTMLFormElement): void {
       message?.focus();
     }));
 
+  // The button says what pressing it will actually do. With something written
+  // but no email address filled in, the message arrives with no way to reply —
+  // so it reads "send anonymously" rather than leaving that in the small print.
+  // Same type size; the button just widens to fit (see .contact-submit).
+  const email = form.querySelector<HTMLInputElement>('.contact-email');
+  const idleLabel = (): string =>
+    message?.value.trim() && !email?.value.trim() ? 'send anonymously' : 'send';
+  const syncIdleLabel = (): void => {
+    // Only while idle — mid-send the button is showing the status instead.
+    if (!label || submit?.dataset.state !== 'idle') return;
+    label.textContent = idleLabel();
+  };
+  message?.addEventListener('input', syncIdleLabel);
+  email?.addEventListener('input', syncIdleLabel);
+
   // Show the blue result for a beat, then fade back to the red idle state.
   const finish = (resultText: string, idleText: string): void => {
     setState('result', resultText);
@@ -657,29 +687,6 @@ function initContactForm(form: HTMLFormElement): void {
   });
 }
 
-/* ── "More works" ───────────────────────────────────────────────────────────
-   The homepage scrolls freely; scrolling down reveals the extra .more-grid tiles
-   and lights the "more works" button (html.more-open, driven by scroll position
-   in initScrollSync) to show it's a toggle. The button itself is a shortcut:
-   scroll down to the tiles, or back to the top. */
-function toggleMore(): void {
-  const moreGrid = document.querySelector<HTMLElement>('[data-more-grid]');
-  const behavior: ScrollBehavior = reduced() ? 'auto' : 'smooth';
-  const atTop = window.scrollY < 40;
-  const target = atTop && moreGrid ? window.scrollY + moreGrid.getBoundingClientRect().top : 0;
-  window.scrollTo({ top: target, behavior });
-}
-
-/* Light the "more works" button whenever the page is scrolled down (and not in
-   an open view), so it reads as a live toggle for the extra tiles. A class
-   toggle per scroll is cheap (it only flips a colour), so no rAF coalescing. */
-function initScrollSync(): void {
-  const update = (): void =>
-    void document.documentElement.classList.toggle('more-open', window.scrollY > 40 && !openId);
-  window.addEventListener('scroll', update, { passive: true });
-  update();
-}
-
 /* ── Click handling ──────────────────────────────────────────────────────── */
 function onStageClick(e: MouseEvent): void {
   const target = e.target as Element;
@@ -698,13 +705,9 @@ function onStageClick(e: MouseEvent): void {
     return;
   }
 
-  // Nav-box section buttons: open the CV, or expand "more works".
+  // Nav-box buttons that aren't projects — just the CV page now.
   const actionEl = target.closest<HTMLElement>('[data-action]');
-  if (actionEl) {
-    const action = actionEl.dataset.action;
-    if (action === 'cv') { openCV(originOf(actionEl)); return; }
-    if (action === 'more') { toggleMore(); return; }
-  }
+  if (actionEl?.dataset.action === 'cv') { openCV(originOf(actionEl)); return; }
 
   // Match on [data-open] rather than .tile: usually that IS the tile, but the
   // Essays card is a button nested inside the nav cell (a .tile with no
@@ -721,11 +724,11 @@ function init(): void {
   // Hovering a tile fills the nav box's description panel
   initDescPanel();
 
+  // ...and the panel is pinned on screen, so it serves the tiles below the fold
+  initStickyDesc();
+
   // Animations on/off (accessibility) — sets html.reduce-motion
   initAnimToggle();
-
-  // Stretch the nav-box labels to fill their boxes
-  fillNavBoxes();
 
   // Contact form — AJAX submit via FormSubmit
   stage.querySelectorAll<HTMLFormElement>('.contact-form').forEach(initContactForm);
@@ -757,20 +760,11 @@ function init(): void {
   }
   window.addEventListener('popstate', onPopState);
 
-  // Light the "more works" button while the page is scrolled down.
-  initScrollSync();
-
   // "More works" tiles live outside the stage (below the fold), so they get
   // their own click handler to open their writeup (e.g. Living Lamp).
   document.querySelector<HTMLElement>('[data-more-grid]')?.addEventListener('click', (e) => {
     const tile = (e.target as Element).closest<HTMLElement>('.more-tile[data-open]');
     if (tile?.dataset.open) openProject(tile, tile.dataset.open);
-  });
-
-  // The trailing nav box (below "more works") is also outside the stage, so its
-  // "back to top" shortcut needs its own click handler too.
-  document.querySelector<HTMLElement>('.trailing-nav')?.addEventListener('click', (e) => {
-    if ((e.target as Element).closest('[data-action="more"]')) toggleMore();
   });
 
   // The open project's hero is sized to the top-left grid cell — recompute it
