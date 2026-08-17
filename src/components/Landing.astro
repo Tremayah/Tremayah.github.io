@@ -49,8 +49,9 @@ const data = (id: string) => {
 
 // Projects whose write-up is still a stub keep the "under construction"
 // badge/notice; everything else is treated as finished (no badge). Removing an
-// id from here is a status change (the project is genuinely done). Currently
-// empty — Topography Table came off the list June 2026.
+// id from here is a status change (the project is genuinely done). Trebuchet is
+// listed but currently renders nowhere (see moreWorks below) — the entry is kept
+// so the badge is already right the moment its tile goes back.
 const UNDER_CONSTRUCTION = new Set<string>(['trebuchet']);
 const isUC = (id: string): boolean => UNDER_CONSTRUCTION.has(id);
 
@@ -77,9 +78,10 @@ const moreWorks = [
   { kind: 'photo' as const, ...data('living-lamp') },
   { kind: 'photo' as const, ...data('keycaps') },
   { kind: 'photo' as const, ...data('table-tennis-bat') },
-  // Skeleton write-up: real tile and a real page, but still carrying the
-  // "under construction" badge until the paragraph briefs are written out.
-  { kind: 'photo' as const, ...data('trebuchet') },
+  // Trebuchet belongs here and its tile is ready, but it's held back while the
+  // write-up is still a skeleton of one-line briefs. Restore this line together
+  // with its id in src/openable.ts:
+  //   { kind: 'photo' as const, ...data('trebuchet') },
 ];
 
 // Essays has no cover image, so it can't be a photo tile. It now lives in the

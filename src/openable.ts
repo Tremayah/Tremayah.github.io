@@ -11,7 +11,11 @@ export const OPENABLE_IDS = [
   'progression', // Smart Jewellery (more works)
   'essays', // Design Culture essays (more works)
   'topography-table', // Topography Table (personal project, in more works)
-  'trebuchet', // Trebuchet (more works) — skeleton, still under construction
+  // 'trebuchet' — the page exists (src/content/projects/trebuchet.md, images in
+  // public/images/trebuchet/) but is deliberately NOT listed while its
+  // paragraphs are still one-line briefs written in the third person. Leaving it
+  // out here keeps it off the site entirely: no embedded write-up, no /p/trebuchet/.
+  // Re-add this line and the moreWorks entry in Landing.astro once the prose is written.
   'cv', // CV page
 ] as const;
 
