@@ -51,7 +51,7 @@ const data = (id: string) => {
 // badge/notice; everything else is treated as finished (no badge). Removing an
 // id from here is a status change (the project is genuinely done). Currently
 // empty — Topography Table came off the list June 2026.
-const UNDER_CONSTRUCTION = new Set<string>([]);
+const UNDER_CONSTRUCTION = new Set<string>(['trebuchet']);
 const isUC = (id: string): boolean => UNDER_CONSTRUCTION.has(id);
 
 // The 3×2 landing grid, one tile per cell: the contact card (cell 0), the
@@ -77,13 +77,15 @@ const moreWorks = [
   { kind: 'photo' as const, ...data('living-lamp') },
   { kind: 'photo' as const, ...data('keycaps') },
   { kind: 'photo' as const, ...data('table-tennis-bat') },
-  // No write-up yet, so this one is hard-coded rather than read from the
-  // collection — including its stage chip. (trebuchet.md carries the same
-  // `stage: product` for when it becomes a real tile.)
-  { kind: 'placeholder' as const, title: 'Trebuchet', stage: 'product' as const, desc: 'A laser-cut plywood trebuchet — coming soon.' },
-  // Essays has no cover image, so it opens from a text tile instead of a photo.
-  { kind: 'text' as const, ...data('essays') },
+  // Skeleton write-up: real tile and a real page, but still carrying the
+  // "under construction" badge until the paragraph briefs are written out.
+  { kind: 'photo' as const, ...data('trebuchet') },
 ];
+
+// Essays has no cover image, so it can't be a photo tile. It now lives in the
+// nav cell (the slot the "more works" button used to hold) rather than trailing
+// the "more works" grid — see the .nav-essays card below.
+const essays = data('essays');
 
 // The welcome / "about" copy — one source of truth, rendered both as the mobile
 // welcome note under the contact form and in the desktop "about me" tile, so the
@@ -169,22 +171,26 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
             );
           }
           if (t.kind === 'nav') {
-            // The bottom-right cell: a 2×2 that persists. Top-left is a
-            // description panel (filled on project hover — see site.ts);
-            // top-right + bottom-left are section buttons; the bottom-right
-            // is a links quad (its own 2×2 — see .nav-quad below).
+            // The bottom-right cell: a 2×2 that persists. The description
+            // panel now spans the whole top row (filled on project hover — see
+            // site.ts); below it, the Essays card and the links quad (its own
+            // 2×2 — see .nav-quad below).
             return (
               <div class="tile tile--nav">
-                <div class="nav-corner">
-                  <label class="anim-toggle" title="Toggle animations">
-                    <input type="checkbox" class="anim-switch" data-anim-switch checked />
-                    <span class="anim-toggle-box">animations</span>
-                  </label>
-                  <div class="nav-desc" data-desc-panel><span class="nav-desc-text"></span></div>
-                </div>
-                <button class="nav-box nav-box--more" type="button" data-action="more" data-desc="Scroll down to see more of my work."><span class="nav-label">more works</span></button>
-                {/* Links quad: Instagram, LinkedIn, the CV page, and one spare
-                    slot (blank for now). Same red→blue treatment, smaller. */}
+                <div class="nav-desc" data-desc-panel><span class="nav-desc-text"></span></div>
+                {/* The Essays card, in the slot the "more works" button used to
+                    hold. Keeps the treatment the Essays tile always had — light
+                    card, red rule, big display title bottom-left, filling solid
+                    red on hover — just sized to this smaller box (see
+                    .nav-essays, which scales its type to the box with cqi). It
+                    opens like any project: data-open, handled by site.ts. */}
+                <button class="nav-essays" type="button" data-open="essays" data-desc={essays.desc}>
+                  <span class="nav-essays-label">{essays.title}</span>
+                  <span class="nav-essays-hint">read →</span>
+                </button>
+                {/* Links quad: Instagram, LinkedIn, the CV page, and the
+                    animations toggle in the fourth slot. Same red→blue
+                    treatment, smaller. */}
                 <div class="nav-quad">
                   <a
                     class="nav-mini nav-mini--link"
@@ -213,14 +219,23 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
                     </svg>
                   </a>
                   <button class="nav-mini nav-mini--cv" type="button" data-action="cv" data-desc="My CV — education, skills, and experience."><span class="nav-mini-label">cv</span></button>
-                  <div class="nav-mini nav-mini--blank" aria-hidden="true"></div>
+                  {/* The animations toggle, in the slot that used to be blank.
+                      Still a real checkbox (visually hidden) rather than a
+                      button, so it stays keyboard- and screen-reader-operable
+                      and site.ts's existing wiring works unchanged; the label
+                      around it is the tile you actually click. The invader is
+                      lab effect 16 — it dances while animations are on and
+                      freezes to a grey ghost when they're off. */}
+                  <label
+                    class="nav-mini nav-mini--anim"
+                    title="Toggle animations"
+                    data-desc="Animations on or off — the invader dances while they're running."
+                  >
+                    <input type="checkbox" class="anim-switch" data-anim-switch checked />
+                    <span class="anim-invader" aria-hidden="true"><i class="f1"></i><i class="f2"></i></span>
+                    <span class="anim-label">anim</span>
+                  </label>
                 </div>
-                {/* A gentle bobbing chevron in the caption band under the "more
-                    works" box — a hint that the page scrolls to reveal more, and
-                    a click shortcut for it (data-action="more", same as the box). */}
-                <span class="more-chevron" data-action="more" aria-hidden="true">
-                  <svg viewBox="0 0 24 12" focusable="false"><path d="M3 3 L12 10 L21 3" /></svg>
-                </span>
               </div>
             );
           }
@@ -285,9 +300,10 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
   </div>
 </div>
 
-{/* "More works" — extra tiles below the fold. Scrolling the page down reveals
-    them (and lights the "more works" toggle); the toggle is a shortcut to
-    scroll there and back. Add more entries above and they flow into new rows. */}
+{/* "More works" — extra tiles below the fold, revealed by scrolling the page
+    down. (The nav-box shortcut button is gone; the trailing "back to top" bar
+    below is the way back up.) Add more entries above and they flow into new
+    rows. */}
 <section class="more-grid" data-more-grid>
   {moreWorks.map((t) => (
     t.kind === 'photo' ? (
@@ -301,15 +317,6 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
           {t.stage && <span class="tile-tag" data-stage={t.stage}>{t.stage}</span>}
           <span class="tile-tag" data-tag={t.scope}>{t.scope}</span>
         </span>
-      </button>
-    ) : t.kind === 'text' ? (
-      // Openable, image-less tile (e.g. Essays): a light card with the title,
-      // opening its write-up like any project. The tag sits top-left, clear of
-      // the bottom-aligned title/hint.
-      <button class="more-tile more-tile--text" type="button" data-open={t.id} data-desc={t.desc}>
-        <span class="tile-tag tile-tag--corner" data-tag={t.scope}>{t.scope}</span>
-        <span class="more-tile-text-label">{t.title}</span>
-        <span class="more-tile-text-hint">read →</span>
       </button>
     ) : (
       // Not-yet-written-up stub (Trebuchet): laid out like a photo tile, but

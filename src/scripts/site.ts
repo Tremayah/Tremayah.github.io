@@ -8,7 +8,8 @@
      • opening a project — everything fizzles, the hero lands top-left and the
        copy wraps around it; a sticky scrolling-name home bar tops the page
      • closing (click the home bar, anywhere off a link/image, or Escape)
-     • "more works": free page scroll, with the nav button lit while scrolled
+     • "more works": free page scroll (the trailing "back to top" bar is the
+       only remaining toggle button, lit while scrolled)
      • the hover description panel, the animations toggle, the nav-label fill,
        the contact form's AJAX submit, carousels and the lightbox
    ========================================================================== */
@@ -172,17 +173,21 @@ function closeLightbox(): void {
   lightboxOpen = false;
 }
 
-/* ── Description panel (nav box, top-left) ────────────────────────────────
+/* ── Description panel (nav box, top row) ─────────────────────────────────
    Hovering any tile with a data-desc shows that blurb in the shared panel —
-   no animation, the text just swaps. Leaving restores the default hint. */
+   no animation, the text just swaps. Sticky: the last blurb stays put once the
+   pointer leaves, rather than blanking. The panel is a big box now that it has
+   the nav cell's whole top row, and emptying it every time the mouse crosses a
+   gap left it blank most of the time. */
 function initDescPanel(): void {
   const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-desc-panel] .nav-desc-text'));
   if (panels.length === 0) return;
-  const hint = (panels[0].textContent ?? '').trim();
   const set = (text: string): void => panels.forEach((p) => { p.textContent = text; });
   document.querySelectorAll<HTMLElement>('[data-desc]').forEach((el) => {
-    el.addEventListener('mouseenter', () => set(el.dataset.desc ?? hint));
-    el.addEventListener('mouseleave', () => set(hint));
+    el.addEventListener('mouseenter', () => {
+      const desc = el.dataset.desc?.trim();
+      if (desc) set(desc); // an empty data-desc leaves the last blurb alone
+    });
   });
 }
 
@@ -696,9 +701,11 @@ function onStageClick(e: MouseEvent): void {
     if (action === 'more') { toggleMore(); return; }
   }
 
-  const tile = target.closest<HTMLElement>('.tile');
-  if (!tile) return;
-  if (tile.dataset.open) openProject(tile, tile.dataset.open);
+  // Match on [data-open] rather than .tile: usually that IS the tile, but the
+  // Essays card is a button nested inside the nav cell (a .tile with no
+  // data-open of its own), so closest('.tile') would find the wrapper and stop.
+  const opener = target.closest<HTMLElement>('[data-open]');
+  if (opener?.dataset.open) openProject(opener, opener.dataset.open);
 }
 
 /* ── Init + load-in animation ────────────────────────────────────────────── */

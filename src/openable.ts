@@ -11,6 +11,7 @@ export const OPENABLE_IDS = [
   'progression', // Smart Jewellery (more works)
   'essays', // Design Culture essays (more works)
   'topography-table', // Topography Table (personal project, in more works)
+  'trebuchet', // Trebuchet (more works) — skeleton, still under construction
   'cv', // CV page
 ] as const;
 
