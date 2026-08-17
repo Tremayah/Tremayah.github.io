@@ -87,14 +87,24 @@ const moreWorks = [
 // the "more works" grid — see the .nav-essays card below.
 const essays = data('essays');
 
-// The welcome / "about" copy — one source of truth, rendered both as the mobile
+// The bio / "about" copy — one source of truth, rendered both as the mobile
 // welcome note under the contact form and in the desktop "about me" tile, so the
-// two presentations can never drift apart again.
+// two presentations can never drift apart again. Three statements, then a
+// closing instruction; the last line is held apart because it carries the
+// mailto link and is set quieter (see .about-contact) — it's a direction, not a
+// claim. "the box above" reads true in both places: the message box sits
+// directly above the note on mobile, and in the cell directly above the about
+// tile on desktop.
 const aboutCopy = [
-  'Hello, and welcome to my portfolio!',
-  'Please do take a look at my works, and be sure to send me your thoughts in the box above.',
-  "If you'd rather not start a conversation, any messages without an email address are anonymous and one-way.",
+  'I want objects to have presence: to respond to their users through motion, voice, or something else entirely.',
+  'I love the way renders make me feel. I want to bring their uncanny sanitisation to the real world.',
+  'Each project teaches me a new tool, practice, or material.',
 ];
+// The closing line, shared by both renderings so its wording can't drift either.
+// This is the one place the real inbox appears in the page source — the form
+// posts through the FormSubmit alias below and never exposes it.
+const CONTACT_LEAD = 'Message me in the box above, or email ';
+const CONTACT_EMAIL = 'raphael.murraybrowne@gmail.com';
 
 // FormSubmit alias — keeps the real address out of the page source (manage at formsubmit.co).
 const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
@@ -159,12 +169,13 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
                     </div>
                     <p class="contact-caption">Messages sent without an email address are one-way and anonymous.</p>
                   </form>
-                  {/* The welcome / "about" note, shown under the form in the
-                      single-column (≤680px) view. On desktop the contact cell is a
-                      fixed half-height with no room here, so this is hidden and the
-                      same aboutCopy appears in the dedicated about tile instead. */}
+                  {/* The bio, shown under the form in the single-column (≤680px)
+                      view. On desktop the contact cell is a fixed half-height with
+                      no room here, so this is hidden and the same aboutCopy appears
+                      in the dedicated about tile instead. */}
                   <div class="contact-welcome" data-focus-message>
                     {aboutCopy.map((t) => <p>{t}</p>)}
+                    <p class="about-contact">{CONTACT_LEAD}<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
                   </div>
                 </div>
               </div>
@@ -249,6 +260,7 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
                 <div class="about-card">
                   <div class="about-body">
                     {aboutCopy.map((t) => <p>{t}</p>)}
+                    <p class="about-contact">{CONTACT_LEAD}<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
                   </div>
                 </div>
               </div>

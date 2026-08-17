@@ -254,6 +254,21 @@ html.view-open { overflow: hidden; }
   color: var(--body-color);
 }
 .about-body p { margin: 0; }
+/* The bio's closing line — a direction rather than a claim, so it's set a step
+   down from the three statements above it, the way the message box's small
+   print is. Sized in `em` so it tracks whichever of the two renderings it's in
+   (about tile on desktop, welcome note on mobile). The address is one long
+   unbreakable token, hence the wrap guard. */
+.about-contact {
+  font-size: 0.78em;
+  line-height: 1.4;
+  opacity: 0.8;
+  overflow-wrap: break-word;
+}
+.about-contact a {
+  color: var(--highlight);
+  text-decoration: underline;
+}
 /* Fixed caption band so the image bottom sits on the shared --cap line that the
    nav boxes and send button also align to. */
 .tile-name {

@@ -627,7 +627,12 @@ function initContactForm(form: HTMLFormElement): void {
   // into the message box (a gentle nudge toward the one thing to do here).
   const message = form.querySelector<HTMLTextAreaElement>('.contact-message');
   form.closest('.contact-card')?.querySelectorAll<HTMLElement>('[data-focus-message]')
-    .forEach((el) => el.addEventListener('click', () => message?.focus()));
+    .forEach((el) => el.addEventListener('click', (e) => {
+      // ...unless it's the mailto link in the bio's closing line — that's a
+      // deliberate choice of the other route, not a stray click on the blurb.
+      if ((e.target as HTMLElement).closest('a')) return;
+      message?.focus();
+    }));
 
   // Show the blue result for a beat, then fade back to the red idle state.
   const finish = (resultText: string, idleText: string): void => {
