@@ -16,8 +16,8 @@ viewport, with no nav or routing.
   *description panel* across the top, with the **Essays** card and a links quad (Instagram,
   LinkedIn, **cv**, and the *animations on/off* toggle) below.
 - **Hovering** a tile shows its blurb in the description panel, which empties again when the
-  pointer leaves. The panel is **pinned** to the screen on desktop, so it still has somewhere
-  to show a blurb once you've scrolled down to the tiles below the fold.
+  pointer leaves. On desktop the panel **sticks to the top of the screen** as you scroll, so it
+  still has somewhere to show a blurb once you've scrolled down to the tiles below the fold.
 - **Clicking a project** fizzles the whole grid with a glitchy radial "corruption" wave and
   reveals the write-up in its place. Every project opens to the **same layout**: its hero image
   lands in the **top-left tile** and the copy wraps around it, with a sticky scrolling-name

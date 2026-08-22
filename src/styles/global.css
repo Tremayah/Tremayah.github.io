@@ -552,14 +552,19 @@ html.view-open { overflow: hidden; }
    text just swaps, and it empties again when the pointer leaves. It fills the
    nav box's whole top row.
 
-   On desktop it's PINNED: site.ts fixes it over the slot it already occupies
-   (.nav-desc-slot, which holds the space in the grid) so it stays put on screen
-   while the page scrolls down to "more works" — those tiles need somewhere to
-   show their blurbs, and this is the only place there is. Fixed rather than
-   sticky because the stage is `overflow: hidden`, which would be sticky's
-   scrollport, and it never scrolls. Left/top/width/height come from the slot's
-   measured box (inline, see initStickyDesc), so at the top of the page nothing
-   moves and there's nothing to see. */
+   On desktop it STICKS TO THE TOP: it scrolls with the page until it reaches
+   the top of the screen and then parks there, so the "more works" tiles below
+   the fold have somewhere to show their blurbs. Fixed rather than sticky
+   because the stage is `overflow: hidden` (which would be sticky's scrollport,
+   and never scrolls) and because a sticky box can't leave its parent's area
+   anyway; .nav-desc-slot holds its place in the grid, and left/width/height
+   come from that slot's measured box (inline, see initStickyDesc).
+
+   Parked, it floats over the tiles it's describing — so it's lifted clear of
+   the rest of the nav cell, which would otherwise scroll over the top of it
+   (the Essays card is `position: relative` and later in the source). 5 keeps it
+   under an open write-up (6) and under the fizzle overlays (4 per tile, 8 for
+   the stage), so it's still covered when a project opens. */
 .tile--nav > .nav-desc-slot,
 .tile--nav > .nav-desc { grid-area: 1 / 1 / 2 / -1; }
 /* The panel leaves the grid flow when pinned, so the row below is placed
@@ -580,7 +585,10 @@ html.view-open { overflow: hidden; }
   cursor: default;
   min-height: 0;
 }
-.nav-desc.is-pinned { position: fixed; }
+.nav-desc.is-pinned {
+  position: fixed;
+  z-index: 5;
+}
 .nav-desc-text {
   font-family: var(--body-font);
   font-size: clamp(0.6rem, 0.95vw, 0.82rem);

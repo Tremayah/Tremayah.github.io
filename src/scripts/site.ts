@@ -242,44 +242,68 @@ function initAnimToggle(): void {
   switches.forEach((s) => s.addEventListener('change', () => apply(s.checked)));
 }
 
-/* ── Pinning the description panel ────────────────────────────────────────
+/* ── Sticking the description panel to the top ────────────────────────────
    The panel is the only place a blurb appears, and half the projects live in
-   the "more works" grid below the fold — so it has to stay on screen as the
-   page scrolls. `position: sticky` can't do it: the stage is `overflow:
-   hidden`, which makes the stage the panel's scrollport, and that never
-   scrolls. So the panel is taken out of the nav grid and fixed over the slot it
-   already occupies (.nav-desc-slot holds the space). It doesn't travel or
-   re-dock — it simply never moves, and the page scrolls under it.
+   the "more works" grid below the fold — so it has to follow you down the page.
+   It rides along in its slot until that slot reaches the top of the screen,
+   then parks there (a grid-pad in, so it keeps the page's margin) while
+   everything else keeps scrolling under it.
+
+   `position: sticky` can't do this twice over: the stage is `overflow: hidden`,
+   which would be the panel's scrollport and never scrolls, and a sticky box is
+   confined to its parent's area anyway — it could never leave the nav cell. So
+   the panel stays in normal flow until the moment it would scroll off, and only
+   then becomes `position: fixed` (.nav-desc-slot holds its place in the grid).
+   Switching at exactly that point means it's genuinely in flow while it travels
+   and genuinely fixed once parked — no per-frame repositioning to lag behind
+   the scroll.
 
    Not on mobile: there's no hover on a touch screen, so a box floating over the
    page would be in the way for nothing. */
 function initStickyDesc(): void {
   const panel = document.querySelector<HTMLElement>('.tile--nav > .nav-desc');
   const slot = document.querySelector<HTMLElement>('.nav-desc-slot');
-  if (!panel || !slot) return;
-  const place = (): void => {
-    if (compact()) {
-      panel.classList.remove('is-pinned');
-      panel.style.cssText = '';
-      return;
-    }
-    // The slot stays in the grid, so it can be measured at any scroll position;
-    // + scrollY converts its viewport box to the page box, which is where the
-    // panel should sit on screen (the stage starts at the top of the document).
+  const grid = document.querySelector<HTMLElement>('.landing-grid');
+  if (!panel || !slot || !grid) return;
+
+  // Where the panel sits in the page, and where it parks. Measured from the
+  // slot, which stays in the grid whether the panel is fixed or not — so this
+  // is valid at any scroll position, and only has to be redone when the layout
+  // itself changes.
+  let home = { top: 0, left: 0, width: 0, height: 0, dock: 0 };
+  let pinned = false;
+
+  const measure = (): void => {
     const r = slot.getBoundingClientRect();
-    panel.classList.add('is-pinned');
-    panel.style.left = `${r.left}px`;
-    panel.style.top = `${r.top + window.scrollY}px`;
-    panel.style.width = `${r.width}px`;
-    panel.style.height = `${r.height}px`;
+    home = {
+      top: r.top + window.scrollY, // page coordinates, so scrolling doesn't move it
+      left: r.left,
+      width: r.width,
+      height: r.height,
+      dock: parseFloat(getComputedStyle(grid).paddingTop) || 0,
+    };
   };
-  place();
-  window.addEventListener('resize', place);
-  // The slot stays in the grid and so tracks every layout change the panel has
-  // to follow — including a page that loads in a hidden or zero-width viewport
-  // and only gets its real size later, which a resize listener alone can miss.
-  // (place() only ever touches the panel, so this can't re-trigger itself.)
-  new ResizeObserver(place).observe(slot);
+  const wantsPin = (): boolean => !compact() && window.scrollY > home.top - home.dock;
+  const apply = (on: boolean): void => {
+    pinned = on;
+    panel.classList.toggle('is-pinned', on);
+    panel.style.cssText = on
+      ? `left:${home.left}px;top:${home.dock}px;width:${home.width}px;height:${home.height}px;`
+      : '';
+  };
+
+  const refresh = (): void => { measure(); apply(wantsPin()); };
+  refresh();
+  window.addEventListener('scroll', () => {
+    const on = wantsPin();
+    if (on !== pinned) apply(on); // only writes at the two crossings, not per frame
+  }, { passive: true });
+  window.addEventListener('resize', refresh);
+  // The slot tracks every layout change the panel has to follow — including a
+  // page that loads in a hidden or zero-width viewport and only gets its real
+  // size later, which a resize listener alone can miss. (refresh() only ever
+  // touches the panel, so this can't re-trigger itself.)
+  new ResizeObserver(refresh).observe(slot);
 }
 
 /* ── Open / close state ───────────────────────────────────────────────────

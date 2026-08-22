@@ -48,10 +48,13 @@ The files that matter:
 - **Hover** anything carrying a `data-desc` → its blurb shows in the nav description panel (no
   typing animation), and the panel empties again when the pointer leaves. A blurb may carry a
   blank line (`\n\n`) to break itself in two; the animations toggle's blurb names its own
-  current state. The panel is **pinned** on desktop — `initStickyDesc` fixes it over the slot
-  it already occupies (`.nav-desc-slot` holds the space in the grid) so it stays on screen for
-  the tiles below the fold. Not `position: sticky`: the stage is `overflow: hidden`, which
-  would be its scrollport and never scrolls.
+  current state. On desktop the panel **sticks to the top** — `initStickyDesc` leaves it in
+  flow until it would scroll off, then fixes it a grid-pad from the top (`.nav-desc-slot` holds
+  its place in the grid), so the tiles below the fold have somewhere to show their blurbs.
+  Not `position: sticky`: the stage is `overflow: hidden`, which would be its scrollport and
+  never scrolls, and a sticky box can't leave its parent's area anyway. Parked, it carries
+  `z-index: 5` — above the rest of the nav cell (which would otherwise scroll over it), below
+  an open write-up (6) and the fizzle overlays.
 - **Opening a project** (`openView`): the *whole* stage fizzles (radial wave) and the project's
   **hero image appears in the TOP-LEFT**, with the copy wrapping around it — the same layout
   for every project, regardless of which tile was clicked. The opened write-up carries a sticky
