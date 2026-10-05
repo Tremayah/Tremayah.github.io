@@ -33,7 +33,7 @@ The files that matter:
 - `src/scripts/site.ts` — all behaviour (see the model below); `pushAway`/`pathFor` keep the
   URL (`/` ⇄ `/p/<slug>/`) and `document.title` in step; cold deep-links open instantly.
 - `src/styles/global.css` — all styling; design tokens in `:root` (`--grid-gap`, `--grid-pad`,
-  `--cap` caption-band height, `--marquee-h`, colours).
+  `--cap` caption-band height, `--stage-h` stage height, `--marquee-h`, colours).
 
 ## Behaviour model (current — README goes deeper)
 
@@ -54,7 +54,10 @@ The files that matter:
   Not `position: sticky`: the stage is `overflow: hidden`, which would be its scrollport and
   never scrolls, and a sticky box can't leave its parent's area anyway. Parked, it carries
   `z-index: 5` — above the rest of the nav cell (which would otherwise scroll over it), below
-  an open write-up (6) and the fizzle overlays.
+  an open write-up (6) and the fizzle overlays. On **touch screens** (`@media (hover: none)`)
+  nothing can hover, so the panel is hidden outright and the Essays card + links quad take the
+  whole nav cell — side by side in a wide cell, stacked in a portrait one (a container query on
+  the cell, above the mobile breakpoint only).
 - **Opening a project** (`openView`): the *whole* stage fizzles (radial wave) and the project's
   **hero image appears in the TOP-LEFT**, with the copy wrapping around it — the same layout
   for every project, regardless of which tile was clicked. The opened write-up carries a sticky
@@ -64,6 +67,24 @@ The files that matter:
 - **more works** = the homepage scrolls; scrolling down reveals extra `.more-grid` tiles below.
   No buttons either end — the page just scrolls, and the pinned description panel follows.
   Topography Table (the personal project) lives here alongside the university work.
+- **Essays** (`/p/essays/`) is a grid of tiles (title · word count · month written), built in
+  `Landing.astro` from `src/content/essays/*.md` via `src/essays.ts` — newest first by the
+  `written: "YYYY-MM"` frontmatter (`order` breaks same-month ties); word count is computed
+  from the body, excluding headings, the italic byline/AI note and everything from an
+  `AI Use`/`References` heading on. Each essay is its own write-up at `/p/essays/<slug>/`
+  (`src/pages/p/essays/[essay].astro`) with the home bar plus a sticky `← essays` back button.
+  It's the one place history goes two deep (home → Essays → essay, state `parent: 'essays'`):
+  the back button / Escape / browser Back step up one level (`swapView`), the home bar jumps
+  both (`history.go(-2)`). Essay pages and the Essays page carry `data-no-click-close`, so a
+  stray click on the text doesn't close them. Essay text is Raphael's own, verbatim from his
+  Google Docs — don't paraphrase or summarise it on the page. The plain-text export doesn't
+  cover `src/content/essays/` (it only reads `projects/`).
+- **Short viewports.** The stage is `--stage-h` = `max(100dvh, 46rem)`, not a bare `100dvh`:
+  below ~736px the rows are shorter than the contact card and about copy need and both clip
+  (an ordinary ~660px laptop window was already losing the message box). Short screens get a
+  stage a little taller than the window and a little scrolling instead. `.more-grid` rows read
+  the same token, and an open `.writeup` is pinned to `100dvh` so it can't run past the fold
+  while page scroll is locked.
 - **Robustness:** one `busy` lock serialises every transition (open/close) so spam-clicking
   can't overlap waves. Animations honour `prefers-reduced-motion` and the toggle
   (`html.reduce-motion` → instant, no wave). On narrow screens (`≤680px`) the grid becomes a

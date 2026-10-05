@@ -1,0 +1,29 @@
+---
+/*  /p/essays/<slug>/ — a real, pre-rendered page per essay.
+
+    Same idea as /p/[slug]: renders the whole single-page app with openId set to
+    the essay's view id (`essays/<slug>`), so site.ts boots straight into the
+    essay — with the Essays page and the home grid synthesised beneath it in
+    history, so Back steps essay → Essays → home. */
+import LandingLayout from '../../../layouts/LandingLayout.astro';
+import Landing from '../../../components/Landing.astro';
+import { getEssays } from '../../../essays';
+
+export async function getStaticPaths() {
+  const essays = await getEssays();
+  return essays.map((e) => ({
+    params: { essay: e.slug },
+    props: {
+      id: e.id,
+      title: `${e.title} — Raphael Murray-Browne`,
+      description: e.lead,
+    },
+  }));
+}
+
+const { id, title, description } = Astro.props as { id: string; title: string; description: string };
+---
+
+<LandingLayout title={title} description={description}>
+  <Landing openId={id} />
+</LandingLayout>

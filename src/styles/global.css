@@ -46,6 +46,15 @@
   --grid-gap: clamp(0.5rem, 1.5vw, 1.25rem);
   --grid-pad: clamp(0.75rem, 2vw, 1.5rem);
 
+  /* How tall the 3x2 stage is. Normally the viewport — the grid is meant to
+     fill the screen exactly — but never less than 46rem, because below that the
+     rows are shorter than the contact card and the about copy need and both get
+     clipped (a laptop window ~660px tall was already losing the message box).
+     Short screens get a stage slightly taller than the window and a little
+     scrolling instead, which keeps the composition intact. The "more works"
+     rows read the same token so they stay the same height as a landing row. */
+  --stage-h: max(100dvh, 46rem);
+
   /* Caption band: the fixed strip under each photo where the title sits. Shared
      so the nav boxes and the send button align to the same image-bottom line as
      the project captions. */
@@ -85,7 +94,7 @@ html { overflow-x: hidden; }
 html.view-open { overflow: hidden; }
 .stage {
   position: relative;
-  height: 100dvh;
+  height: var(--stage-h);
   width: 100%;
   overflow: hidden;
   /* Own stacking context so the open-state layers order predictably:
@@ -123,7 +132,7 @@ html.view-open { overflow: hidden; }
   grid-template-columns: repeat(3, 1fr);
   gap: var(--grid-gap);
   padding: 0 var(--grid-pad) var(--grid-pad);
-  grid-auto-rows: calc((100dvh - 2 * var(--grid-pad) - var(--grid-gap)) / 2);
+  grid-auto-rows: calc((var(--stage-h) - 2 * var(--grid-pad) - var(--grid-gap)) / 2);
 }
 .more-tile {
   position: relative;
@@ -589,6 +598,36 @@ html.view-open { overflow: hidden; }
   position: fixed;
   z-index: 5;
 }
+/* Touch screens (phones, tablets): nothing can hover, so the panel could never
+   fill — it would just be an empty white box holding a quarter of the nav cell.
+   Drop it there and give the Essays card and the links quad the whole cell.
+   `hover: none` asks the real question (can the primary input hover?) rather
+   than inferring it from the width, so a small laptop window keeps its panel
+   and an iPad doesn't get one it can't use. */
+@media (hover: none) {
+  .tile--nav > .nav-desc,
+  .tile--nav > .nav-desc-slot { display: none; }
+  .tile--nav { grid-template-rows: 1fr; }
+  .nav-essays,
+  .nav-quad { grid-row: 1; }
+}
+/* Side by side suits a wide cell — a phone's nav tile, or a landscape screen.
+   In a PORTRAIT cell (a tablet held upright) it makes two tall slivers instead,
+   so stack them there: Essays over the links. What decides is the shape of the
+   cell, not of the window, so the cell asks the question itself. Only above the
+   mobile breakpoint: below it the tiles are in normal flow and give the cell its
+   height, which `container-type: size` would contain away to nothing. */
+@media (hover: none) and (min-width: 681px) {
+  .cell:has(.tile--nav) { container-type: size; }
+  @container (max-aspect-ratio: 1 / 1) {
+    .tile--nav {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+    .nav-quad { grid-row: 2; }
+  }
+}
+
 .nav-desc-text {
   font-family: var(--body-font);
   font-size: clamp(0.6rem, 0.95vw, 0.82rem);
@@ -862,6 +901,12 @@ html.reduce-motion *::after {
   overflow-y: auto;
   background: var(--bg);
 }
+/* On a short screen the stage is taller than the window (see --stage-h) and page
+   scroll is locked while a view is open — so pin the write-up to the window's
+   height rather than the stage's, or its last stretch would sit below the fold
+   with no way to scroll to it. (Over-constrained with inset: 0, so `bottom` is
+   the declaration that gets dropped.) */
+.writeup { height: 100dvh; }
 /* !important so [hidden] always beats the display:block above — a closed
    project must never stay visually stuck covering the stage. */
 .writeup[hidden] { display: none !important; }
@@ -1014,6 +1059,122 @@ html.reduce-motion *::after {
 .project-body a    { color: var(--accent); text-decoration: underline; }
 .project-body strong { font-weight: 700; }
 .project-body em   { font-style: italic; }
+
+/* ── Essays page: a grid of essay tiles ─────────────────────────────────────
+   Same treatment as the homepage Essays card (.nav-essays): a light card with a
+   red rule, title large in the display face, filling solid red on hover. Title
+   top, word count + month written along the bottom. Tiles grow to fit a long
+   title rather than clip it; the grid reflows from three across down to one. */
+.essay-grid {
+  list-style: none;
+  margin: var(--grid-gap) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  gap: var(--grid-gap);
+}
+.essay-grid > li { display: flex; }
+.essay-tile {
+  container-type: inline-size;
+  flex: 1;
+  min-width: 0;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(0.75rem, 6cqi, 1.25rem);
+  margin: 0;
+  border: none;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1.5px var(--body-color);
+  color: var(--body-color);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.essay-tile:hover,
+.essay-tile:focus-visible {
+  background: var(--body-color);
+  color: #fff;
+  outline: none;
+}
+.essay-tile-title {
+  font-family: 'lores-9-plus-narrow', var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(1.1rem, 9cqi, 2rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+}
+/* One column on a phone: a full-width 4:3 tile would be mostly empty, so let
+   it hug its title instead. */
+@media (max-width: 680px) {
+  .essay-tile { aspect-ratio: auto; min-height: 8.5rem; }
+}
+.essay-tile-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.65rem, 4.5cqi, 0.9rem);
+  text-transform: lowercase;
+}
+
+/* ── An essay's own page ────────────────────────────────────────────────────
+   The back button is pinned top-left just under the home bar while the essay
+   scrolls beneath it (the wrapper is click-through; only the button catches
+   clicks). Copy is held to a comfortable reading measure. */
+.essay-back-wrap {
+  position: sticky;
+  top: var(--marquee-h);
+  z-index: 2;
+  padding: var(--grid-pad) var(--grid-pad) 0;
+  pointer-events: none;
+}
+.essay-back {
+  pointer-events: auto;
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  text-transform: lowercase;
+  padding: 0.45em 0.8em;
+  border: none;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1.5px var(--body-color);
+  color: var(--body-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.essay-back:hover,
+.essay-back:focus-visible {
+  background: var(--body-color);
+  color: #fff;
+  outline: none;
+}
+.writeup--essay .writeup-inner { padding-top: calc(var(--grid-pad) * 0.75); }
+.writeup--essay .writeup-title,
+.writeup--essay .essay-meta,
+.essay-body { max-width: 75ch; }
+.essay-meta {
+  font-family: var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  text-transform: lowercase;
+  color: var(--fg);
+  margin: 0 0 1.4em;
+}
+.essay-body blockquote {
+  margin: 0 0 0.85em;
+  padding-left: 1em;
+  border-left: 2px solid var(--title-color);
+}
+.essay-body p { overflow-wrap: anywhere; }
+/* Reference lists carry long unbreakable URLs — justified, they'd stretch the
+   words around them into big gaps, so set them ragged-right. */
+.essay-body li { text-align: left; overflow-wrap: anywhere; }
 .project-body img  { max-width: 100%; height: auto; display: block; margin: 1.5rem 0; cursor: zoom-in; }
 
 /* ── CV page ───────────────────────────────────────────────────────────────
@@ -1498,5 +1659,12 @@ html.reduce-motion .carousel-track { transition: none; }
   /* Hero becomes a full-width lead image (no float) on a phone. */
   .wrap-hero { float: none; width: 100% !important; height: auto !important; margin: 0 0 1rem 0; }
   .wrap-hero-img { height: auto; aspect-ratio: 3 / 2; }
+}
+
+/* The phone-sized nav cell was two rows tall for the panel + the row below it.
+   With no panel (see the hover query above) one row is all it needs, which also
+   leaves the Essays card and the links square rather than squat. */
+@media (max-width: 680px) and (hover: none) {
+  .tile--nav { height: 46vw; }
 }
 

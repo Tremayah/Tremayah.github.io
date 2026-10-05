@@ -258,8 +258,9 @@ function initAnimToggle(): void {
    and genuinely fixed once parked — no per-frame repositioning to lag behind
    the scroll.
 
-   Not on mobile: there's no hover on a touch screen, so a box floating over the
-   page would be in the way for nothing. */
+   Not on mobile, and not on any touch screen: there's no hover there, so the
+   panel is hidden outright (see the `hover: none` query in global.css) and a
+   box floating over the page would be in the way for nothing. */
 function initStickyDesc(): void {
   const panel = document.querySelector<HTMLElement>('.tile--nav > .nav-desc');
   const slot = document.querySelector<HTMLElement>('.nav-desc-slot');
@@ -283,7 +284,9 @@ function initStickyDesc(): void {
       dock: parseFloat(getComputedStyle(grid).paddingTop) || 0,
     };
   };
-  const wantsPin = (): boolean => !compact() && window.scrollY > home.top - home.dock;
+  // A zero-sized slot means the panel is hidden (touch screens) — nothing to pin.
+  const wantsPin = (): boolean =>
+    home.width > 0 && !compact() && window.scrollY > home.top - home.dock;
   const apply = (on: boolean): void => {
     pinned = on;
     panel.classList.toggle('is-pinned', on);
@@ -366,7 +369,10 @@ function layoutProjectHero(writeup: HTMLElement, coverSrc: string | null): void 
    view button back) don't animate directly — they call history.back(), so the
    popstate handler runs the one home transition. That keeps history in sync and
    makes "go home" look identical however it's triggered. */
-type AwayState = { home: false; view: 'project' | 'cv'; id?: string };
+/* The one exception to "at most one entry": an essay opened from the Essays page
+   pushes a SECOND entry (carrying `parent: 'essays'`), so Back — and the essay's
+   own back button — steps essay → Essays, and the home bar jumps both at once. */
+type AwayState = { home: false; view: 'project' | 'cv'; id?: string; parent?: string };
 const atHome = (): boolean => !(history.state && history.state.home === false);
 let navigatingHome = false; // guards against double history.back() on rapid clicks
 
@@ -396,12 +402,27 @@ function goHomeViaHistory(): void {
   if (busy || navigatingHome) return;
   if (atHome()) { fizzleHome(); return; } // already at base (shouldn't happen) — just animate
   navigatingHome = true;
+  // An essay sits two entries above home (home → Essays → essay): skip both.
+  if ((history.state as AwayState | null)?.parent) history.go(-2);
+  else history.back();
+}
+
+/* An essay's back button (and Escape on an essay): one step back, to the
+   Essays page — popstate then swaps the view (swapView). */
+function goBackViaHistory(): void {
+  if (busy || navigatingHome) return;
+  navigatingHome = true;
   history.back();
 }
 
 /* Forward button: re-open the away view recorded in the entry. */
 function restoreView(state: AwayState): void {
   if (busy || !stage) return;
+  // Already showing another view (Essays ⇄ an essay): swap in place, no home trip.
+  if (openId) {
+    if (state.view === 'project' && state.id && state.id !== openId) swapView(state.id, null);
+    return;
+  }
   const origin: Point = { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
   if (state.view === 'cv') openView('cv', origin, null);
   else if (state.view === 'project' && state.id) {
@@ -599,6 +620,59 @@ function openProject(tile: HTMLElement, id: string): Promise<void> {
   pushAway({ view: 'project', id });
   return openView(id, originOf(tile), cover);
 }
+/* Swap one open view for another without going home — the Essays page ⇄ one of
+   its essays. With a click origin (a tile) the new page ripples in radially over
+   the old one, like opening a project; without one (Back / Forward) it's the
+   uniform static wash, like going home. */
+async function swapView(id: string, origin: Point | null): Promise<void> {
+  if (!stage || busy || !openId || openId === id) return;
+  const from = stage.querySelector<HTMLElement>(`.writeup[data-for="${openId}"]`);
+  const to = stage.querySelector<HTMLElement>(`.writeup[data-for="${id}"]`);
+  if (!to) return;
+  busy = true;
+  try {
+    const show = (): void => {
+      to.hidden = false;
+      to.scrollTop = 0;
+      initCarousels(to);
+      layoutProjectHero(to, null);
+      openId = id;
+      setDocTitle(id);
+    };
+    const hideFrom = (): void => { if (from) { from.hidden = true; clearMask(from); } };
+
+    if (reduced() || compact()) { show(); hideFrom(); return; }
+
+    stage.classList.add('animating');
+    if (origin) {
+      to.style.zIndex = '7'; // above the page it's replacing, below the static (8)
+      setMask(to, origin, 0, false);
+      show();
+      await Promise.all([runStageWave(origin), animateMask(to, origin, maxDistFrom(origin), false)]);
+      clearMask(to);
+      to.style.zIndex = '';
+      hideFrom();
+    } else {
+      await pixelate(stage, true);
+      hideFrom();
+      show();
+      await pixelate(stage, false);
+    }
+  } finally {
+    stage.classList.remove('animating');
+    busy = false;
+  }
+}
+
+/* An essay tile on the Essays page: push the essay's own entry (above the
+   Essays one) and ripple the essay in from the tile. */
+function openEssay(tile: HTMLElement, id: string): void {
+  if (!openId || busy || !stage) return;
+  const state: AwayState = { home: false, view: 'project', id, parent: openId };
+  history.pushState(state, '', pathFor(state));
+  swapView(id, originOf(tile));
+}
+
 /* CV button: a full-page CV (no hero). The write-up's home bar is the way out. */
 function openCV(origin: Point): Promise<void> {
   if (openId || busy || !stage) return Promise.resolve();
@@ -722,9 +796,15 @@ function onStageClick(e: MouseEvent): void {
   if (openId) {
     if (lightboxOpen) return;
     if (target.closest('[data-home]')) { goHomeViaHistory(); return; }
+    if (target.closest('[data-back]')) { goBackViaHistory(); return; }
+    const essayTile = target.closest<HTMLElement>('[data-open-essay]');
+    if (essayTile?.dataset.openEssay) { openEssay(essayTile, essayTile.dataset.openEssay); return; }
     if (target.closest('a[href], .carousel-btn, .carousel-counter')) return;
     const img = target.closest('.project-body img') as HTMLImageElement | null;
     if (img) { openLightbox(img); return; }
+    // Reading pages (the Essays page and each essay) don't close on a stray
+    // click — only their home bar / back button leave them.
+    if (target.closest('[data-no-click-close]')) return;
     goHomeViaHistory();
     return;
   }
@@ -759,7 +839,12 @@ function init(): void {
 
   stage.addEventListener('click', onStageClick);
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { if (lightboxOpen) closeLightbox(); else if (openId) goHomeViaHistory(); return; }
+    if (e.key === 'Escape') {
+      if (lightboxOpen) closeLightbox();
+      else if ((history.state as AwayState | null)?.parent) goBackViaHistory(); // essay → Essays
+      else if (openId) goHomeViaHistory();
+      return;
+    }
     // Keyboard-activate the writeup home bar (role=button).
     if ((e.key === 'Enter' || e.key === ' ') && (e.target as Element)?.closest?.('[data-home]')) {
       e.preventDefault();
@@ -776,7 +861,10 @@ function init(): void {
     const path = location.pathname + location.search;
     const isCV = openInitial === 'cv';
     history.replaceState({ home: true }, '', '/');
-    history.pushState({ home: false, view: isCV ? 'cv' : 'project', id: isCV ? undefined : openInitial }, '', path);
+    // An essay (`essays/<slug>`): put its parent page between home and it.
+    const parent = openInitial.includes('/') ? openInitial.split('/')[0] : undefined;
+    if (parent) history.pushState({ home: false, view: 'project', id: parent }, '', `/p/${parent}/`);
+    history.pushState({ home: false, view: isCV ? 'cv' : 'project', id: isCV ? undefined : openInitial, parent }, '', path);
   } else {
     // Booting onto the home grid: stamp this entry as the home base even if a
     // stale away state (e.g. an older build's removed view) was persisted on it.

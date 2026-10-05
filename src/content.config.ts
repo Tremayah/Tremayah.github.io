@@ -24,4 +24,18 @@ const projects = defineCollection({
   }),
 });
 
-export const collections = { projects };
+// Essays — one file per essay, shown as tiles on the Essays page and opened
+// on their own page at /p/essays/<slug>/. `written` is the month the essay was
+// written ("YYYY-MM"); tiles sort newest first by it. Word count is computed
+// from the body at build time (see src/essays.ts).
+const essays = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/essays' }),
+  schema: z.object({
+    title: z.string(),
+    written: z.string().regex(/^\d{4}-\d{2}$/),
+    // Tie-breaker for essays written in the same month: lower comes first.
+    order: z.number().optional().default(0),
+  }),
+});
+
+export const collections = { projects, essays };

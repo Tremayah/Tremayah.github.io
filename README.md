@@ -18,6 +18,8 @@ viewport, with no nav or routing.
 - **Hovering** a tile shows its blurb in the description panel, which empties again when the
   pointer leaves. On desktop the panel **sticks to the top of the screen** as you scroll, so it
   still has somewhere to show a blurb once you've scrolled down to the tiles below the fold.
+  On touch screens, where nothing can hover, it's hidden and the Essays card and links take the
+  whole cell.
 - **Clicking a project** fizzles the whole grid with a glitchy radial "corruption" wave and
   reveals the write-up in its place. Every project opens to the **same layout**: its hero image
   lands in the **top-left tile** and the copy wraps around it, with a sticky scrolling-name
@@ -28,7 +30,9 @@ viewport, with no nav or routing.
   one grid, told apart by the caption tags.
 - An **animations** toggle (the links quad's fourth tile) honours `prefers-reduced-motion` and, when
   off, makes every transition instant. On narrow screens (≤ 680px) the grid becomes a
-  single-column scroller and an opened project is a full-screen overlay.
+  single-column scroller and an opened project is a full-screen overlay. On **short** screens the
+  grid keeps a workable height (`--stage-h`, never under 46rem) and the page scrolls a little
+  rather than squashing the contact card and the bio out of their cells.
 
 ### How the pieces fit together
 

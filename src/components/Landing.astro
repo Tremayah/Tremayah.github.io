@@ -8,6 +8,7 @@
     instantly, no fizzle. On "/" it's unset and the site opens on the home grid. */
 import { getCollection, render } from 'astro:content';
 import { OPENABLE_IDS } from '../openable';
+import { getEssays } from '../essays';
 
 interface Props {
   openId?: string | null;
@@ -30,6 +31,13 @@ const writeups = (
     })
   )
 ).filter((w): w is NonNullable<typeof w> => w !== null);
+
+// Essays: the Essays write-up is a grid of tiles (title, word count, month
+// written), one per essay; each essay is its own embedded write-up, opened from
+// its tile at /p/essays/<slug>/ with a back button to the Essays page.
+const essayList = await Promise.all(
+  (await getEssays()).map(async (e) => ({ ...e, Content: (await render(e.entry)).Content }))
+);
 
 const data = (id: string) => {
   const e = get(id);
@@ -313,8 +321,11 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
   <div class="writeups">
     {writeups.map((w) => {
       const Body = w.Content;
+      const isEssays = w.id === 'essays';
       return (
-        <article class="writeup" data-for={w.id} hidden>
+        // The Essays page is a reading page: clicks on it don't close it (the
+        // home bar is the way out) — see data-no-click-close in site.ts.
+        <article class="writeup" data-for={w.id} data-no-click-close={isEssays ? '' : undefined} hidden>
           <div class="writeup-bar" data-home role="button" tabindex="0" aria-label="Back to home">
             <span class="writeup-bar-track" aria-hidden="true">
               {Array.from({ length: 14 }).map(() => (
@@ -326,7 +337,49 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
             {isUC(w.id) && <p class="uc-notice">under construction — this write-up is still being finished</p>}
             <h2 class="writeup-title">{w.entry.data.title}</h2>
             <p class="project-desc">{w.entry.data.description}</p>
-            <div class="project-body"><Body /></div>
+            {isEssays ? (
+              <ul class="essay-grid">
+                {essayList.map((e) => (
+                  <li>
+                    <button class="essay-tile" type="button" data-open-essay={e.id}>
+                      <span class="essay-tile-title">{e.title}</span>
+                      <span class="essay-tile-meta">
+                        <span>{e.words.toLocaleString('en-GB')} words</span>
+                        <span>{e.date}</span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div class="project-body"><Body /></div>
+            )}
+          </div>
+        </article>
+      );
+    })}
+
+    {/* One write-up per essay, opened from its tile on the Essays page. Same
+        home bar as every page, plus a back button pinned top-left that returns
+        to the Essays page. */}
+    {essayList.map((e) => {
+      const Body = e.Content;
+      return (
+        <article class="writeup writeup--essay" data-for={e.id} data-no-click-close hidden>
+          <div class="writeup-bar" data-home role="button" tabindex="0" aria-label="Back to home">
+            <span class="writeup-bar-track" aria-hidden="true">
+              {Array.from({ length: 14 }).map(() => (
+                <span class="writeup-bar-item">Raphael Murray-Browne</span>
+              ))}
+            </span>
+          </div>
+          <div class="essay-back-wrap">
+            <button class="essay-back" type="button" data-back>← essays</button>
+          </div>
+          <div class="writeup-inner">
+            <h2 class="writeup-title">{e.title}</h2>
+            <p class="essay-meta">{e.date} · {e.words.toLocaleString('en-GB')} words</p>
+            <div class="project-body essay-body"><Body /></div>
           </div>
         </article>
       );
