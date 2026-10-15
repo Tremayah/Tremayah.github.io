@@ -1668,3 +1668,30 @@ html.reduce-motion .carousel-track { transition: none; }
   .tile--nav { height: 46vw; }
 }
 
+
+/* ── Page background texture ─────────────────────────────────────────────────
+   scripts/background.ts paints a drifting, dithered pixel-cloud texture onto
+   every surface that shows --bg (it adds .bg-surface to them, and .bg-texture
+   to <html>). --tex / --tex-size / --tex-top describe the drawn stretch of
+   page and live on <html>; --tx / --ty are each surface's own offset on its
+   page, so the texture lines up across surfaces and scrolls with the content.
+   Without the script (or WebGL) none of this applies and --bg stays flat.
+   The !importants are deliberate: this layer has to sit over every surface's
+   own `background: var(--bg)` shorthand, whatever its specificity. */
+@property --tx { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --ty { syntax: '<number>'; inherits: false; initial-value: 0; }
+.bg-surface {
+  background-image: var(--tex, none) !important;
+  background-size: var(--tex-size, auto) !important;
+  background-repeat: no-repeat !important;
+  background-position: calc(var(--tx) * -1px) calc((var(--tex-top, 0) - var(--ty)) * 1px) !important;
+  image-rendering: pixelated; /* crisp 4px blocks — reset for real images below */
+}
+/* A write-up scrolls inside itself: `local` makes its own background travel
+   with its content (offset 0 — it *is* the page). */
+.writeup.bg-surface { background-attachment: local !important; }
+.bg-surface :is(img, video, canvas, iframe) { image-rendering: auto; }
+/* Essay tiles still fill red on hover / focus. */
+.essay-tile.bg-surface:is(:hover, :focus-visible) { background-image: none !important; }
+/* The text boxes are see-through onto the contact card — keep them flat. */
+.bg-texture :is(.contact-email, .contact-message) { background-color: var(--bg); }
