@@ -1,0 +1,13 @@
+---
+/*  404 — what GitHub Pages serves (with a 404 status) for any address that
+    doesn't exist. No error screen: a mistyped or stale link just lands on the
+    home grid, the same app as "/". The 404 status keeps it out of search
+    results; site.ts boots it as home, and opening/closing projects from here
+    behaves exactly as it does on "/". */
+import LandingLayout from '../layouts/LandingLayout.astro';
+import Landing from '../components/Landing.astro';
+---
+
+<LandingLayout title="Raphael Murray-Browne">
+  <Landing />
+</LandingLayout>

@@ -7,13 +7,15 @@ Raphael Murray-Browne's portfolio. Astro static site → GitHub Pages.
 - **The site we build here is LIVE at <https://tremayah.com/>.** That's the custom domain (set
   in `public/CNAME`, DNS pointed at GitHub Pages, HTTPS enforced). `tremayah.github.io` still
   resolves and redirects to it.
-- **`raphaelmurraybrowne.com` is the OLD WordPress site.** Raphael has jumped ship to the new
-  site in this repo. The *only* reason to ever touch `raphaelmurraybrowne.com` is to scavenge
-  **images or text** for projects (pages like `/keycaps/` still serve real write-up copy).
-  Nothing in this repo references it any more — don't reintroduce hot-links to it, and don't
-  treat it as the live site or something to keep in sync.
+- **`raphaelmurraybrowne.com` was the OLD WordPress site — it's gone (taken down Oct 2026).**
+  There's nothing left to scavenge there; Raphael's own words now come from his Google Docs and
+  the Plain Text mirror. Nothing in this repo references it — don't reintroduce links to it.
 
-Those are the only two addresses that exist. Don't invent others.
+tremayah.com is the only address that exists. Don't invent others.
+
+The site icons (`public/favicon.*`, `apple-touch-icon.png`, `icon-192/512.png`) are the bold
+Lo-Res 9 Plus Narrow "T" from the title, redrawn as its 6×6 pixel grid in `--title-color`
+(a placeholder until Raphael designs a proper logo).
 
 ## What this is
 

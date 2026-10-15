@@ -54,12 +54,16 @@ const identity = Astro.url.pathname === '/' && {
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#fafafa" />
+  {/* Light only: stops browsers' forced dark mode (Chrome on Android, Samsung
+      Internet) recolouring the reds/oranges with their own formula. */}
+  <meta name="color-scheme" content="only light" />
   <meta name="description" content={description} />
+  <meta name="author" content="Raphael Murray-Browne" />
   <title>{title}</title>
   <link rel="canonical" href={canonical} />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -71,6 +75,7 @@ const identity = Astro.url.pathname === '/' && {
       WhatsApp, Slack, etc.). */}
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Raphael Murray-Browne" />
+  <meta property="og:locale" content="en_GB" />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
   <meta property="og:url" content={canonical} />
