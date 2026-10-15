@@ -25,7 +25,9 @@ const ogImage = new URL(image, Astro.site);
 // Structured data for search engines (never rendered): whose site this is, so
 // Google can tie "Raphael Murray-Browne", "Tremayah" and tremayah.com together
 // in results and AI summaries. Home page only — that's where Google reads the
-// site's own name from. sameAs = the profiles linked from the links quad.
+// site's own name from. sameAs = the profiles linked from the links quad;
+// jobTitle/affiliation mirror the contact card's info list (the year is left
+// out so it can't go stale).
 const home = new URL('/', Astro.site).href;
 const identity = Astro.url.pathname === '/' && {
   '@context': 'https://schema.org',
@@ -43,7 +45,13 @@ const identity = Astro.url.pathname === '/' && {
       '@id': `${home}#person`,
       name: 'Raphael Murray-Browne',
       url: home,
-      jobTitle: 'Product designer',
+      jobTitle: 'Product Design student',
+      knowsAbout: 'Product design',
+      affiliation: {
+        '@type': 'CollegeOrUniversity',
+        name: 'University of Plymouth',
+        address: { '@type': 'PostalAddress', addressLocality: 'Plymouth', addressCountry: 'GB' },
+      },
       sameAs: [
         'https://www.instagram.com/rmb_is_designing/',
         'https://www.linkedin.com/in/rmbdesign',
