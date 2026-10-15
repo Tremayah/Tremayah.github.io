@@ -21,6 +21,36 @@ const {
 // Absolute URLs for link-preview cards (Astro.site = https://tremayah.com).
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const ogImage = new URL(image, Astro.site);
+
+// Structured data for search engines (never rendered): whose site this is, so
+// Google can tie "Raphael Murray-Browne", "Tremayah" and tremayah.com together
+// in results and AI summaries. Home page only — that's where Google reads the
+// site's own name from. sameAs = the profiles linked from the links quad.
+const home = new URL('/', Astro.site).href;
+const identity = Astro.url.pathname === '/' && {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${home}#website`,
+      url: home,
+      name: 'Raphael Murray-Browne',
+      alternateName: 'Tremayah',
+      publisher: { '@id': `${home}#person` },
+    },
+    {
+      '@type': 'Person',
+      '@id': `${home}#person`,
+      name: 'Raphael Murray-Browne',
+      url: home,
+      jobTitle: 'Product designer',
+      sameAs: [
+        'https://www.instagram.com/rmb_is_designing/',
+        'https://www.linkedin.com/in/rmbdesign',
+      ],
+    },
+  ],
+};
 ---
 
 <!doctype html>
@@ -49,6 +79,7 @@ const ogImage = new URL(image, Astro.site);
   <meta name="twitter:title" content={title} />
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image" content={ogImage} />
+  {identity && <script is:inline type="application/ld+json" set:html={JSON.stringify(identity)} />}
   <!-- Warm the font host's connection (once for the CSS, once CORS for the
        font files themselves) before the render-blocking kit CSS is requested. -->
   <link rel="preconnect" href="https://use.typekit.net" />
