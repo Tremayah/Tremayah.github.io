@@ -1691,7 +1691,8 @@ html.reduce-motion .carousel-track { transition: none; }
    with its content (offset 0 — it *is* the page). */
 .writeup.bg-surface { background-attachment: local !important; }
 .bg-surface :is(img, video, canvas, iframe) { image-rendering: auto; }
-/* Essay tiles still fill red on hover / focus. */
-.essay-tile.bg-surface:is(:hover, :focus-visible) { background-image: none !important; }
-/* The text boxes are see-through onto the contact card — keep them flat. */
-.bg-texture :is(.contact-email, .contact-message) { background-color: var(--bg); }
+/* Buttons that fill red on hover / focus, and the animations toggle while it's
+   on (red), drop the texture for their solid fill. (The text boxes need no rule:
+   they're see-through, so the contact card's texture shows behind them.) */
+:is(.essay-tile, .nav-essays, .essay-back).bg-surface:is(:hover, :focus-visible),
+.nav-mini--anim.bg-surface:has(.anim-switch:checked) { background-image: none !important; }

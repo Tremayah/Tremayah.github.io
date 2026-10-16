@@ -12,9 +12,10 @@
    natively with the content. (No `background-attachment: fixed` — iOS ignores
    it.)
 
-   Buttons and text boxes stay flat off-white. With animations off (the toggle,
-   or prefers-reduced-motion) the texture holds still. Without WebGL the site
-   simply keeps its flat background.
+   Buttons that fill red on hover keep their fill (CSS drops the texture
+   then); the see-through text boxes show the card's texture behind them. With
+   animations off (the toggle, or prefers-reduced-motion) the texture holds
+   still. Without WebGL the site simply keeps its flat background.
    ========================================================================== */
 
 const PX = 4; // block size, CSS px
@@ -23,11 +24,13 @@ const SPEED = 0.2; // drift speed (1 = the lab's default)
 const UNIT = 640; // CSS px per noise unit — the cloud size picked in the lab
 const MARGIN = 0.75; // screens of texture drawn beyond each edge of the view
 
-// Everything that showed the flat off-white, minus buttons and text boxes. The
-// essay tiles are buttons, but read as cards; they still fill red on hover (CSS).
+// Everything that showed the flat off-white (and the description panel's
+// white). The red-filling buttons and the animations toggle swap the texture
+// for their fill on hover / while on — see global.css.
 const SURFACES = [
   'html', 'body', '.tile--contact', '.tile--photo', '.tile--photo .tile-media', '.tile--about',
   '.more-tile--photo', '.more-tile--photo .tile-media', '.writeup', '.writeup-bar', '.essay-tile',
+  '.nav-desc', '.nav-essays', '.essay-back', '.nav-mini--anim',
 ].join(', ');
 
 const FRAGMENT = `
