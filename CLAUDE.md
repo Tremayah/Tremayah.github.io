@@ -14,8 +14,10 @@ Raphael Murray-Browne's portfolio. Astro static site → GitHub Pages.
 tremayah.com is the only address that exists. Don't invent others.
 
 The site icons (`public/favicon.*`, `apple-touch-icon.png`, `icon-192/512.png`) are the bold
-Lo-Res 9 Plus Narrow "T" from the title, redrawn as its 6×6 pixel grid in `--title-color`
-(a placeholder until Raphael designs a proper logo).
+Lo-Res 9 Plus Narrow "T" from the homepage name, redrawn as its 6×6 pixel grid in
+`--title-color` **with every corner rounded** — outer and inner, at 0.28 of a pixel, as the
+font draws it (measured against the browser's render: 99.6% pixel match). Don't square the
+corners off: that reads as a different font. (A placeholder until Raphael designs a proper logo.)
 
 ## What this is
 
