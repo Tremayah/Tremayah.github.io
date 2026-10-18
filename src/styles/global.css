@@ -327,6 +327,21 @@ html.view-open { overflow: hidden; }
   white-space: nowrap;
 }
 .tile-tag[data-tag='university'] { --tag-color: var(--tag-university); }
+/* When the project was finished (MM.YYYY), in the bottom-right corner of its
+   thumbnail: the title's red and pixel face, no backing. Picked in the lab
+   ("medium") at ~1.12× the caption — kept in that proportion here. */
+.tile-date {
+  position: absolute;
+  right: 0.55em;
+  bottom: 0.5em;
+  z-index: 2;
+  font-family: 'lores-9-plus-narrow', var(--nav-font);
+  font-weight: 700;
+  font-size: clamp(0.95rem, 1.57vw, 1.35rem);
+  line-height: 1;
+  color: var(--title-color);
+  pointer-events: none;
+}
 .tile-tag[data-tag='personal']   { --tag-color: var(--tag-personal); }
 /* Stage chip — same block, sitting immediately left of the scope chip. */
 .tile-tag[data-stage='concept']   { --tag-color: var(--tag-concept); }

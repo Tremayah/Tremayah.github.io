@@ -18,6 +18,10 @@ const projects = defineCollection({
     // text tile) and no stage chip is rendered.
     stage: z.enum(['concept', 'prototype', 'product']).optional(),
     order: z.number().optional().default(99),
+    // The month the project was finished ("YYYY-MM"), shown in the corner of
+    // its landing / more-works thumbnail as MM.YYYY. Optional — omit it and no
+    // date is shown.
+    date: z.string().regex(/^\d{4}-\d{2}$/).optional(),
     // Landing-page tile image. Projects without a cover are hidden from the
     // landing grid and the nav (e.g. placeholder stubs).
     cover: z.string().optional(),

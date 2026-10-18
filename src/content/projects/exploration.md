@@ -2,6 +2,7 @@
 title: "Acrylic Sandwich Lamps"
 description: "A batch-production lighting study — translucent acrylic layered and lit from within, then re-made in Corian, wood and metal to see how each material looks, feels, and responds to the light."
 year: 2026
+date: "2026-06"
 category: "Product Design"
 tags: ["Batch Production", "Lighting", "Acrylic", "Woodwork", "Metalwork", "Corian", "Laser Cutting"]
 stage: "product"

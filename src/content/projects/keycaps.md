@@ -1,7 +1,8 @@
 ---
 title: "Porcelain Keycaps"
 description: "Using the keycap as a medium to put materiality first — and casting a set in clear-glazed porcelain."
-year: 2024
+year: 2025
+date: "2025-12"
 category: "Product Design"
 tags: ["Ceramics", "CAD", "Prototyping", "Rhino", "Mould Making"]
 stage: "prototype"

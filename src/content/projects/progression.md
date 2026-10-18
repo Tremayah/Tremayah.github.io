@@ -1,7 +1,8 @@
 ---
 title: "Smart Jewellery"
 description: "Designing 'something between a smartphone and a dumbphone' — a set of jewellery that each take on a single phone function, to make it easier to put the phone down."
-year: 2025
+year: 2026
+date: "2026-01"
 category: "Product Design"
 tags: ["Research", "Wearables", "CAD", "Blender", "3D Printing", "Concept Design"]
 stage: "concept"

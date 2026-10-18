@@ -52,6 +52,9 @@ const data = (id: string) => {
     // The second chip, left of the scope one: how far the project got
     // (concept / prototype / product). Optional — undefined renders no chip.
     stage: e?.data.stage,
+    // When it was finished, as MM.YYYY for the thumbnail's corner (from the
+    // frontmatter's "YYYY-MM"). Optional — undefined renders no date.
+    date: e?.data.date?.split('-').reverse().join('.'),
   };
 };
 
@@ -303,6 +306,7 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
               {isUC(t.id) && <span class="uc-badge">under construction</span>}
               <span class="tile-media">
                 <img class="tile-img" src={t.cover} alt="" loading="eager" decoding="async" />
+                {t.date && <span class="tile-date">{t.date}</span>}
               </span>
               <span class="tile-name">
                 <span class="tile-title">{t.title}</span>
@@ -400,6 +404,7 @@ const FORMSUBMIT_ALIAS = '6d3f3fafc8f33af8dd86131575fc6736';
         {isUC(t.id) && <span class="uc-badge">under construction</span>}
         <span class="tile-media">
           <img class="tile-img" src={t.cover} alt="" loading="lazy" decoding="async" />
+          {t.date && <span class="tile-date">{t.date}</span>}
         </span>
         <span class="tile-name">
           <span class="tile-title">{t.title}</span>

@@ -2,6 +2,7 @@
 title: "Topography Table"
 description: "A low table whose layered-wood top reads like a contour map, sealed flat under a clear top — a personal CAD-and-render study."
 year: 2026
+date: "2026-06"
 category: "Furniture Design"
 tags: ["Furniture", "CAD", "Rhino", "Blender", "Rendering", "Concept Design"]
 scope: "personal"

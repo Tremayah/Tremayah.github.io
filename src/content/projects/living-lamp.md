@@ -2,6 +2,7 @@
 title: "Living Lamp"
 description: "A lamp that — just like its owner — moves, responds, and evolves."
 year: 2025
+date: "2025-05"
 category: "Product Design"
 tags: ["Arduino", "Metalwork", "Electronics", "Fusion 360", "Prototyping"]
 stage: "prototype"
