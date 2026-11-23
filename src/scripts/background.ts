@@ -5,8 +5,9 @@
 
    A WebGL fragment shader draws the clouds into a small offscreen canvas — one
    texel per 4px block, covering the stretch of page around what's on screen —
-   which is exported as a PNG and painted (pixelated) onto every surface that
-   used to show --bg. It's set on the page, not the screen: each surface's
+   which is exported as an image (a BMP per animation step, a PNG when it must
+   show at once — see step() and drawNow()) and painted (pixelated) onto every
+   surface that used to show --bg. It's set on the page, not the screen: each surface's
    background is offset by where that surface sits on its page (the document,
    or an open write-up, which scrolls inside itself), so the texture scrolls
    natively with the content. (No `background-attachment: fixed` — iOS ignores
@@ -38,6 +39,7 @@ const FRAGMENT = `
   uniform vec2 uRes;      // canvas size, texels
   uniform float uRowOff;  // page row (in blocks) of the canvas's top row
   uniform float uT;       // time, already scaled by SPEED
+  uniform bool uBgr;      // write blue-green-red, the byte order a BMP wants
   const float SCALE = ${(PX / UNIT).toFixed(6)};
   const vec3 F = vec3(0.98);                   // --bg, #fafafa
   const vec3 MID = vec3(0.958, 0.956, 0.950);
@@ -60,7 +62,8 @@ const FRAGMENT = `
     // Cloud value → 4 levels, with an ordered dither between neighbouring levels.
     float b = smoothstep(0.40, 0.68, fbm(vec3(p * 2.2 + vec2(uT * 0.015, 0.0), uT * 0.01))) * 4.0;
     float k = min(floor(b) + (fract(b) > bayer8(cell) ? 1.0 : 0.0), 3.0) / 3.0;
-    gl_FragColor = vec4(k < 0.5 ? mix(F, MID, k * 2.0) : mix(MID, DEEP, k * 2.0 - 1.0), 1.0);
+    vec3 c = k < 0.5 ? mix(F, MID, k * 2.0) : mix(MID, DEEP, k * 2.0 - 1.0);
+    gl_FragColor = vec4(uBgr ? c.bgr : c, 1.0);
   }`;
 
 function setup(): void {
@@ -90,6 +93,7 @@ function setup(): void {
   const uRes = gl.getUniformLocation(prog, 'uRes');
   const uRowOff = gl.getUniformLocation(prog, 'uRowOff');
   const uT = gl.getUniformLocation(prog, 'uT');
+  const uBgr = gl.getUniformLocation(prog, 'uBgr');
 
   const root = document.documentElement;
   const surfaces = [...document.querySelectorAll<HTMLElement>(SURFACES)];
@@ -137,28 +141,108 @@ function setup(): void {
     return [Math.max(0, from), to];
   }
 
-  function draw(): void {
+  // Renders the clouds for the stretch of page around the view into the
+  // (offscreen) canvas, and says which stretch that is.
+  type Stretch = { start: number; end: number; size: string; cols: number; rows: number };
+  function render(bgr = false): Stretch | null {
     const [from, to] = range();
     const start = Math.floor(from / PX) * PX;
     const cols = Math.ceil(root.clientWidth / PX), rows = Math.ceil((to - start) / PX);
-    if (!cols || rows <= 0) return;
+    if (!cols || rows <= 0) return null;
     if (canvas.width !== cols || canvas.height !== rows) { canvas.width = cols; canvas.height = rows; }
     gl!.viewport(0, 0, cols, rows);
     gl!.uniform2f(uRes, cols, rows);
     gl!.uniform1f(uRowOff, start / PX);
     gl!.uniform1f(uT, (animated() ? now() : frozenAt) + 40);
+    gl!.uniform1i(uBgr, bgr ? 1 : 0);
     gl!.drawArrays(gl!.TRIANGLES, 0, 3);
-    root.style.setProperty('--tex', `url("${canvas.toDataURL()}")`);
-    root.style.setProperty('--tex-size', `${cols * PX}px ${rows * PX}px`);
-    root.style.setProperty('--tex-top', String(start));
-    covered = { start, end: start + rows * PX };
+    return { start, end: start + rows * PX, size: `${cols * PX}px ${rows * PX}px`, cols, rows };
+  }
+
+  // The canvas as an uncompressed 32-bit BMP. There's nothing to encode, so
+  // making it costs only the GPU read-back (~1 ms). Rows run bottom-up in both
+  // a BMP and readPixels, so they go in as they come; render(true) has already
+  // written each pixel's channels in BMP's blue-green-red order.
+  let pixels = new Uint8Array(0);
+  function bmp({ cols, rows }: Stretch): Blob {
+    const size = cols * rows * 4;
+    if (pixels.length !== size) pixels = new Uint8Array(size);
+    gl!.readPixels(0, 0, cols, rows, gl!.RGBA, gl!.UNSIGNED_BYTE, pixels);
+    const head = new DataView(new ArrayBuffer(54));
+    head.setUint16(0, 0x4d42, true); // "BM"
+    head.setUint32(2, 54 + size, true); // file size
+    head.setUint32(10, 54, true); // where the pixels start
+    head.setUint32(14, 40, true); // BITMAPINFOHEADER
+    head.setInt32(18, cols, true);
+    head.setInt32(22, rows, true); // positive: bottom-up
+    head.setUint16(26, 1, true); // planes
+    head.setUint16(28, 32, true); // bits per pixel (compression 0: none)
+    head.setUint32(34, size, true);
+    return new Blob([head.buffer, pixels], { type: 'image/bmp' });
+  }
+
+  // Puts a rendered texture on every surface. Set on the surfaces themselves
+  // (non-inherited — see global.css), so only they restyle, not the page.
+  function show(url: string, s: Stretch): void {
+    const props: [string, string][] = [['--tex', `url("${url}")`], ['--tex-size', s.size], ['--tex-top', String(s.start)]];
+    for (const el of surfaces) {
+      for (const [k, v] of props) if (el.style.getPropertyValue(k) !== v) el.style.setProperty(k, v);
+    }
+    covered = { start: s.start, end: s.end };
+  }
+
+  // Draws and shows a texture in this same frame, as a PNG data: URL (which,
+  // unlike a blob: URL, the page can paint without waiting for it to load).
+  // For when the view has just moved past the drawn stretch, or the window
+  // has resized. It's the slow way — the PNG is encoded here and then, being
+  // ~100 KB of text, parsed into every surface's style — so it's kept for
+  // those moments.
+  let shownGen = 0; // bumped by every draw; a step that's overtaken is dropped
+  function drawNow(): void {
+    const s = render();
+    if (!s) return;
+    shownGen++;
+    show(canvas.toDataURL(), s);
+  }
+
+  // An animation step, 16 a second: the frame goes over as a BMP behind a
+  // short blob: URL. It's loaded before it's swapped in, so the surfaces can
+  // paint it straight away (no blank frame), and each step costs the page
+  // ~3 ms rather than ~25 — little enough not to hold up the frames the home
+  // bar's scrolling name needs. (Not canvas.toBlob: Chrome only encodes that
+  // PNG in idle time, which here took about a second per step. And it waits
+  // for `load`, not img.decode(), which only settles once frames are drawn.)
+  let inFlight: { gen: number; at: number } | null = null;
+  const held: { url: string; img: HTMLImageElement }[] = [];
+  function step(): void {
+    // One step at a time: if the last is still loading, skip this beat (a
+    // step stuck for a whole second is given up on).
+    if (inFlight && performance.now() - inFlight.at < 1000) return;
+    const s = render(true);
+    if (!s) return;
+    const mine = { gen: ++shownGen, at: performance.now() };
+    inFlight = mine;
+    const url = URL.createObjectURL(bmp(s));
+    const img = new Image();
+    img.onload = img.onerror = (e) => {
+      if (inFlight === mine) inFlight = null;
+      // Failed, or a newer draw got there first.
+      if ((e as Event).type === 'error' || mine.gen !== shownGen) { URL.revokeObjectURL(url); return; }
+      show(url, s);
+      // Hold on to this image and the one it replaced (surfaces may still be
+      // painting it until their restyle); free anything older.
+      held.push({ url, img });
+      while (held.length > 2) URL.revokeObjectURL(held.shift()!.url);
+      cover(); // in case the view ran past this stretch while it loaded
+    };
+    img.src = url;
   }
 
   // Redraw only if something on screen has scrolled outside the drawn stretch.
   function cover(): void {
     const vh = window.innerHeight;
     const out = [scrolling(), ...openWriteups()].some((s) => s.scrollTop < covered.start || s.scrollTop + vh > covered.end);
-    if (out) draw();
+    if (out) drawNow();
   }
 
   // The animation loop. It stops itself when animations are switched off (the
@@ -171,24 +255,26 @@ function setup(): void {
     setTimeout(tick, 1000 / FPS);
     if (document.hidden) return;
     place();
-    draw();
+    step();
   }
 
   document.addEventListener('scroll', () => { place(); cover(); }, { capture: true, passive: true });
-  addEventListener('resize', () => { place(); draw(); });
+  addEventListener('resize', () => { place(); drawNow(); });
   // A view opening or closing unhides / hides its write-up.
   new MutationObserver(() => requestAnimationFrame(() => { place(); cover(); }))
     .observe(document.body, { subtree: true, attributes: true, attributeFilter: ['hidden'] });
-  // html.view-open and the animations toggle (html.reduce-motion).
+  // html.view-open and the animations toggle (html.reduce-motion). Switching
+  // animations off just freezes the clock — the texture on screen is the
+  // latest step already, so there's nothing to redraw.
   new MutationObserver(() => {
     if (!animated()) frozenAt = now();
     else if (!running) tick();
     place();
-    draw();
+    cover();
   }).observe(root, { attributes: true, attributeFilter: ['class'] });
 
   place();
-  draw();
+  drawNow();
   tick();
 }
 

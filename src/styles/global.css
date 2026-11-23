@@ -1688,11 +1688,18 @@ html.reduce-motion .carousel-track { transition: none; }
    scripts/background.ts paints a drifting, dithered pixel-cloud texture onto
    every surface that shows --bg (it adds .bg-surface to them, and .bg-texture
    to <html>). --tex / --tex-size / --tex-top describe the drawn stretch of
-   page and live on <html>; --tx / --ty are each surface's own offset on its
-   page, so the texture lines up across surfaces and scrolls with the content.
+   page; --tx / --ty are each surface's own offset on its page, so the texture
+   lines up across surfaces and scrolls with the content.
    Without the script (or WebGL) none of this applies and --bg stays flat.
    The !importants are deliberate: this layer has to sit over every surface's
-   own `background: var(--bg)` shorthand, whatever its specificity. */
+   own `background: var(--bg)` shorthand, whatever its specificity.
+   All five are set on each surface itself and don't inherit. --tex changes 16
+   times a second; set once on <html> and inherited, every step restyled the
+   whole page, which held up frames enough to make the home bar's scrolling
+   name stutter. This way a step only restyles the ~20 surfaces. */
+@property --tex { syntax: '*'; inherits: false; }
+@property --tex-size { syntax: '*'; inherits: false; }
+@property --tex-top { syntax: '<number>'; inherits: false; initial-value: 0; }
 @property --tx { syntax: '<number>'; inherits: false; initial-value: 0; }
 @property --ty { syntax: '<number>'; inherits: false; initial-value: 0; }
 .bg-surface {
